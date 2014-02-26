@@ -35,11 +35,12 @@ private slots:
 
     void on_horizontalSlider_sliderMoved(int position);
 
+
 public slots:
     void onCurIdxChanged(int idx); // idx is index of pose array, not botID (there's only 1 bot :/ )
     void onTimeout();
 private:
-    int curIdx;
+    // don't need curIdx, simply read the position of the slider (otherwise there is duplicacy)
     Ui::Dialog *ui;
     QTimer *timer;
     Pose poses[NUMTICKS];

@@ -13,6 +13,8 @@ class Pose
     static const double ticksToCmS = 1.08; //still only approximate...
     static const double fieldXConvert = 29.75;
     static const double fieldYConvert = 27.33333;
+    void update_1(int vl_ticks, int vr_ticks, double dt); // simple update, without delay.
+    void update_2(int vl_ticks, int vr_ticks, double dt); // delay of 1 tick bw updates.
 public:
     double x() { return x_ * fieldXConvert;}                 // returns in strategy coordinate system
     double y() { return y_ * fieldYConvert;}                 // returns in strategy coordinate system

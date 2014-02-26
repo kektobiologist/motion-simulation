@@ -1,5 +1,6 @@
 #include "pose.h"
 #include <math.h>
+#include <algorithm>
 /* Constructor takes in x, y in Strategy coordinates! */
 Pose::Pose(double x, double y, double theta):
     x_(x/fieldXConvert),
@@ -14,6 +15,11 @@ Pose::Pose()
 }
 
 void Pose::update(int vl_ticks, int vr_ticks, double dt)
+{
+    update_2(vl_ticks, vr_ticks, dt);
+}
+
+void Pose::update_1(int vl_ticks, int vr_ticks, double dt)
 {
     static const double PI = 3.14159265359;
     double vl = vl_ticks * ticksToCmS;
@@ -35,4 +41,13 @@ void Pose::update(int vl_ticks, int vr_ticks, double dt)
     theta_ += w * dt;
     while(theta_ > PI) theta_ -= PI*2;
     while(theta_ <= -PI) theta_ += PI*2;
+}
+
+void Pose::update_2(int vl_ticks, int vr_ticks, double dt)
+{
+    static double prev_x_ = x_;
+    static double prev_y_ = y_;
+    update_1(vl_ticks, vr_ticks, dt);
+    std::swap(prev_x_, x_);
+    std::swap(prev_y_, y_);
 }

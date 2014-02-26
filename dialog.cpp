@@ -12,8 +12,9 @@ Dialog::Dialog(QWidget *parent) :
     ui->setupUi(this);
     timer = new QTimer();
     //img = cvCreateImage(cvSize(ui->drawArea->width(), ui->drawArea->height()), 8, 3);
-    simulate(Pose(HALF_FIELD_MAXX/2,HALF_FIELD_MAXY/2,PI/4), Pose(HALF_FIELD_MAXX,HALF_FIELD_MAXY,0));
+    simulate(Pose(HALF_FIELD_MAXX/2,HALF_FIELD_MAXY/2,PI/8), Pose(0,0,0));
     ui->horizontalSlider->setRange(0, NUMTICKS-1);
+    connect(ui->horizontalSlider, SIGNAL(valueChanged(int)), this, SLOT(onCurIdxChanged(int)));
     connect(timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
     onCurIdxChanged(0);
 }
@@ -87,6 +88,7 @@ void Dialog::simulate(Pose startPose, Pose endPose)
         poses[i] = poses[i-1];
         int vl, vr;
         generateControl(poses[i], endPose, vl, vr);
+        qDebug() << "vl, vr = " << vl << ", " << vr;
         poses[i].update(vl, vr, timeLC);
     }
 }
@@ -111,11 +113,19 @@ void Dialog::on_resetButton_clicked()
 void Dialog::on_horizontalSlider_sliderMoved(int position)
 {
     timer->stop();
-    onCurIdxChanged(position);
+//    onCurIdxChanged(position);
 }
 
 void Dialog::onCurIdxChanged(int idx)
 {
+    ui->renderArea->changePose(poses[idx]);
+    qDebug() << "Pose: " << poses[idx].x() << ", " << poses[idx].y() << ", " << poses[idx].theta()*180/PI;
+}
+
+void Dialog::onTimeout()
+{
+    int idx = ui->horizontalSlider->value();
+    idx++;
     if(idx >= NUMTICKS) {
         timer->stop();
         return;
@@ -123,14 +133,8 @@ void Dialog::onCurIdxChanged(int idx)
     if(idx < 0 || idx >= NUMTICKS) {
         qDebug() << "Error! idx = " << idx << " and is out of range!";
         return;
-    }
-    curIdx = idx;
-    ui->horizontalSlider->setValue(curIdx);
-    ui->renderArea->changePose(poses[curIdx]);
-    qDebug() << "Pose: " << poses[curIdx].x() << ", " << poses[curIdx].y() << ", " << poses[curIdx].theta()*180/PI;
+    }    
+    ui->horizontalSlider->setValue(idx);
+//    onCurIdxChanged(curIdx+1);
 }
 
-void Dialog::onTimeout()
-{
-    onCurIdxChanged(curIdx+1);
-}
