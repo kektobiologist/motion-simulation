@@ -1,6 +1,6 @@
- #ifndef POSE_H
+#ifndef POSE_H
 #define POSE_H
-
+#include <queue>
 /* Pose defines the position and angle of the robot.
  * It is in REAL WORLD coordinates (m and radians).
  * NOTE: vl, vr are taken in ticks only. dt is in ms
@@ -15,6 +15,8 @@ class Pose
     static const double fieldYConvert = 27.33333;
     void update_1(int vl_ticks, int vr_ticks, double dt); // simple update, without delay.
     void update_2(int vl_ticks, int vr_ticks, double dt); // delay of 1 tick bw updates.
+    std::queue<int> vlq, vrq;      // q to implement packet delay.
+    static const int numPacketDelay = 1; // num of packets to delay by
 public:
     double x() { return x_ * fieldXConvert;}                 // returns in strategy coordinate system
     double y() { return y_ * fieldYConvert;}                 // returns in strategy coordinate system

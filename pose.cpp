@@ -7,11 +7,17 @@ Pose::Pose(double x, double y, double theta):
     y_(y/fieldYConvert),
     theta_(theta)
 {    
+    for(int i = 0; i < numPacketDelay; i++) {
+        vlq.push(0); vrq.push(0);
+    }
 }
 
 Pose::Pose()
 {
     x_ = 0; y_ = 0; theta_ = 0;
+    for(int i = 0; i < numPacketDelay; i++) {
+        vlq.push(0); vrq.push(0);
+    }
 }
 
 void Pose::update(int vl_ticks, int vr_ticks, double dt)
@@ -45,9 +51,10 @@ void Pose::update_1(int vl_ticks, int vr_ticks, double dt)
 
 void Pose::update_2(int vl_ticks, int vr_ticks, double dt)
 {
-    static double prev_x_ = x_;
-    static double prev_y_ = y_;
-    update_1(vl_ticks, vr_ticks, dt);
-    std::swap(prev_x_, x_);
-    std::swap(prev_y_, y_);
+    vlq.push(vl_ticks);
+    vrq.push(vr_ticks);
+    int vl = vlq.front();
+    int vr = vrq.front();
+    vlq.pop(); vrq.pop();
+    update_1(vl, vr, dt);
 }

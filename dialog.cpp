@@ -13,6 +13,7 @@ Dialog::Dialog(QWidget *parent) :
     timer = new QTimer();
     //img = cvCreateImage(cvSize(ui->drawArea->width(), ui->drawArea->height()), 8, 3);
     simulate(Pose(HALF_FIELD_MAXX/2,HALF_FIELD_MAXY/2,PI/8), Pose(0,0,0));
+//    simulate(Pose(-HALF_FIELD_MAXX/1.3,-HALF_FIELD_MAXY/2,PI/8), Pose(0,0,0));
     ui->horizontalSlider->setRange(0, NUMTICKS-1);
     connect(ui->horizontalSlider, SIGNAL(valueChanged(int)), this, SLOT(onCurIdxChanged(int)));
     connect(timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
