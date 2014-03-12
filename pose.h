@@ -16,7 +16,7 @@ class Pose
     void update_1(int vl_ticks, int vr_ticks, double dt); // simple update, without delay.
     void update_2(int vl_ticks, int vr_ticks, double dt); // delay of 1 tick bw updates.
     std::queue<int> vlq, vrq;      // q to implement packet delay.
-    static const int numPacketDelay = 1; // num of packets to delay by
+    static const int numPacketDelay = 1; // num of packets to delay in update
 public:
     double x() { return x_ * fieldXConvert;}                 // returns in strategy coordinate system
     double y() { return y_ * fieldYConvert;}                 // returns in strategy coordinate system

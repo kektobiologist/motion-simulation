@@ -36,6 +36,8 @@ private slots:
     void on_horizontalSlider_sliderMoved(int position);
 
 
+    void on_simButton_clicked();
+
 public slots:
     void onCurIdxChanged(int idx); // idx is index of pose array, not botID (there's only 1 bot :/ )
     void onTimeout();

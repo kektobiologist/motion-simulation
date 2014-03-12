@@ -139,3 +139,11 @@ void Dialog::onTimeout()
 //    onCurIdxChanged(curIdx+1);
 }
 
+
+void Dialog::on_simButton_clicked()
+{
+    Pose start = ui->renderArea->getStartPose();
+    Pose end = ui->renderArea->getEndPose();
+    simulate(start, end);
+    onCurIdxChanged(0);
+}

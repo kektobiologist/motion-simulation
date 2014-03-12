@@ -3,9 +3,31 @@
 #include <QTime>
 #include <QPen>
 #include <QDebug>
+#include <QEvent>
+#include <QMouseEvent>
+#include <math.h>
+#include <assert.h>
 RenderArea::RenderArea(QWidget *parent) :
     QWidget(parent)
 {
+    scribbling = false;
+    for(int i = 0; i < 2; i++) {
+        x[i] = y[i] = theta[i] = 0;
+    }
+}
+
+Pose RenderArea::getStartPose()
+{
+    int xx = (x[0] * HALF_FIELD_MAXX * 2) / this->width() - HALF_FIELD_MAXX;
+    int yy = (y[0] * HALF_FIELD_MAXY * 2) / this->height() - HALF_FIELD_MAXY;
+    return Pose(xx, yy, theta[0]);
+}
+
+Pose RenderArea::getEndPose()
+{
+    int xx = (x[1] * HALF_FIELD_MAXX * 2) / this->width() - HALF_FIELD_MAXX;
+    int yy = (y[1] * HALF_FIELD_MAXY * 2) / this->height() - HALF_FIELD_MAXY;
+    return Pose(xx, yy, theta[1]);
 }
 
 void RenderArea::paintEvent(QPaintEvent *)
@@ -14,6 +36,8 @@ void RenderArea::paintEvent(QPaintEvent *)
     QPainter painter(this);
     drawField(painter);
     drawBot(painter);
+    drawPose(painter, 0);
+    drawPose(painter, 1);
 }
 
 void RenderArea::drawField(QPainter &painter)
@@ -51,4 +75,58 @@ void RenderArea::drawBot(QPainter &painter)
     painter.drawRect(bot);
     painter.drawLine(midLine);
     painter.restore();
+}
+
+void RenderArea::drawPose(QPainter &painter, int index)
+{
+    assert(index == 0 || index == 1);
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+    QPen pen;
+    pen.setColor(Qt::black);
+    pen.setWidth(2);
+    painter.setPen(pen);
+    int x2, y2;
+    x2 = x[index] + cos(theta[index])*50;
+    y2 = y[index] + sin(theta[index])*50;
+    painter.drawLine(x[index], y[index], x2, y2);
+    if(index)
+        pen.setColor(Qt::red);
+    else
+        pen.setColor(Qt::blue);
+    painter.setPen(pen);
+    painter.drawEllipse(QPointF(x[index], y[index]), 10, 10);
+    painter.restore();
+}
+
+void RenderArea::mousePressEvent(QMouseEvent *event)
+{
+    if(event->button() == Qt::LeftButton) {
+        scribbling = true;
+        if(event->modifiers() & Qt::ControlModifier)
+            idx = 1;
+        else
+            idx = 0;
+        x[idx] = event->x();
+        y[idx] = event->y();
+        theta[idx] = 0;
+        update();
+    }
+}
+
+void RenderArea::mouseReleaseEvent(QMouseEvent *event)
+{
+    if(event->button() == Qt::LeftButton && scribbling) {
+        scribbling = false;
+        theta[idx] = atan2(event->y()-y[idx], event->x()-x[idx]);
+        update();
+    }
+}
+
+void RenderArea::mouseMoveEvent(QMouseEvent *event)
+{
+    if((event->buttons() & Qt::LeftButton) && scribbling) {
+        theta[idx] = atan2(event->y()-y[idx], event->x()-x[idx]);
+        update();
+    }
 }
