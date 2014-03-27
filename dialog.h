@@ -45,6 +45,8 @@ private slots:
 
     void on_simButton_clicked();
 
+    void on_batchButton_clicked();
+
 public slots:
     void onCurIdxChanged(int idx); // idx is index of pose array, not botID (there's only 1 bot :/ )
     void onTimeout();
@@ -59,6 +61,7 @@ private:
     void PController(Pose s, Pose e, int &vl, int &vr);
     void PolarBased(Pose s, Pose e, int &vl, int &vr);
     void simulate(Pose startPose, Pose endPose, FType fun);
+    void batchSimulation(FType fun);
     vector<FPair> functions;
     void drawControlArc(int idx, Pose endPose);
 };

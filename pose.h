@@ -1,6 +1,7 @@
 #ifndef POSE_H
 #define POSE_H
 #include <queue>
+#include <math.h>
 /* Pose defines the position and angle of the robot.
  * It is in REAL WORLD coordinates (m and radians).
  * NOTE: vl, vr are taken in ticks only. dt is in ms
@@ -27,5 +28,9 @@ public:
     Pose();
     void update(int vl, int vr, double dt); // takes vl, vr in ticks. Implicitly converts to cm/s!! updates pose.
 };
+
+inline double dist(Pose p1, Pose p2) {
+    return sqrt((double)(p1.x()-p2.x())*(p1.x()-p2.x()) + (p1.y()-p2.y())*(p1.y()-p2.y()));
+}
 
 #endif // POSE_H

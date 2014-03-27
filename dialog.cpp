@@ -175,6 +175,41 @@ void Dialog::simulate(Pose startPose, Pose endPose, FType func)
     }
 }
 
+void Dialog::batchSimulation(Dialog::FType fun)
+{
+    srand(time(NULL));
+    while(1) {
+        int x1 = rand()%HALF_FIELD_MAXX;
+        x1 = rand()%2?-x1:x1;
+        int y1 = rand()%HALF_FIELD_MAXY;
+        y1 = rand()%2?-y1:y1;
+        double theta1 = rand()/(double)RAND_MAX;
+        theta1 = normalizeAngle(theta1 * 2 * PI);
+        int x2 = rand()%HALF_FIELD_MAXX;
+        x2 = rand()%2?-x2:x2;
+        int y2 = rand()%HALF_FIELD_MAXY;
+        y2 = rand()%2?-y2:y2;
+        double theta2 = rand()/(double)RAND_MAX;
+        theta2 = normalizeAngle(theta2 * 2 * PI);
+        Pose start(x1, y1, theta1);
+        Pose end(x2, y2, theta2);
+        simulate(start, end, fun);
+        char buf[1000];
+        sprintf(buf, "Pose (%d, %d, %lf) to (%d, %d, %lf) simulating..", x1, y1, theta1, x2, y2, theta2);
+        ui->textEdit->append(buf);
+        if(dist(end, poses[NUMTICKS-1]) > 150) {
+            sprintf(buf, "Did not reach! Distance = %lf", dist(end, poses[NUMTICKS-1]));
+            ui->textEdit->append(buf);
+            ui->renderArea->setStartPose(start);
+            ui->renderArea->setEndPose(end);
+            break;
+        } else {
+            sprintf(buf, "Reached. Distance from end = %lf.", dist(end, poses[NUMTICKS-1]));
+            ui->textEdit->append(buf);
+        }
+    }
+}
+
 
 void Dialog::on_startButton_clicked()
 {
@@ -228,4 +263,9 @@ void Dialog::on_simButton_clicked()
     simulate(start, end, fun);
     onCurIdxChanged(0);
     on_resetButton_clicked();
+}
+
+void Dialog::on_batchButton_clicked()
+{
+    batchSimulation(functions[ui->simCombo->currentIndex()].second);
 }

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>661</width>
-    <height>588</height>
+    <width>826</width>
+    <height>535</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,14 +15,31 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="RenderArea" name="renderArea" native="true">
-     <property name="minimumSize">
-      <size>
-       <width>595</width>
-       <height>410</height>
-      </size>
-     </property>
-    </widget>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="RenderArea" name="renderArea" native="true">
+       <property name="minimumSize">
+        <size>
+         <width>595</width>
+         <height>410</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>596</width>
+         <height>410</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QTextEdit" name="textEdit">
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
    <item>
     <widget class="QSlider" name="horizontalSlider">
@@ -61,6 +78,13 @@
       <widget class="QPushButton" name="simButton">
        <property name="text">
         <string>Simulate</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="3">
+      <widget class="QPushButton" name="batchButton">
+       <property name="text">
+        <string>Run Batch Simulation</string>
        </property>
       </widget>
      </item>

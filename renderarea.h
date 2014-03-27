@@ -15,6 +15,8 @@ public:
     void changePose(Pose p) {pose = p; update();}
     Pose getStartPose();
     Pose getEndPose();
+    void setStartPose(Pose p);
+    void setEndPose(Pose p);
 protected:
     void paintEvent(QPaintEvent *);
     void drawField(QPainter &painter);

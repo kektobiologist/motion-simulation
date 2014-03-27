@@ -36,6 +36,22 @@ Pose RenderArea::getEndPose()
     return Pose(xx, yy, theta[1]);
 }
 
+void RenderArea::setStartPose(Pose p)
+{
+    x[0] = (p.x() + HALF_FIELD_MAXX) * this->width() / (2.0 * HALF_FIELD_MAXX);
+    y[0] = (p.y() + HALF_FIELD_MAXY) * this->height() / (2.0 * HALF_FIELD_MAXY);
+    theta[0] = p.theta();
+    update();
+}
+
+void RenderArea::setEndPose(Pose p)
+{
+    x[1] = (p.x() + HALF_FIELD_MAXX) * this->width() / (2.0 * HALF_FIELD_MAXX);
+    y[1] = (p.y() + HALF_FIELD_MAXY) * this->height() / (2.0 * HALF_FIELD_MAXY);
+    theta[1] = p.theta();
+    update();
+}
+
 void RenderArea::paintEvent(QPaintEvent *)
 {
 //    qDebug() << "Pose in render area: " << pose.x() << ", " << pose.y() << ", " << pose.theta()*180/3.141;
