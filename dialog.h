@@ -4,6 +4,12 @@
 #include <QDialog>
 #include "pose.h"
 #include <QTimer>
+#include <vector>
+#include <map>
+#include <algorithm>
+#include <utility>
+
+using namespace std;
 namespace Ui {
 class Dialog;
 }
@@ -12,14 +18,15 @@ class Dialog;
 const float MAX_BOT_LINEAR_VEL_CHANGE  = 3;
 const float MAX_BOT_SPEED              = 80.0;
 const int BOT_POINT_THRESH             = 147;
-const int CLEARANCE_PATH_PLANNER       = 300;
+const int CLEARANCE_PATH_PLANNER       = 400;
 
 const double timeLC = 16e-3;
 const int NUMTICKS = 1000;
-
 #define SGN(x) (((x)>0)?1:(((x)<0)?(-1):0))
 class Dialog : public QDialog
 {
+    typedef void(Dialog::*FType)(Pose, Pose, int &, int &);
+    typedef std::pair<QString, FType> FPair;
     Q_OBJECT
     
 public:
@@ -46,10 +53,13 @@ private:
     Ui::Dialog *ui;
     QTimer *timer;
     Pose poses[NUMTICKS];
-    void generateControl(Pose initialPose, Pose finalPose, int &vl, int &vr, int clearance = CLEARANCE_PATH_PLANNER);
-    void simulate(Pose startPose, Pose endPose);
-
-
+    int vls[NUMTICKS], vrs[NUMTICKS];
+    void kgpkubs(Pose initialPose, Pose finalPose, int &vl, int &vr);
+    void CMU(Pose s, Pose e, int &vl, int &vr);
+    void PController(Pose s, Pose e, int &vl, int &vr);
+    void PolarBased(Pose s, Pose e, int &vl, int &vr);
+    void simulate(Pose startPose, Pose endPose, FType fun);
+    vector<FPair> functions;
     void drawControlArc(int idx, Pose endPose);
 };
 

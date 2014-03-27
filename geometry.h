@@ -3,7 +3,7 @@
  * It also implements overloading of the following operators : -,+,*,/
  * for these objects.
  */
-#pragma once
+
 #ifndef GEOMETRY_H
 #define GEOMETRY_H
 
@@ -176,13 +176,11 @@ inline bool operator != (const Vector2D<T>& lhs, const Vector2D<T>& rhs)
 }
 
 // Normalizes the angle (in radians) to be in the range (-pi, pi]
-inline float normalizeAngle(float angle)
+double normalizeAngle(double angle)
 {
-  if (angle > PI)
-    return angle - 2 * PI;
-  else if (angle <= -PI)
-    return angle + 2 * PI;
-  return angle;
+    while(angle > PI) angle -= 2*PI;
+    while(angle <= -PI) angle += 2*PI;
+    return angle;
 }
 
 // Detects if a point is within a circle or not

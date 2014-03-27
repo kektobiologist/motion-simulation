@@ -10,14 +10,20 @@
 RenderArea::RenderArea(QWidget *parent) :
     QWidget(parent)
 {
+//    qDebug() << "WIDTH + " << this->width() << "HEIGHT + " << this->height();
     scribbling = false;
-    for(int i = 0; i < 2; i++) {
-        x[i] = y[i] = theta[i] = 0;
-    }
+    x[0] = 595*2/3;
+    y[0] = 410*2/3;
+    theta[0] = 3.1418/8;
+    x[1] = 595/2;
+    y[1] = 410/2;
+    theta[1] = 0;
+//    x[1] = y[1] = theta[1] = 0;
 }
 
 Pose RenderArea::getStartPose()
 {
+//    qDebug() << "Width height in startPose: " << this->width() << ", " << this->height();
     int xx = (x[0] * HALF_FIELD_MAXX * 2) / this->width() - HALF_FIELD_MAXX;
     int yy = (y[0] * HALF_FIELD_MAXY * 2) / this->height() - HALF_FIELD_MAXY;
     return Pose(xx, yy, theta[0]);

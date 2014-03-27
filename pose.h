@@ -9,10 +9,12 @@
 class Pose
 {
     double x_, y_, theta_;
+public:
     static const double d          = 6.5; //distance between wheels in cm
     static const double ticksToCmS = 1.08; //still only approximate...
     static const double fieldXConvert = 29.75;
     static const double fieldYConvert = 27.33333;
+private:
     void update_1(int vl_ticks, int vr_ticks, double dt); // simple update, without delay.
     void update_2(int vl_ticks, int vr_ticks, double dt); // delay of 1 tick bw updates.
     std::queue<int> vlq, vrq;      // q to implement packet delay.

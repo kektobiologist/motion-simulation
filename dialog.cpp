@@ -5,18 +5,28 @@
 #include <assert.h>
 #include <QTimer>
 #include <QDebug>
+#include <algorithm>
+
+using namespace std;
 Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::Dialog)
 {
     ui->setupUi(this);
     timer = new QTimer();
-    //img = cvCreateImage(cvSize(ui->drawArea->width(), ui->drawArea->height()), 8, 3);
-    simulate(Pose(HALF_FIELD_MAXX/2,HALF_FIELD_MAXY/2,PI/8), Pose(0,0,0));
-//    simulate(Pose(-HALF_FIELD_MAXX/1.3,-HALF_FIELD_MAXY/2,PI/8), Pose(0,0,0));
+    Pose start = ui->renderArea->getStartPose();
+    Pose end = ui->renderArea->getEndPose();
+    simulate(start, end, &Dialog::kgpkubs);
     ui->horizontalSlider->setRange(0, NUMTICKS-1);
     connect(ui->horizontalSlider, SIGNAL(valueChanged(int)), this, SLOT(onCurIdxChanged(int)));
     connect(timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
+    functions.push_back(make_pair("kgpkubs", &Dialog::kgpkubs));
+    functions.push_back(make_pair("CMU", &Dialog::CMU));
+    functions.push_back(make_pair("PController", &Dialog::PController));
+    functions.push_back(make_pair("PolarBased", &Dialog::PolarBased));
+    for(unsigned int i = 0; i < functions.size(); i++) {
+        ui->simCombo->addItem(functions[i].first);
+    }
     onCurIdxChanged(0);
 }
 
@@ -26,8 +36,9 @@ Dialog::~Dialog()
 }
 
 
-void Dialog::generateControl(Pose initialPose, Pose finalPose, int &vl, int &vr, int clearance)
+void Dialog::kgpkubs(Pose initialPose, Pose finalPose, int &vl, int &vr)
 {
+    int clearance = CLEARANCE_PATH_PLANNER;
     static float prevVel = 0;
     Vector2D<int> initial(initialPose.x(), initialPose.y());
     Vector2D<int> final(finalPose.x(), finalPose.y());
@@ -48,7 +59,6 @@ void Dialog::generateControl(Pose initialPose, Pose finalPose, int &vl, int &vr,
      printf("what\n");
      assert(0);
     }
-
     float fTheta = asin(sqrt(fabs(r)));
     fTheta = 1 - fTheta/(PI/2);
     fTheta = pow(fTheta,2.2) ;
@@ -80,7 +90,76 @@ void Dialog::generateControl(Pose initialPose, Pose finalPose, int &vl, int &vr,
     vr = t+r;
 }
 
-void Dialog::simulate(Pose startPose, Pose endPose)
+void Dialog::CMU(Pose s, Pose e, int &vl, int &vr)
+{
+    int maxDis = 2*sqrt(HALF_FIELD_MAXX*HALF_FIELD_MAXX+HALF_FIELD_MAXY*HALF_FIELD_MAXY);
+    Vector2D<int> initial(s.x(), s.y());
+    Vector2D<int> final(e.x(), e.y());
+    int distance = Vector2D<int>::dist(initial, final);
+    double phi = s.theta();
+    double theta = Vector2D<int>::angle(final, initial);
+    double phiStar = e.theta();
+    double alpha = normalizeAngle(theta-phiStar);
+    double beta = atan2((maxDis/15.0), distance);
+    double thetaD = theta + min(alpha, beta);
+    thetaD = theta; // removing the phiStar part. wasnt able to get it to work right.
+    double delta = normalizeAngle(thetaD - phi);
+    double t = cos(delta)*cos(delta)*SGN(cos(delta));
+    double r = sin(delta)*sin(delta)*SGN(sin(delta));
+    vl = 100*(t-r);
+    vr = 100*(t+r);
+}
+
+void Dialog::PController(Pose s, Pose e, int &vl, int &vr)
+{
+    Vector2D<int> initial(s.x(), s.y());
+    Vector2D<int> final(e.x(), e.y());
+    int distance = Vector2D<int>::dist(initial, final);
+    double angleError = normalizeAngle(s.theta() - Vector2D<int>::angle(final, initial));
+    double v = 0;
+    int maxDis = 2*sqrt(HALF_FIELD_MAXX*HALF_FIELD_MAXX+HALF_FIELD_MAXY*HALF_FIELD_MAXY);
+    if(angleError > PI/2) {
+        v = 0;
+    } else {
+        if(distance > maxDis/2) {
+            v = 100;
+        } else {
+            v = (distance/(double)maxDis)*90+10;
+        }
+    }
+    double w = -2*angleError;
+    v *= Pose::ticksToCmS;
+    vl = v - Pose::d*w/2;
+    vr = v + Pose::d*w/2;
+    if(abs(vl) > 100 || abs(vr) > 100) {
+        double max = abs(vl)>abs(vr)?abs(vl):abs(vr);
+        vl = vl*100/max;
+        vr = vr*100/max;
+    }
+}
+
+void Dialog::PolarBased(Pose s, Pose e, int &vl, int &vr)
+{
+    Vector2D<int> initial(s.x()-e.x(), s.y()-e.y());
+    Vector2D<int> final(0, 0);
+    double theta = normalizeAngle(s.theta() - e.theta());
+    double rho = sqrt(initial.x*initial.x + initial.y*initial.y);
+    double gamma = atan2(initial.y, initial.x) - theta + PI;
+    double delta = gamma + theta;
+    double k1 = 1, k2 = 5, k3 = 3;
+    double v = k1*rho*cos(gamma);
+    double w = k2*gamma+k1*sin(gamma)*cos(gamma)/gamma*(gamma + k3*delta);
+    v *= Pose::ticksToCmS;
+    vl = v - Pose::d*w/2;
+    vr = v + Pose::d*w/2;
+    if(abs(vl) > 100 || abs(vr) > 100) {
+        double max = abs(vl)>abs(vr)?abs(vl):abs(vr);
+        vl = vl*100/max;
+        vr = vr*100/max;
+    }
+}
+
+void Dialog::simulate(Pose startPose, Pose endPose, FType func)
 {
     poses[0] = startPose;
     //simulating behaviour for all ticks at once
@@ -88,8 +167,10 @@ void Dialog::simulate(Pose startPose, Pose endPose)
     {
         poses[i] = poses[i-1];
         int vl, vr;
-        generateControl(poses[i], endPose, vl, vr);
-        qDebug() << "vl, vr = " << vl << ", " << vr;
+        (this->*func)(poses[i], endPose, vl, vr);
+        vls[i] = vl;
+        vrs[i] = vr;
+//        qDebug() << "vl, vr = " << vl << ", " << vr;
         poses[i].update(vl, vr, timeLC);
     }
 }
@@ -111,16 +192,16 @@ void Dialog::on_resetButton_clicked()
     ui->horizontalSlider->setValue(0);
 }
 
-void Dialog::on_horizontalSlider_sliderMoved(int position)
+void Dialog::on_horizontalSlider_sliderMoved(int )
 {
     timer->stop();
-//    onCurIdxChanged(position);
 }
 
 void Dialog::onCurIdxChanged(int idx)
 {
     ui->renderArea->changePose(poses[idx]);
-    qDebug() << "Pose: " << poses[idx].x() << ", " << poses[idx].y() << ", " << poses[idx].theta()*180/PI;
+    qDebug() << "vl, vr = " << vls[idx] << ", " << vrs[idx];
+//    qDebug() << "Pose: " << poses[idx].x() << ", " << poses[idx].y() << ", " << poses[idx].theta()*180/PI;
 }
 
 void Dialog::onTimeout()
@@ -136,7 +217,6 @@ void Dialog::onTimeout()
         return;
     }    
     ui->horizontalSlider->setValue(idx);
-//    onCurIdxChanged(curIdx+1);
 }
 
 
@@ -144,6 +224,8 @@ void Dialog::on_simButton_clicked()
 {
     Pose start = ui->renderArea->getStartPose();
     Pose end = ui->renderArea->getEndPose();
-    simulate(start, end);
+    FType fun = functions[ui->simCombo->currentIndex()].second;
+    simulate(start, end, fun);
     onCurIdxChanged(0);
+    on_resetButton_clicked();
 }
