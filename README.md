@@ -16,4 +16,4 @@ CMU: http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=810044&tag=1
 
 PolarBased: www.dis.uniroma1.it/~labrob/pub/papers/Ramsete01.pdf
 
-PController: hmi.ewi.utwente.nl/robotsoccernieuw/.../thesis_werner_dierssen.pdf‎
+PController: http://hmi.ewi.utwente.nl/robotsoccernieuw/documents/thesis_werner_dierssen.pdf
