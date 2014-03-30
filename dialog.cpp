@@ -20,10 +20,10 @@ Dialog::Dialog(QWidget *parent) :
     ui->horizontalSlider->setRange(0, NUMTICKS-1);
     connect(ui->horizontalSlider, SIGNAL(valueChanged(int)), this, SLOT(onCurIdxChanged(int)));
     connect(timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
+    functions.push_back(make_pair("PolarBased", &Dialog::PolarBased));
     functions.push_back(make_pair("kgpkubs", &Dialog::kgpkubs));
     functions.push_back(make_pair("CMU", &Dialog::CMU));
     functions.push_back(make_pair("PController", &Dialog::PController));
-    functions.push_back(make_pair("PolarBased", &Dialog::PolarBased));
     for(unsigned int i = 0; i < functions.size(); i++) {
         ui->simCombo->addItem(functions[i].first);
     }
@@ -127,7 +127,7 @@ void Dialog::PController(Pose s, Pose e, int &vl, int &vr)
             v = (distance/(double)maxDis)*90+10;
         }
     }
-    double w = -2*angleError;
+    double w = -1.5*angleError;
     v *= Pose::ticksToCmS;
     vl = v - Pose::d*w/2;
     vr = v + Pose::d*w/2;
@@ -141,14 +141,22 @@ void Dialog::PController(Pose s, Pose e, int &vl, int &vr)
 void Dialog::PolarBased(Pose s, Pose e, int &vl, int &vr)
 {
     Vector2D<int> initial(s.x()-e.x(), s.y()-e.y());
-    Vector2D<int> final(0, 0);
     double theta = normalizeAngle(s.theta() - e.theta());
+    // rotate initial by -e.theta degrees;
+    double newx = initial.x * cos(-e.theta()) - initial.y * sin(-e.theta());
+    double newy = initial.x * sin(-e.theta()) + initial.y * cos(-e.theta());
+    initial = Vector2D<int>(newx, newy);
     double rho = sqrt(initial.x*initial.x + initial.y*initial.y);
-    double gamma = atan2(initial.y, initial.x) - theta + PI;
-    double delta = gamma + theta;
-    double k1 = 1, k2 = 5, k3 = 3;
+    double gamma = normalizeAngle(atan2(initial.y, initial.x) - theta + PI);
+    double delta = normalizeAngle(gamma + theta);
+    double k1 = 0.05, k2 = 4, k3 = 20;
     double v = k1*rho*cos(gamma);
-    double w = k2*gamma+k1*sin(gamma)*cos(gamma)/gamma*(gamma + k3*delta);
+    double w;
+    if(gamma == 0) {
+        w = k2*gamma+k1*cos(gamma)*(gamma+k3*delta);
+    } else {
+        w = k2*gamma+k1*sin(gamma)*cos(gamma)/gamma*(gamma + k3*delta);
+    }
     v *= Pose::ticksToCmS;
     vl = v - Pose::d*w/2;
     vr = v + Pose::d*w/2;
@@ -191,13 +199,14 @@ void Dialog::batchSimulation(Dialog::FType fun)
         y2 = rand()%2?-y2:y2;
         double theta2 = rand()/(double)RAND_MAX;
         theta2 = normalizeAngle(theta2 * 2 * PI);
+        theta2 = 0; // because of polar algo
         Pose start(x1, y1, theta1);
         Pose end(x2, y2, theta2);
         simulate(start, end, fun);
         char buf[1000];
         sprintf(buf, "Pose (%d, %d, %lf) to (%d, %d, %lf) simulating..", x1, y1, theta1, x2, y2, theta2);
         ui->textEdit->append(buf);
-        if(dist(end, poses[NUMTICKS-1]) > 150) {
+        if(dist(end, poses[NUMTICKS-1]) > 50 || fabs(normalizeAngle(poses[NUMTICKS-1].theta() - end.theta())) > PI/10) {
             sprintf(buf, "Did not reach! Distance = %lf", dist(end, poses[NUMTICKS-1]));
             ui->textEdit->append(buf);
             ui->renderArea->setStartPose(start);
@@ -235,7 +244,15 @@ void Dialog::on_horizontalSlider_sliderMoved(int )
 void Dialog::onCurIdxChanged(int idx)
 {
     ui->renderArea->changePose(poses[idx]);
-    qDebug() << "vl, vr = " << vls[idx] << ", " << vrs[idx];
+    Pose s = poses[idx];
+    Pose e = ui->renderArea->getEndPose();
+    Vector2D<int> initial(s.x()-e.x(), s.y()-e.y());
+    Vector2D<int> final(0, 0);
+    double theta = normalizeAngle(s.theta() - e.theta());
+    double rho = sqrt(initial.x*initial.x + initial.y*initial.y);
+    double gamma = normalizeAngle(atan2(initial.y, initial.x) - theta + PI);
+    double delta = normalizeAngle(gamma + theta);
+    qDebug() << "vl, vr = " << vls[idx] << ", " << vrs[idx] << ", rho = " << rho << ", gamma = " << gamma << ", delta = " << delta;
 //    qDebug() << "Pose: " << poses[idx].x() << ", " << poses[idx].y() << ", " << poses[idx].theta()*180/PI;
 }
 
