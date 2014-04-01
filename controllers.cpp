@@ -138,5 +138,34 @@ void PolarBased(Pose s, Pose e, int &vl, int &vr)
         vr = vr*speed/max;
     }
 }
+void PolarBasedGA(Pose s, Pose e, int &vl, int &vr, double k1, double k2, double k3)
+{
+    Vector2D<int> initial(s.x()-e.x(), s.y()-e.y());
+    double theta = normalizeAngle(s.theta() - e.theta());
+    // rotate initial by -e.theta degrees;
+    double newx = initial.x * cos(-e.theta()) - initial.y * sin(-e.theta());
+    double newy = initial.x * sin(-e.theta()) + initial.y * cos(-e.theta());
+    initial = Vector2D<int>(newx, newy);
+    double rho = sqrt(initial.x*initial.x + initial.y*initial.y);
+    double gamma = normalizeAngle(atan2(initial.y, initial.x) - theta + PI);
+    double delta = normalizeAngle(gamma + theta);
+    double v = k1*rho*cos(gamma);
+    double w;
+    if(gamma == 0) {
+        w = k2*gamma+k1*cos(gamma)*(gamma+k3*delta);
+    } else {
+        w = k2*gamma+k1*sin(gamma)*cos(gamma)/gamma*(gamma + k3*delta);
+    }
+    v *= Pose::ticksToCmS;
+    vl = v - Pose::d*w/2;
+    vr = v + Pose::d*w/2;
+    double timeMs = 0.294 * rho; // empirical
+    double speed = timeMs<timeLCMs*5?timeMs/timeLCMs*(80/5):80;
+    double max = fabs(vl)>fabs(vr)?fabs(vl):fabs(vr);
+    if(max > 0) {
+        vl = vl*speed/max;
+        vr = vr*speed/max;
+    }
+}
 
 }

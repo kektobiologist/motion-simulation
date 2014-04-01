@@ -64,8 +64,10 @@ private:
                 x.updateNoDelay(it->first, it->second, timeLC);
             }
             (*fun)(x, e, vl, vr);
-            uq.pop_front();
-            uq.push_back(make_pair<int,int>(vl, vr));
+            if(uq.size()) {
+                uq.pop_front();
+                uq.push_back(make_pair<int,int>(vl, vr));
+            }
         }
     };
 
@@ -80,6 +82,9 @@ private:
     vector<FPair> functions;
     void drawControlArc(int idx, Pose endPose);
     void regression(vector<RegData> func);
+
+    // functions for GA
+    double fitnessFunction(double k1, double k2, double k3);
 };
 
 #endif // DIALOG_H

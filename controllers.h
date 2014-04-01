@@ -19,6 +19,8 @@ void CMU(Pose s, Pose e, int &vl, int &vr);
 void PController(Pose s, Pose e, int &vl, int &vr);
 void PolarBased(Pose s, Pose e, int &vl, int &vr);
 
+// functions for GA
+void PolarBasedGA(Pose s, Pose e, int &vl, int &vr, double k1, double k2, double k3); // for use in GA
 }
 typedef void(*FType)(Pose, Pose, int &, int &);
 typedef std::pair<QString, FType> FPair;

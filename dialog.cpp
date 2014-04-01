@@ -217,7 +217,8 @@ void Dialog::on_simButton_clicked()
 
 void Dialog::on_batchButton_clicked()
 {
-    batchSimulation(functions[ui->simCombo->currentIndex()].second);
+//    batchSimulation(functions[ui->simCombo->currentIndex()].second);
+    qDebug() << "Fitness = " << fitnessFunction(0.05, 20, 5);
 }
 
 
@@ -247,4 +248,43 @@ void Dialog::regression(vector<RegData> func)
     gsl_vector_free(Y);
     gsl_vector_free(beta);
     gsl_multifit_linear_free(wspc);
+}
+
+double Dialog::fitnessFunction(double k1, double k2, double k3)
+{
+    srand(time(NULL));
+    double val = 0;
+    for(int j = 0; j < 300; j++) {
+        Pose poses[NUMTICKS];
+        int x1 = rand()%HALF_FIELD_MAXX;
+        x1 = rand()%2?-x1:x1;
+        int y1 = rand()%HALF_FIELD_MAXY;
+        y1 = rand()%2?-y1:y1;
+        double theta1 = rand()/(double)RAND_MAX;
+        theta1 = normalizeAngle(theta1 * 2 * PI);
+        int x2 = rand()%HALF_FIELD_MAXX;
+        x2 = rand()%2?-x2:x2;
+        int y2 = rand()%HALF_FIELD_MAXY;
+        y2 = rand()%2?-y2:y2;
+        double theta2 = rand()/(double)RAND_MAX;
+        theta2 = normalizeAngle(theta2 * 2 * PI);
+        Pose start(x1, y1, theta1);
+        Pose end(x2, y2, theta2);
+        poses[0] = start;
+        //simulating behaviour for all ticks at once
+        int endFlag = 0, timeMs = 0;
+        for(int i=1; i < NUMTICKS; i++)
+        {
+            poses[i] = poses[i-1];
+            int vl, vr;
+            Controllers::PolarBasedGA(poses[i], end, vl, vr, k1, k2, k3);
+            if(dist(poses[i], end) < 40 && !endFlag) {
+                timeMs = i*timeLCMs;
+                endFlag = 1;
+            }
+            poses[i].update(vl, vr, timeLC);
+        }
+        val += timeMs;
+    }
+    return val;
 }
