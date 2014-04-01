@@ -130,7 +130,7 @@ void PolarBased(Pose s, Pose e, int &vl, int &vr)
     v *= Pose::ticksToCmS;
     vl = v - Pose::d*w/2;
     vr = v + Pose::d*w/2;
-    double timeMs = 0.255 * rho; // empirical
+    double timeMs = 0.294 * rho; // empirical
     double speed = timeMs<timeLCMs*5?timeMs/timeLCMs*(80/5):80;
     double max = fabs(vl)>fabs(vr)?fabs(vl):fabs(vr);
     if(max > 0) {

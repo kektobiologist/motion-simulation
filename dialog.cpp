@@ -102,21 +102,21 @@ void Dialog::batchSimulation(FType fun)
         double theta2 = rand()/(double)RAND_MAX;
         theta2 = normalizeAngle(theta2 * 2 * PI);
         {
-            x2 = y2 = theta2 = 0; // doing this for regression with gamma and delta
-            double rho = -rand()%HALF_FIELD_MAXX; // keeping it left side.
-            double angle = rand()/(double)RAND_MAX;
-            angle = normalizeAngle(angle* 2 * PI);
-            angle = 0; // always facing towards final angle.
-            x1 = rho*cos(angle);
-            y1 = rho*sin(angle);
-            theta1 = rand()/(double)RAND_MAX;
-            theta1 = normalizeAngle(theta1*PI);
-            theta1 = PI/4;
+//            x2 = y2 = theta2 = 0; // doing this for regression with gamma and delta
+//            double rho = -rand()%HALF_FIELD_MAXX; // keeping it left side.
+//            double angle = rand()/(double)RAND_MAX;
+//            angle = normalizeAngle(angle* 2 * PI);
+//            angle = 0; // always facing towards final angle.
+//            x1 = rho*cos(angle);
+//            y1 = rho*sin(angle);
+//            theta1 = rand()/(double)RAND_MAX;
+//            theta1 = normalizeAngle(theta1*PI);
+//            theta1 = PI/4;
 //            theta1 = rand()%2?-theta1:theta1;
         }
         Pose start(x1, y1, theta1);
         Pose end(x2, y2, theta2);
-        int timeMs = simulate(start, end, fun);
+        int timeMs = simulateDelayController(start, end, fun);
         {
             // calculate rho, gamma, delta
             Pose s(x1, y1, theta1);
