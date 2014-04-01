@@ -9,7 +9,8 @@
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_multifit.h>
-
+#include <limits.h>
+#include <limits>
 using namespace std;
 Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
@@ -40,11 +41,12 @@ Dialog::~Dialog()
 
 
 
-int Dialog::simulate(Pose startPose, Pose endPose, FType func)
+double Dialog::simulate(Pose startPose, Pose endPose, FType func)
 {
     poses[0] = startPose;
     //simulating behaviour for all ticks at once
-    int endFlag = 0, timeMs = 0;
+    int endFlag = 0;
+    double timeMs = std::numeric_limits<double>::max();
     for(int i=1; i < NUMTICKS; i++)
     {
         poses[i] = poses[i-1];
@@ -61,11 +63,12 @@ int Dialog::simulate(Pose startPose, Pose endPose, FType func)
     return timeMs;
 }
 
-int Dialog::simulateDelayController(Pose startPose, Pose endPose, FType func)
+double Dialog::simulateDelayController(Pose startPose, Pose endPose, FType func)
 {
     poses[0] = startPose;
     //simulating behaviour for all ticks at once
-    int endFlag = 0, timeMs = 0;
+    int endFlag = 0;
+    double timeMs = std::numeric_limits<double>::max();
     DelayController dc(func, Pose::numPacketDelay);
     for(int i=1; i < NUMTICKS; i++)
     {
@@ -116,7 +119,7 @@ void Dialog::batchSimulation(FType fun)
         }
         Pose start(x1, y1, theta1);
         Pose end(x2, y2, theta2);
-        int timeMs = simulateDelayController(start, end, fun);
+        double timeMs = simulateDelayController(start, end, fun);
         {
             // calculate rho, gamma, delta
             Pose s(x1, y1, theta1);
@@ -132,7 +135,7 @@ void Dialog::batchSimulation(FType fun)
             double delta = normalizeAngle(gamma + theta);
             func.push_back(RegData(rho, gamma, delta, timeMs));
             char buf[1000];
-            sprintf(buf, "%g %g %g %d", rho, fabs(gamma), fabs(delta), timeMs);
+            sprintf(buf, "%g %g %g %g", rho, fabs(gamma), fabs(delta), timeMs);
             ui->textEdit->append(buf);
         }
 //        sprintf(buf, "Pose (%d, %d, %lf) to (%d, %d, %lf) simulating..", x1, y1, theta1, x2, y2, theta2);
@@ -208,8 +211,8 @@ void Dialog::on_simButton_clicked()
     Pose start = ui->renderArea->getStartPose();
     Pose end = ui->renderArea->getEndPose();
     FType fun = functions[ui->simCombo->currentIndex()].second;
-//    int timeMs = simulate(start, end, fun);
-    int timeMs = simulateDelayController(start, end, fun);
+//    double timeMs = simulate(start, end, fun);
+    double timeMs = simulateDelayController(start, end, fun);
     qDebug() << "Bot reached at time tick = " << timeMs/timeLCMs;
     onCurIdxChanged(0);
     on_resetButton_clicked();
@@ -272,7 +275,8 @@ double Dialog::fitnessFunction(double k1, double k2, double k3)
         Pose end(x2, y2, theta2);
         poses[0] = start;
         //simulating behaviour for all ticks at once
-        int endFlag = 0, timeMs = 0;
+        int endFlag = 0;
+        double timeMs = std::numeric_limits<double>::max();
         for(int i=1; i < NUMTICKS; i++)
         {
             poses[i] = poses[i-1];

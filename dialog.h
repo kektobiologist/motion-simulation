@@ -18,9 +18,9 @@ class Dialog;
 
 struct RegData {
     double rho, gamma, delta;
-    int timeMs;
+    double timeMs;
     RegData():rho(0), gamma(0), delta(0), timeMs(0){}
-    RegData(double rho, double gamma, double delta, int timeMs):rho(rho), gamma(gamma), delta(delta), timeMs(timeMs){}
+    RegData(double rho, double gamma, double delta, double timeMs):rho(rho), gamma(gamma), delta(delta), timeMs(timeMs){}
 };
 
 class Dialog : public QDialog
@@ -76,15 +76,15 @@ private:
     QTimer *timer;
     Pose poses[NUMTICKS];
     int vls[NUMTICKS], vrs[NUMTICKS];
-    int simulate(Pose startPose, Pose endPose, FType func); // returns the time(ms) to reach endPose. A dist threshold is taken, no angle considerations yet.
-    int simulateDelayController(Pose startPose, Pose endPose, FType func); // implements delay control logic, for any given controller.
+    double simulate(Pose startPose, Pose endPose, FType func); // returns the time(ms) to reach endPose. A dist threshold is taken, no angle considerations yet.
+    double simulateDelayController(Pose startPose, Pose endPose, FType func); // implements delay control logic, for any given controller.
     void batchSimulation(FType fun);
     vector<FPair> functions;
     void drawControlArc(int idx, Pose endPose);
     void regression(vector<RegData> func);
 
     // functions for GA
-    double fitnessFunction(double k1, double k2, double k3);
+    double fitnessFunction(double k1, double k2, double k3); // runs the PolarBasedGA function with k1, k2, k3 values.
 };
 
 #endif // DIALOG_H
