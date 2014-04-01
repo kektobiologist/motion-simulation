@@ -25,30 +25,30 @@ Pose RenderArea::getStartPose()
 {
 //    qDebug() << "Width height in startPose: " << this->width() << ", " << this->height();
     int xx = (x[0] * HALF_FIELD_MAXX * 2) / this->width() - HALF_FIELD_MAXX;
-    int yy = (y[0] * HALF_FIELD_MAXY * 2) / this->height() - HALF_FIELD_MAXY;
-    return Pose(xx, yy, theta[0]);
+    int yy = -((y[0] * HALF_FIELD_MAXY * 2) / this->height() - HALF_FIELD_MAXY);
+    return Pose(xx, yy, -theta[0]);
 }
 
 Pose RenderArea::getEndPose()
 {
     int xx = (x[1] * HALF_FIELD_MAXX * 2) / this->width() - HALF_FIELD_MAXX;
-    int yy = (y[1] * HALF_FIELD_MAXY * 2) / this->height() - HALF_FIELD_MAXY;
-    return Pose(xx, yy, theta[1]);
+    int yy = -((y[1] * HALF_FIELD_MAXY * 2) / this->height() - HALF_FIELD_MAXY);
+    return Pose(xx, yy, -theta[1]);
 }
 
 void RenderArea::setStartPose(Pose p)
 {
     x[0] = (p.x() + HALF_FIELD_MAXX) * this->width() / (2.0 * HALF_FIELD_MAXX);
-    y[0] = (p.y() + HALF_FIELD_MAXY) * this->height() / (2.0 * HALF_FIELD_MAXY);
-    theta[0] = p.theta();
+    y[0] = (-p.y() + HALF_FIELD_MAXY) * this->height() / (2.0 * HALF_FIELD_MAXY);
+    theta[0] = -p.theta();
     update();
 }
 
 void RenderArea::setEndPose(Pose p)
 {
     x[1] = (p.x() + HALF_FIELD_MAXX) * this->width() / (2.0 * HALF_FIELD_MAXX);
-    y[1] = (p.y() + HALF_FIELD_MAXY) * this->height() / (2.0 * HALF_FIELD_MAXY);
-    theta[1] = p.theta();
+    y[1] = (-p.y() + HALF_FIELD_MAXY) * this->height() / (2.0 * HALF_FIELD_MAXY);
+    theta[1] = -p.theta();
     update();
 }
 
@@ -88,8 +88,8 @@ void RenderArea::drawBot(QPainter &painter)
     midLine.setLine(bot.center().x(), bot.center().y(), bot.center().x()+bot.width()/2, bot.center().y());
     painter.translate(this->width()/2, this->height()/2);
     painter.scale(this->width()/(double)(2*HALF_FIELD_MAXX), this->height()/(double)(2*HALF_FIELD_MAXY));
-    painter.translate(pose.x(), pose.y());
-    painter.rotate(pose.theta()*180/3.1415); // pathetic
+    painter.translate(pose.x(), -pose.y());
+    painter.rotate(-pose.theta()*180/3.1415); // pathetic
     QPen pen;
     pen.setColor(Qt::black);
     pen.setWidth(4);

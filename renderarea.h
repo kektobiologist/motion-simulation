@@ -3,8 +3,7 @@
 
 #include <QWidget>
 #include "pose.h"
-const int HALF_FIELD_MAXX              = 2975;
-const int HALF_FIELD_MAXY              = 2050;
+
 class RenderArea : public QWidget
 {
     Q_OBJECT

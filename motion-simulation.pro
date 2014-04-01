@@ -22,5 +22,5 @@ HEADERS  += dialog.h \
     pose.h \
     geometry.h \
     renderarea.h
-
+LIBS += -lgsl -lgslcblas
 FORMS    += dialog.ui

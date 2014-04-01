@@ -6,6 +6,9 @@
 #include <QTimer>
 #include <QDebug>
 #include <algorithm>
+#include <gsl/gsl_matrix.h>
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_multifit.h>
 
 using namespace std;
 Dialog::Dialog(QWidget *parent) :
@@ -55,8 +58,8 @@ void Dialog::kgpkubs(Pose initialPose, Pose finalPose, int &vl, int &vr)
     float delta = normalizeAngle(thetaD - phi);
     double r = (sin(delta) * sin(delta)) * SGN(tan(delta));
     double t = (cos(delta) * cos(delta)) * SGN(cos(delta));
-    if(!(t >= -1.0 && t <= 1.0 && r >= -1.0 && r <= 1.0)) {
-     printf("what\n");
+    if(!(t >= -1.0 && t <= 1.0 && r >= -1.0 && r <= 1.0)) {        
+     printf("what? delta = %f, initial = (%lf, %lf, %lf)\n", delta, initialPose.x(), initialPose.y(), initialPose.theta());
      assert(0);
     }
     float fTheta = asin(sqrt(fabs(r)));
@@ -160,33 +163,43 @@ void Dialog::PolarBased(Pose s, Pose e, int &vl, int &vr)
     v *= Pose::ticksToCmS;
     vl = v - Pose::d*w/2;
     vr = v + Pose::d*w/2;
-    if(abs(vl) > 100 || abs(vr) > 100) {
-        double max = abs(vl)>abs(vr)?abs(vl):abs(vr);
-        vl = vl*100/max;
-        vr = vr*100/max;
+    double timeMs = 0.255 * rho; // empirical
+    double speed = timeMs<16*5?timeMs/16*(80/5):80;
+    double max = fabs(vl)>fabs(vr)?fabs(vl):fabs(vr);
+    if(max > 0) {
+        vl = vl*speed/max;
+        vr = vr*speed/max;
     }
 }
 
-void Dialog::simulate(Pose startPose, Pose endPose, FType func)
+int Dialog::simulate(Pose startPose, Pose endPose, FType func)
 {
     poses[0] = startPose;
     //simulating behaviour for all ticks at once
+    int endFlag = 0, timeMs = 0;
     for(int i=1; i < NUMTICKS; i++)
     {
         poses[i] = poses[i-1];
         int vl, vr;
         (this->*func)(poses[i], endPose, vl, vr);
-        vls[i] = vl;
-        vrs[i] = vr;
-//        qDebug() << "vl, vr = " << vl << ", " << vr;
+        vls[i-1] = vl;
+        vrs[i-1] = vr;
+        if(dist(poses[i], endPose) < 40 && !endFlag) {
+//            qDebug() << "Bot reaches end pose after " << i << "frames (dist = " << dist(poses[i], endPose) << ")";
+            timeMs = i*16;
+            endFlag = 1;
+        }
         poses[i].update(vl, vr, timeLC);
     }
+    return timeMs;
 }
+
 
 void Dialog::batchSimulation(Dialog::FType fun)
 {
     srand(time(NULL));
-    while(1) {
+    vector<RegData> func; // (dist,theta) maps to timeMs
+    for(int i = 0; i < 300; i++) {
         int x1 = rand()%HALF_FIELD_MAXX;
         x1 = rand()%2?-x1:x1;
         int y1 = rand()%HALF_FIELD_MAXY;
@@ -199,24 +212,53 @@ void Dialog::batchSimulation(Dialog::FType fun)
         y2 = rand()%2?-y2:y2;
         double theta2 = rand()/(double)RAND_MAX;
         theta2 = normalizeAngle(theta2 * 2 * PI);
-        theta2 = 0; // because of polar algo
+        {
+            x2 = y2 = theta2 = 0; // doing this for regression with gamma and delta
+            double rho = -rand()%HALF_FIELD_MAXX; // keeping it left side.
+            double angle = rand()/(double)RAND_MAX;
+            angle = normalizeAngle(angle* 2 * PI);
+            angle = 0; // always facing towards final angle.
+            x1 = rho*cos(angle);
+            y1 = rho*sin(angle);
+            theta1 = rand()/(double)RAND_MAX;
+            theta1 = normalizeAngle(theta1*PI);
+            theta1 = PI/4;
+//            theta1 = rand()%2?-theta1:theta1;
+        }
         Pose start(x1, y1, theta1);
         Pose end(x2, y2, theta2);
-        simulate(start, end, fun);
-        char buf[1000];
-        sprintf(buf, "Pose (%d, %d, %lf) to (%d, %d, %lf) simulating..", x1, y1, theta1, x2, y2, theta2);
-        ui->textEdit->append(buf);
-        if(dist(end, poses[NUMTICKS-1]) > 50 || fabs(normalizeAngle(poses[NUMTICKS-1].theta() - end.theta())) > PI/10) {
-            sprintf(buf, "Did not reach! Distance = %lf", dist(end, poses[NUMTICKS-1]));
-            ui->textEdit->append(buf);
-            ui->renderArea->setStartPose(start);
-            ui->renderArea->setEndPose(end);
-            break;
-        } else {
-            sprintf(buf, "Reached. Distance from end = %lf.", dist(end, poses[NUMTICKS-1]));
+        int timeMs = simulate(start, end, fun);
+        {
+            // calculate rho, gamma, delta
+            Pose s(x1, y1, theta1);
+            Pose e(x2, y2, theta2);
+            Vector2D<int> initial(s.x()-e.x(), s.y()-e.y());
+            double theta = normalizeAngle(s.theta() - e.theta());
+            // rotate initial by -e.theta degrees;
+            double newx = initial.x * cos(-e.theta()) - initial.y * sin(-e.theta());
+            double newy = initial.x * sin(-e.theta()) + initial.y * cos(-e.theta());
+            initial = Vector2D<int>(newx, newy);
+            double rho = sqrt(initial.x*initial.x + initial.y*initial.y);
+            double gamma = normalizeAngle(atan2(initial.y, initial.x) - theta + PI);
+            double delta = normalizeAngle(gamma + theta);
+            func.push_back(RegData(rho, gamma, delta, timeMs));
+            char buf[1000];
+            sprintf(buf, "%g %g %g %d", rho, fabs(gamma), fabs(delta), timeMs);
             ui->textEdit->append(buf);
         }
+//        sprintf(buf, "Pose (%d, %d, %lf) to (%d, %d, %lf) simulating..", x1, y1, theta1, x2, y2, theta2);
+//        if(dist(end, poses[NUMTICKS-1]) > 50 || fabs(normalizeAngle(poses[NUMTICKS-1].theta() - end.theta())) > PI/10) {
+//            sprintf(buf, "Did not reach! Distance = %lf", dist(end, poses[NUMTICKS-1]));
+//            ui->textEdit->append(buf);
+//            ui->renderArea->setStartPose(start);
+//            ui->renderArea->setEndPose(end);
+//            break;
+//        } else {
+//            sprintf(buf, "Reached. Distance from end = %lf.", dist(end, poses[NUMTICKS-1]));
+//            ui->textEdit->append(buf);
+//        }
     }
+    regression(func);
 }
 
 
@@ -252,7 +294,7 @@ void Dialog::onCurIdxChanged(int idx)
     double rho = sqrt(initial.x*initial.x + initial.y*initial.y);
     double gamma = normalizeAngle(atan2(initial.y, initial.x) - theta + PI);
     double delta = normalizeAngle(gamma + theta);
-    qDebug() << "vl, vr = " << vls[idx] << ", " << vrs[idx] << ", rho = " << rho << ", gamma = " << gamma << ", delta = " << delta;
+    qDebug() << idx <<". "<< "vl, vr = " << vls[idx] << ", " << vrs[idx] << ", rho = " << rho << ", gamma = " << gamma << ", delta = " << delta;
 //    qDebug() << "Pose: " << poses[idx].x() << ", " << poses[idx].y() << ", " << poses[idx].theta()*180/PI;
 }
 
@@ -277,7 +319,8 @@ void Dialog::on_simButton_clicked()
     Pose start = ui->renderArea->getStartPose();
     Pose end = ui->renderArea->getEndPose();
     FType fun = functions[ui->simCombo->currentIndex()].second;
-    simulate(start, end, fun);
+    int timeMs = simulate(start, end, fun);
+    qDebug() << "Bot reached at time tick = " << timeMs/16;
     onCurIdxChanged(0);
     on_resetButton_clicked();
 }
@@ -285,4 +328,33 @@ void Dialog::on_simButton_clicked()
 void Dialog::on_batchButton_clicked()
 {
     batchSimulation(functions[ui->simCombo->currentIndex()].second);
+}
+
+
+void Dialog::regression(vector<RegData> func)
+{
+    int n = func.size();
+    gsl_matrix *X = gsl_matrix_calloc(n, 2);
+    gsl_vector *Y = gsl_vector_alloc(n);
+    gsl_vector *beta = gsl_vector_alloc(2);
+
+    for (int i = 0; i < n; i++) {
+        gsl_vector_set(Y, i, func[i].timeMs);
+
+        gsl_matrix_set(X, i, 0, func[i].rho);
+        gsl_matrix_set(X, i, 1, func[i].gamma);
+//        gsl_matrix_set(X, i, 1, func[i].delta);
+    }
+
+    double chisq;
+    gsl_matrix *cov = gsl_matrix_alloc(2, 2);
+    gsl_multifit_linear_workspace * wspc = gsl_multifit_linear_alloc(n, 2);
+    gsl_multifit_linear(X, Y, beta, cov, &chisq, wspc);
+    qDebug() << "Beta = " << gsl_vector_get(beta, 0) << ", " << gsl_vector_get(beta, 1);// << ", " << gsl_vector_get(beta, 2);
+
+    gsl_matrix_free(X);
+    gsl_matrix_free(cov);
+    gsl_vector_free(Y);
+    gsl_vector_free(beta);
+    gsl_multifit_linear_free(wspc);
 }
