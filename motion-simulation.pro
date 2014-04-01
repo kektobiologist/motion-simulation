@@ -16,11 +16,13 @@ PKGCONFIG += opencv
 SOURCES += main.cpp\
         dialog.cpp \
     pose.cpp \
-    renderarea.cpp
+    renderarea.cpp \
+    controllers.cpp
 
 HEADERS  += dialog.h \
     pose.h \
     geometry.h \
-    renderarea.h
+    renderarea.h \
+    controllers.h
 LIBS += -lgsl -lgslcblas
 FORMS    += dialog.ui

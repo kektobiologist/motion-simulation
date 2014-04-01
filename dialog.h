@@ -8,31 +8,23 @@
 #include <map>
 #include <algorithm>
 #include <utility>
-
+#include <deque>
+#include "controllers.h"
 using namespace std;
 namespace Ui {
 class Dialog;
 }
 
-// Constants required by generateControl, directly copied from most recent version of kgpkubs.
-const float MAX_BOT_LINEAR_VEL_CHANGE  = 3;
-const float MAX_BOT_SPEED              = 80.0;
-const int BOT_POINT_THRESH             = 147;
-const int CLEARANCE_PATH_PLANNER       = 400;
 
-const double timeLC = 16e-3;
-const int NUMTICKS = 300;
-#define SGN(x) (((x)>0)?1:(((x)<0)?(-1):0))
 struct RegData {
     double rho, gamma, delta;
     int timeMs;
     RegData():rho(0), gamma(0), delta(0), timeMs(0){}
     RegData(double rho, double gamma, double delta, int timeMs):rho(rho), gamma(gamma), delta(delta), timeMs(timeMs){}
 };
+
 class Dialog : public QDialog
 {
-    typedef void(Dialog::*FType)(Pose, Pose, int &, int &);
-    typedef std::pair<QString, FType> FPair;
     Q_OBJECT
     
 public:
@@ -57,16 +49,33 @@ public slots:
     void onCurIdxChanged(int idx); // idx is index of pose array, not botID (there's only 1 bot :/ )
     void onTimeout();
 private:
+    class DelayController {
+        FType fun;
+        deque<pair<int,int> > uq; // controls queue.
+        int k;                    // the num of packet delay
+    public:
+        DelayController(FType fun, int k):fun(fun), k(k) {
+            for(int i = 0; i < k; i++)
+                uq.push_back(make_pair<int,int>(0,0));
+        }
+        void genControls(Pose s, Pose e, int &vl, int &vr) {
+            Pose x = s;
+            for(deque<pair<int,int> >::iterator it = uq.begin(); it != uq.end(); it++) {
+                x.updateNoDelay(it->first, it->second, timeLC);
+            }
+            (*fun)(x, e, vl, vr);
+            uq.pop_front();
+            uq.push_back(make_pair<int,int>(vl, vr));
+        }
+    };
+
     // don't need curIdx, simply read the position of the slider (otherwise there is duplicacy)
     Ui::Dialog *ui;
     QTimer *timer;
     Pose poses[NUMTICKS];
     int vls[NUMTICKS], vrs[NUMTICKS];
-    void kgpkubs(Pose initialPose, Pose finalPose, int &vl, int &vr);
-    void CMU(Pose s, Pose e, int &vl, int &vr);
-    void PController(Pose s, Pose e, int &vl, int &vr);
-    void PolarBased(Pose s, Pose e, int &vl, int &vr);
-    int simulate(Pose startPose, Pose endPose, FType fun);
+    int simulate(Pose startPose, Pose endPose, FType func); // returns the time(ms) to reach endPose. A dist threshold is taken, no angle considerations yet.
+    int simulateDelayController(Pose startPose, Pose endPose, FType func); // implements delay control logic, for any given controller.
     void batchSimulation(FType fun);
     vector<FPair> functions;
     void drawControlArc(int idx, Pose endPose);

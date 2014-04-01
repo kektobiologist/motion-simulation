@@ -25,9 +25,13 @@ void Pose::update(int vl_ticks, int vr_ticks, double dt)
     update_2(vl_ticks, vr_ticks, dt);
 }
 
+void Pose::updateNoDelay(int vl, int vr, double dt)
+{
+    update_1(vl, vr, dt);
+}
+
 void Pose::update_1(int vl_ticks, int vr_ticks, double dt)
 {
-    static const double PI = 3.14159265359;
     double vl = vl_ticks * ticksToCmS;
     double vr = vr_ticks * ticksToCmS;
 

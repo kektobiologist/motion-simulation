@@ -5,6 +5,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <stdlib.h>
+#include "geometry.h"
 /* Pose defines the position and angle of the robot.
  * It is in REAL WORLD coordinates (m and radians).
  * NOTE: vl, vr are taken in ticks only. dt is in ms
@@ -23,15 +24,16 @@ private:
     void update_1(int vl_ticks, int vr_ticks, double dt); // simple update, without delay.
     void update_2(int vl_ticks, int vr_ticks, double dt); // delay of 1 tick bw updates.
     std::queue<int> vlq, vrq;      // q to implement packet delay.
-    static const int numPacketDelay = 2; // num of packets to delay in update
 public:
-    double randStdNormal() {double x = rand()/(double)RAND_MAX; return sqrt(-2*log(x))*cos(2*3.14159265359*x);} // between -1 and 1
-    double x() { return x_ * fieldXConvert + randStdNormal()*HALF_FIELD_MAXX/1000.0;} // returns in strategy coordinate system
-    double y() { return y_ * fieldYConvert + randStdNormal()*HALF_FIELD_MAXY/1000.0;} // returns in strategy coordinate system
-    double theta() { return theta_ + randStdNormal()*3.14159265359/1000;}                         // already strategy coordinates
-    Pose(double x, double y, double theta);                  // takes in Strategy coordinates!
+    static const int numPacketDelay = 3; // num of packets to delay in update
+    double randStdNormal() {double x = rand()/(double)RAND_MAX; return sqrt(-2*log(x))*cos(2*3.14159265359*x);} // returns random number from std normal distribution
+    double x() { return x_ * fieldXConvert + randStdNormal()*HALF_FIELD_MAXX*1/1000.0;} // returns in strategy coordinate system
+    double y() { return y_ * fieldYConvert + randStdNormal()*HALF_FIELD_MAXY*1/1000.0;} // returns in strategy coordinate system
+    double theta() { return normalizeAngle(theta_ + 10*randStdNormal()*PI/1000);}       // already strategy coordinates
+    Pose(double x, double y, double theta);                                             // takes in Strategy coordinates!
     Pose();
-    void update(int vl, int vr, double dt); // takes vl, vr in ticks. Implicitly converts to cm/s!! updates pose.
+    void update(int vl, int vr, double dt);               // takes vl, vr in ticks. Implicitly converts to cm/s!! updates pose.
+    void updateNoDelay(int vl, int vr, double dt);        // updates without any delay mechanics.
     void setTheta(double newtheta) {theta_ = newtheta;}   // will add setX and setY if/when needed
 };
 

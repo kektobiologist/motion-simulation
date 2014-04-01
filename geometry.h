@@ -176,7 +176,7 @@ inline bool operator != (const Vector2D<T>& lhs, const Vector2D<T>& rhs)
 }
 
 // Normalizes the angle (in radians) to be in the range (-pi, pi]
-double normalizeAngle(double angle)
+inline double normalizeAngle(double angle)
 {
     while(angle > PI) angle -= 2*PI;
     while(angle <= -PI) angle += 2*PI;
