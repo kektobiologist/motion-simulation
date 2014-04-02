@@ -5,7 +5,32 @@
 #include <utility>
 using namespace std;
 namespace Controllers {
+void turnToAngle(float turnAngleLeft,int &vl, int &vr )
+{
 
+  if(turnAngleLeft>PI/2||turnAngleLeft<-PI/2)
+  {
+    if(turnAngleLeft>PI/2)
+      turnAngleLeft=turnAngleLeft-PI;
+    else
+      turnAngleLeft=turnAngleLeft+PI;
+  }
+  float factor = (turnAngleLeft+KD_ANGLE*(turnAngleLeft))/(PI/2);
+
+  vr = 0.4*MAX_BOT_SPEED*(factor)/(PI/2);
+  vl = -vr;
+
+  if(fabs(turnAngleLeft) > DRIBBLER_BALL_ANGLE_RANGE/2)
+  {
+    return;
+  }
+  else
+  {
+    vl = 0;
+    vr = 0;
+  }
+
+ }
 void kgpkubs(Pose initialPose, Pose finalPose, int &vl, int &vr)
 {
     int clearance = CLEARANCE_PATH_PLANNER;
@@ -19,6 +44,23 @@ void kgpkubs(Pose initialPose, Pose finalPose, int &vl, int &vr)
     double phi = curSlope;
     //directionalAngle = (cos(atan2(final.y - initial.y, final.x - initial.x) - curSlope) >= 0) ? curSlope : normalizeAngle(curSlope - PI);
     int dist = Vector2D<int>::dist(final, initial);  // Distance of next waypoint from the bot
+    if(dist < BOT_POINT_THRESH)
+    {
+        float turnAngleLeft = firaNormalizeAngle(finalSlope - curSlope);
+        float angle = fabs(turnAngleLeft);
+        if(angle > DRIBBLER_BALL_ANGLE_RANGE)
+        {
+          turnToAngle(turnAngleLeft,vl,vr);
+
+          return;
+        }
+        vl = 0;
+        vr = 0;
+        return;
+        // This part of the function is just for safety.
+        // The tactic should actually prevent this call.
+        // The bot should be aligned properly before this condition is reached.
+    }
     double alpha = normalizeAngle(theta - phiStar);
     double beta = (fabs(alpha) < fabs(atan2(clearance, dist))) ? (alpha) : SGN(alpha) * atan2(clearance, dist);
     double thetaD = normalizeAngle(theta + beta);
