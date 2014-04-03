@@ -58,12 +58,12 @@ private:
             for(int i = 0; i < k; i++)
                 uq.push_back(make_pair<int,int>(0,0));
         }
-        void genControls(Pose s, Pose e, int &vl, int &vr) {
+        void genControls(Pose s, Pose e, int &vl, int &vr, double prevSpeed) {
             Pose x = s;
             for(deque<pair<int,int> >::iterator it = uq.begin(); it != uq.end(); it++) {
                 x.updateNoDelay(it->first, it->second, timeLC);
             }
-            (*fun)(x, e, vl, vr);
+            (*fun)(x, e, vl, vr, prevSpeed);
             if(uq.size()) {
                 uq.pop_front();
                 uq.push_back(make_pair<int,int>(vl, vr));
@@ -77,7 +77,7 @@ private:
     Pose poses[NUMTICKS];
     int vls[NUMTICKS], vrs[NUMTICKS];
     double simulate(Pose startPose, Pose endPose, FType func); // returns the time(ms) to reach endPose. A dist threshold is taken, no angle considerations yet.
-    double simulateDelayController(Pose startPose, Pose endPose, FType func); // implements delay control logic, for any given controller.
+    double simulateDelayController(Pose startPose, Pose endPose, FType func, bool isBatch = false); // implements delay control logic, for any given controller.
     void batchSimulation(FType fun);
     vector<FPair> functions;
     void drawControlArc(int idx, Pose endPose);

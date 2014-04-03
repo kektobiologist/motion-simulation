@@ -25,7 +25,7 @@ private:
     void update_2(int vl_ticks, int vr_ticks, double dt); // delay of 1 tick bw updates.
     std::queue<int> vlq, vrq;      // q to implement packet delay.
 public:
-    static const int numPacketDelay = 0; // num of packets to delay in update
+    static const int numPacketDelay = 3; // num of packets to delay in update
     double randStdNormal() {double x = rand()/(double)RAND_MAX; return sqrt(-2*log(x))*cos(2*3.14159265359*x);} // returns random number from std normal distribution
     double x() { return x_ * fieldXConvert + randStdNormal()*HALF_FIELD_MAXX*1/1000.0;} // returns in strategy coordinate system
     double y() { return y_ * fieldYConvert + randStdNormal()*HALF_FIELD_MAXY*1/1000.0;} // returns in strategy coordinate system

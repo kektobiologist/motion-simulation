@@ -24,6 +24,7 @@ Dialog::Dialog(QWidget *parent) :
     ui->horizontalSlider->setRange(0, NUMTICKS-1);
     connect(ui->horizontalSlider, SIGNAL(valueChanged(int)), this, SLOT(onCurIdxChanged(int)));
     connect(timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
+    functions.push_back(make_pair("PolarBidirectional", &Controllers::PolarBidirectional));
     functions.push_back(make_pair("PolarBased", &Controllers::PolarBased));
     functions.push_back(make_pair("kgpkubs", &Controllers::kgpkubs));
     functions.push_back(make_pair("CMU", &Controllers::CMU));
@@ -47,11 +48,13 @@ double Dialog::simulate(Pose startPose, Pose endPose, FType func)
     //simulating behaviour for all ticks at once
     int endFlag = 0;
     double timeMs = std::numeric_limits<double>::max();
+    double prevSpeed = 0;
     for(int i=1; i < NUMTICKS; i++)
     {
         poses[i] = poses[i-1];
         int vl, vr;
-        (*func)(poses[i], endPose, vl, vr);
+        (*func)(poses[i], endPose, vl, vr, prevSpeed);
+        prevSpeed = max(fabs(vl), fabs(vr));
         vls[i-1] = vl;
         vrs[i-1] = vr;
         if(dist(poses[i], endPose) < 40 && !endFlag) {
@@ -63,25 +66,29 @@ double Dialog::simulate(Pose startPose, Pose endPose, FType func)
     return timeMs;
 }
 
-double Dialog::simulateDelayController(Pose startPose, Pose endPose, FType func)
+double Dialog::simulateDelayController(Pose startPose, Pose endPose, FType func, bool isBatch)
 {
     poses[0] = startPose;
     //simulating behaviour for all ticks at once
     int endFlag = 0;
     double timeMs = std::numeric_limits<double>::max();
     DelayController dc(func, Pose::numPacketDelay);
+    double prevSpeed = 0;
     for(int i=1; i < NUMTICKS; i++)
     {
         poses[i] = poses[i-1];
         int vl, vr;
-        dc.genControls(poses[i], endPose, vl, vr);
+        dc.genControls(poses[i], endPose, vl, vr, prevSpeed);
+        prevSpeed = max(fabs(vl), fabs(vr));
         vls[i-1] = vl;
         vrs[i-1] = vr;
+        poses[i].update(vl, vr, timeLC);
         if(dist(poses[i], endPose) < 40 && !endFlag) {
             timeMs = i*timeLCMs;
             endFlag = 1;
+            if(isBatch)
+                break;
         }
-        poses[i].update(vl, vr, timeLC);
     }
     return timeMs;
 }
@@ -105,21 +112,11 @@ void Dialog::batchSimulation(FType fun)
         double theta2 = rand()/(double)RAND_MAX;
         theta2 = normalizeAngle(theta2 * 2 * PI);
         {
-//            x2 = y2 = theta2 = 0; // doing this for regression with gamma and delta
-//            double rho = -rand()%HALF_FIELD_MAXX; // keeping it left side.
-//            double angle = rand()/(double)RAND_MAX;
-//            angle = normalizeAngle(angle* 2 * PI);
-//            angle = 0; // always facing towards final angle.
-//            x1 = rho*cos(angle);
-//            y1 = rho*sin(angle);
-//            theta1 = rand()/(double)RAND_MAX;
-//            theta1 = normalizeAngle(theta1*PI);
-//            theta1 = PI/4;
-//            theta1 = rand()%2?-theta1:theta1;
+            x2 = y2 = theta2 = 0;
         }
         Pose start(x1, y1, theta1);
         Pose end(x2, y2, theta2);
-        double timeMs = simulateDelayController(start, end, fun);
+        double timeMs = simulateDelayController(start, end, fun, true);
         {
             // calculate rho, gamma, delta
             Pose s(x1, y1, theta1);
@@ -220,8 +217,8 @@ void Dialog::on_simButton_clicked()
 
 void Dialog::on_batchButton_clicked()
 {
-//    batchSimulation(functions[ui->simCombo->currentIndex()].second);
-    qDebug() << "Fitness = " << fitnessFunction(0.05, 20, 5);
+    batchSimulation(functions[ui->simCombo->currentIndex()].second);
+//    qDebug() << "Fitness = " << fitnessFunction(0.05, 20, 5);
 }
 
 
@@ -236,7 +233,8 @@ void Dialog::regression(vector<RegData> func)
         gsl_vector_set(Y, i, func[i].timeMs);
 
         gsl_matrix_set(X, i, 0, func[i].rho);
-        gsl_matrix_set(X, i, 1, func[i].gamma);
+        gsl_matrix_set(X, i, 1, sqrt(func[i].rho));
+//        gsl_matrix_set(X, i, 1, func[i].gamma);
 //        gsl_matrix_set(X, i, 1, func[i].delta);
     }
 
@@ -244,7 +242,7 @@ void Dialog::regression(vector<RegData> func)
     gsl_matrix *cov = gsl_matrix_alloc(2, 2);
     gsl_multifit_linear_workspace * wspc = gsl_multifit_linear_alloc(n, 2);
     gsl_multifit_linear(X, Y, beta, cov, &chisq, wspc);
-    qDebug() << "Beta = " << gsl_vector_get(beta, 0) << ", " << gsl_vector_get(beta, 1);// << ", " << gsl_vector_get(beta, 2);
+    qDebug() << "Beta = " << gsl_vector_get(beta, 0) << ", " << gsl_vector_get(beta, 1) << ", chisq = " << chisq;// << ", " << gsl_vector_get(beta, 2);
 
     gsl_matrix_free(X);
     gsl_matrix_free(cov);

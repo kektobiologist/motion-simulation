@@ -6,8 +6,9 @@
 using namespace std;
 namespace Controllers {
 
-void kgpkubs(Pose initialPose, Pose finalPose, int &vl, int &vr)
+void kgpkubs(Pose initialPose, Pose finalPose, int &vl, int &vr, double prevSpeed)
 {
+    Q_UNUSED(prevSpeed);
     int clearance = CLEARANCE_PATH_PLANNER;
     static float prevVel = 0;
     Vector2D<int> initial(initialPose.x(), initialPose.y());
@@ -60,8 +61,9 @@ void kgpkubs(Pose initialPose, Pose finalPose, int &vl, int &vr)
     vr = t+r;
 }
 
-void CMU(Pose s, Pose e, int &vl, int &vr)
+void CMU(Pose s, Pose e, int &vl, int &vr, double prevSpeed)
 {
+    Q_UNUSED(prevSpeed);
     int maxDis = 2*sqrt(HALF_FIELD_MAXX*HALF_FIELD_MAXX+HALF_FIELD_MAXY*HALF_FIELD_MAXY);
     Vector2D<int> initial(s.x(), s.y());
     Vector2D<int> final(e.x(), e.y());
@@ -80,8 +82,9 @@ void CMU(Pose s, Pose e, int &vl, int &vr)
     vr = 100*(t+r);
 }
 
-void PController(Pose s, Pose e, int &vl, int &vr)
+void PController(Pose s, Pose e, int &vl, int &vr, double prevSpeed)
 {
+    Q_UNUSED(prevSpeed);
     Vector2D<int> initial(s.x(), s.y());
     Vector2D<int> final(e.x(), e.y());
     int distance = Vector2D<int>::dist(initial, final);
@@ -108,7 +111,7 @@ void PController(Pose s, Pose e, int &vl, int &vr)
     }
 }
 
-void PolarBased(Pose s, Pose e, int &vl, int &vr)
+void PolarBased(Pose s, Pose e, int &vl, int &vr, double prevSpeed)
 {
     Vector2D<int> initial(s.x()-e.x(), s.y()-e.y());
     double theta = normalizeAngle(s.theta() - e.theta());
@@ -130,14 +133,34 @@ void PolarBased(Pose s, Pose e, int &vl, int &vr)
     v *= Pose::ticksToCmS;
     vl = v - Pose::d*w/2;
     vr = v + Pose::d*w/2;
-    double timeMs = 0.294 * rho; // empirical
-    double speed = timeMs<timeLCMs*5?timeMs/timeLCMs*(80/5):80;
+    double timeMs = 0.07*rho + 12 * sqrt(rho); // empirical
+    double speed = timeMs/timeLCMs<(prevSpeed/MAX_BOT_LINEAR_VEL_CHANGE)?prevSpeed-MAX_BOT_LINEAR_VEL_CHANGE:prevSpeed+MAX_BOT_LINEAR_VEL_CHANGE;
+    if(speed > MAX_BOT_SPEED)
+        speed = MAX_BOT_SPEED;
+    else if (speed < 0)
+        speed = 0;
     double max = fabs(vl)>fabs(vr)?fabs(vl):fabs(vr);
     if(max > 0) {
         vl = vl*speed/max;
         vr = vr*speed/max;
     }
 }
+void PolarBidirectional(Pose s, Pose e, int &vl, int &vr, double prevSpeed)
+{
+    static bool wasInverted = false; // keeps track of whether in the previous call, the bot was inverted or not.
+    PolarBased(s, e, vl, vr, prevSpeed);
+    double v = (vl+vr)/2.0;
+    wasInverted = false;
+    if(v < 0 || (v == 0 && wasInverted)) {
+        s.setTheta(normalizeAngle(s.theta()+PI));
+        PolarBased(s, e, vl, vr, prevSpeed);
+        swap(vl, vr);
+        vl = -vl;
+        vr = -vr;
+        wasInverted = true;
+    }
+}
+
 void PolarBasedGA(Pose s, Pose e, int &vl, int &vr, double k1, double k2, double k3)
 {
     Vector2D<int> initial(s.x()-e.x(), s.y()-e.y());
@@ -159,7 +182,7 @@ void PolarBasedGA(Pose s, Pose e, int &vl, int &vr, double k1, double k2, double
     v *= Pose::ticksToCmS;
     vl = v - Pose::d*w/2;
     vr = v + Pose::d*w/2;
-    double timeMs = 0.294 * rho; // empirical
+    double timeMs = 23 * sqrt(rho); // empirical
     double speed = timeMs<timeLCMs*5?timeMs/timeLCMs*(80/5):80;
     double max = fabs(vl)>fabs(vr)?fabs(vl):fabs(vr);
     if(max > 0) {
