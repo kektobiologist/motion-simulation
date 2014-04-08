@@ -16,6 +16,7 @@ Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::Dialog)
 {
+    srand(time(NULL));
     ui->setupUi(this);
     timer = new QTimer();
     Pose start = ui->renderArea->getStartPose();
@@ -42,44 +43,20 @@ Dialog::~Dialog()
 
 
 
-double Dialog::simulate(Pose startPose, Pose endPose, FType func)
-{
-    poses[0] = startPose;
-    //simulating behaviour for all ticks at once
-    int endFlag = 0;
-    double timeMs = std::numeric_limits<double>::max();
-    double prevSpeed = 0;
-    for(int i=1; i < NUMTICKS; i++)
-    {
-        poses[i] = poses[i-1];
-        int vl, vr;
-        (*func)(poses[i], endPose, vl, vr, prevSpeed);
-        prevSpeed = max(fabs(vl), fabs(vr));
-        vls[i-1] = vl;
-        vrs[i-1] = vr;
-        if(dist(poses[i], endPose) < 40 && !endFlag) {
-            timeMs = i*timeLCMs;
-            endFlag = 1;
-        }
-        poses[i].update(vl, vr, timeLC);
-    }
-    return timeMs;
-}
 
-double Dialog::simulateDelayController(Pose startPose, Pose endPose, FType func, bool isBatch)
+
+double Dialog::simulate(Pose startPose, Pose endPose, FType func, bool isBatch)
 {
     poses[0] = startPose;
     //simulating behaviour for all ticks at once
     int endFlag = 0;
     double timeMs = std::numeric_limits<double>::max();
-    DelayController dc(func, Pose::numPacketDelay);
-    double prevSpeed = 0;
+    ControllerWrapper dc(func, Pose::numPacketDelay);
     for(int i=1; i < NUMTICKS; i++)
     {
         poses[i] = poses[i-1];
         int vl, vr;
-        dc.genControls(poses[i], endPose, vl, vr, prevSpeed);
-        prevSpeed = max(fabs(vl), fabs(vr));
+        dc.genControls(poses[i], endPose, vl, vr);
         vls[i-1] = vl;
         vrs[i-1] = vr;
         poses[i].update(vl, vr, timeLC);
@@ -96,7 +73,7 @@ double Dialog::simulateDelayController(Pose startPose, Pose endPose, FType func,
 
 void Dialog::batchSimulation(FType fun)
 {
-    srand(time(NULL));
+
     vector<RegData> func; // (dist,theta) maps to timeMs
     for(int i = 0; i < 300; i++) {
         int x1 = rand()%HALF_FIELD_MAXX;
@@ -116,7 +93,7 @@ void Dialog::batchSimulation(FType fun)
         }
         Pose start(x1, y1, theta1);
         Pose end(x2, y2, theta2);
-        double timeMs = simulateDelayController(start, end, fun, true);
+        double timeMs = simulate(start, end, fun, true);
         {
             // calculate rho, gamma, delta
             Pose s(x1, y1, theta1);
@@ -208,8 +185,7 @@ void Dialog::on_simButton_clicked()
     Pose start = ui->renderArea->getStartPose();
     Pose end = ui->renderArea->getEndPose();
     FType fun = functions[ui->simCombo->currentIndex()].second;
-//    double timeMs = simulate(start, end, fun);
-    double timeMs = simulateDelayController(start, end, fun);
+    double timeMs = simulate(start, end, fun);
     qDebug() << "Bot reached at time tick = " << timeMs/timeLCMs;
     onCurIdxChanged(0);
     on_resetButton_clicked();
@@ -232,8 +208,9 @@ void Dialog::regression(vector<RegData> func)
     for (int i = 0; i < n; i++) {
         gsl_vector_set(Y, i, func[i].timeMs);
 
-        gsl_matrix_set(X, i, 0, func[i].rho);
-        gsl_matrix_set(X, i, 1, sqrt(func[i].rho));
+//        gsl_matrix_set(X, i, 0, 1);
+        gsl_matrix_set(X, i, 0, pow(func[i].rho, 1/2.0));
+        gsl_matrix_set(X, i, 1, pow(func[i].rho, 1/3.0));
 //        gsl_matrix_set(X, i, 1, func[i].gamma);
 //        gsl_matrix_set(X, i, 1, func[i].delta);
     }

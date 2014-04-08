@@ -2,6 +2,8 @@
 #define CONTROLLERS_H
 #include "pose.h"
 #include <QString>
+#include <deque>
+using namespace std;
 // Constants required by generateControl, directly copied from most recent version of kgpkubs.
 const float MAX_BOT_LINEAR_VEL_CHANGE  = 5;
 const float MAX_BOT_SPEED              = 80.0;
@@ -25,4 +27,27 @@ void PolarBasedGA(Pose s, Pose e, int &vl, int &vr, double k1, double k2, double
 typedef void(*FType)(Pose, Pose, int &, int &, double);
 typedef std::pair<QString, FType> FPair;
 
+
+
+class ControllerWrapper { // a wrapper to implement controller for a robot. Currently able to handle packet delay.
+    FType fun;
+    deque<pair<int,int> > uq; // controls queue. .first = vl, .second = vr
+    int k;                    // the num of packet delay
+public:
+    ControllerWrapper(FType fun, int k):fun(fun), k(k) {
+        for(int i = 0; i < k; i++)
+            uq.push_back(make_pair<int,int>(0,0));
+    }
+    void genControls(Pose s, Pose e, int &vl, int &vr) {
+        Pose x = s;
+        for(deque<pair<int,int> >::iterator it = uq.begin(); it != uq.end(); it++) {
+            x.updateNoDelay(it->first, it->second, timeLC);
+        }
+        pair<int,int> &previousControl = uq.at(uq.size()-1);
+        double prevSpeed = max(fabs(previousControl.first), fabs(previousControl.second));
+        (*fun)(x, e, vl, vr, prevSpeed);
+        uq.push_back(make_pair<int,int>(vl, vr));
+        uq.pop_front();
+    }
+};
 #endif // CONTROLLERS_H

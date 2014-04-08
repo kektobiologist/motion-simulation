@@ -20,6 +20,9 @@ public:
     static const double ticksToCmS = 1.08; //still only approximate...
     static const double fieldXConvert = 29.75;
     static const double fieldYConvert = 27.33333;
+    static const double xUncertainty = 0.5; // Uncertainty is in %age of max value. eg. 1% where fabs(x) <= 1000 means fabs(error) <= 10
+    static const double yUncertainty = 0.5;
+    static const double thetaUncertainty = 3;
 private:
     void update_1(int vl_ticks, int vr_ticks, double dt); // simple update, without delay.
     void update_2(int vl_ticks, int vr_ticks, double dt); // delay of 1 tick bw updates.
@@ -27,9 +30,12 @@ private:
 public:
     static const int numPacketDelay = 3; // num of packets to delay in update
     double randStdNormal() {double x = rand()/(double)RAND_MAX; return sqrt(-2*log(x))*cos(2*3.14159265359*x);} // returns random number from std normal distribution
-    double x() { return x_ * fieldXConvert + randStdNormal()*HALF_FIELD_MAXX*1/1000.0;} // returns in strategy coordinate system
-    double y() { return y_ * fieldYConvert + randStdNormal()*HALF_FIELD_MAXY*1/1000.0;} // returns in strategy coordinate system
-    double theta() { return normalizeAngle(theta_ + 10*randStdNormal()*PI/1000);}       // already strategy coordinates
+    double x(); // returns in strategy coordinate system
+    double y(); // returns in strategy coordinate system
+    double theta(); // already in strategy coordinates
+    double xForDisplay(){ return x_ * fieldXConvert;}
+    double yForDisplay(){ return y_ * fieldYConvert;}
+    double thetaForDisplay(){ return theta_;}
     Pose(double x, double y, double theta);                                             // takes in Strategy coordinates!
     Pose();
     void update(int vl, int vr, double dt);               // takes vl, vr in ticks. Implicitly converts to cm/s!! updates pose.

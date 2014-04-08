@@ -113,11 +113,14 @@ void PController(Pose s, Pose e, int &vl, int &vr, double prevSpeed)
 
 void PolarBased(Pose s, Pose e, int &vl, int &vr, double prevSpeed)
 {
+    // NOTE: its preferable to call x(), y(), and theta() of each object exactly once since they may return different
+    // values on each call.
     Vector2D<int> initial(s.x()-e.x(), s.y()-e.y());
-    double theta = normalizeAngle(s.theta() - e.theta());
+    double etheta = e.theta();
+    double theta = normalizeAngle(s.theta() - etheta);
     // rotate initial by -e.theta degrees;
-    double newx = initial.x * cos(-e.theta()) - initial.y * sin(-e.theta());
-    double newy = initial.x * sin(-e.theta()) + initial.y * cos(-e.theta());
+    double newx = initial.x * cos(-etheta) - initial.y * sin(-etheta);
+    double newy = initial.x * sin(-etheta) + initial.y * cos(-etheta);
     initial = Vector2D<int>(newx, newy);
     double rho = sqrt(initial.x*initial.x + initial.y*initial.y);
     double gamma = normalizeAngle(atan2(initial.y, initial.x) - theta + PI);
@@ -161,7 +164,7 @@ void PolarBidirectional(Pose s, Pose e, int &vl, int &vr, double prevSpeed)
     }
 }
 
-void PolarBasedGA(Pose s, Pose e, int &vl, int &vr, double k1, double k2, double k3)
+void PolarBasedGA(Pose s, Pose e, int &vl, int &vr, double k1, double k2, double k3) // this function is old now, do not use.
 {
     Vector2D<int> initial(s.x()-e.x(), s.y()-e.y());
     double theta = normalizeAngle(s.theta() - e.theta());

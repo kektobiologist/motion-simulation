@@ -49,35 +49,15 @@ public slots:
     void onCurIdxChanged(int idx); // idx is index of pose array, not botID (there's only 1 bot :/ )
     void onTimeout();
 private:
-    class DelayController {
-        FType fun;
-        deque<pair<int,int> > uq; // controls queue.
-        int k;                    // the num of packet delay
-    public:
-        DelayController(FType fun, int k):fun(fun), k(k) {
-            for(int i = 0; i < k; i++)
-                uq.push_back(make_pair<int,int>(0,0));
-        }
-        void genControls(Pose s, Pose e, int &vl, int &vr, double prevSpeed) {
-            Pose x = s;
-            for(deque<pair<int,int> >::iterator it = uq.begin(); it != uq.end(); it++) {
-                x.updateNoDelay(it->first, it->second, timeLC);
-            }
-            (*fun)(x, e, vl, vr, prevSpeed);
-            if(uq.size()) {
-                uq.pop_front();
-                uq.push_back(make_pair<int,int>(vl, vr));
-            }
-        }
-    };
+
 
     // don't need curIdx, simply read the position of the slider (otherwise there is duplicacy)
     Ui::Dialog *ui;
     QTimer *timer;
     Pose poses[NUMTICKS];
     int vls[NUMTICKS], vrs[NUMTICKS];
-    double simulate(Pose startPose, Pose endPose, FType func); // returns the time(ms) to reach endPose. A dist threshold is taken, no angle considerations yet.
-    double simulateDelayController(Pose startPose, Pose endPose, FType func, bool isBatch = false); // implements delay control logic, for any given controller.
+    double simulate(Pose startPose, Pose endPose, FType func, bool isBatch = false); // implements delay control logic, for any given controller. (I removed the old simulate function that did not use wrapper)
+                                                                                     // returns the time(ms) to reach endPose. A dist threshold is taken, no angle considerations yet.
     void batchSimulation(FType fun);
     vector<FPair> functions;
     void drawControlArc(int idx, Pose endPose);
