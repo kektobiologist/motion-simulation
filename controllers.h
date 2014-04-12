@@ -43,7 +43,7 @@ public:
         for(deque<pair<int,int> >::iterator it = uq.begin(); it != uq.end(); it++) {
             x.updateNoDelay(it->first, it->second, timeLC);
         }
-        pair<int,int> &previousControl = uq.at(uq.size()-1);
+        pair<int,int> previousControl = uq.size()?uq.at(uq.size()-1):make_pair<int,int>(0,0);
         double prevSpeed = max(fabs(previousControl.first), fabs(previousControl.second));
         (*fun)(x, e, vl, vr, prevSpeed);
         uq.push_back(make_pair<int,int>(vl, vr));

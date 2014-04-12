@@ -10,7 +10,7 @@
  * It is in REAL WORLD coordinates (m and radians).
  * NOTE: vl, vr are taken in ticks only. dt is in ms
  */
-const int HALF_FIELD_MAXX              = 2975;
+const int HALF_FIELD_MAXX              = 3025;
 const int HALF_FIELD_MAXY              = 2050;
 class Pose
 {
@@ -20,9 +20,9 @@ public:
     static const double ticksToCmS = 1.08; //still only approximate...
     static const double fieldXConvert = 29.75;
     static const double fieldYConvert = 27.33333;
-    static const double xUncertainty = 0.5; // Uncertainty is in %age of max value. eg. 1% where fabs(x) <= 1000 means fabs(error) <= 10
-    static const double yUncertainty = 0.5;
-    static const double thetaUncertainty = 3;
+    static const double xUncertainty = 0;//0.5; // Uncertainty is in %age of max value. eg. 1% where fabs(x) <= 1000 means fabs(error) <= 10
+    static const double yUncertainty = 0;//0.5;
+    static const double thetaUncertainty = 0;//3;
 private:
     void update_1(int vl_ticks, int vr_ticks, double dt); // simple update, without delay.
     void update_2(int vl_ticks, int vr_ticks, double dt); // delay of 1 tick bw updates.
@@ -33,10 +33,10 @@ public:
     double x(); // returns in strategy coordinate system
     double y(); // returns in strategy coordinate system
     double theta(); // already in strategy coordinates
-    double xForDisplay(){ return x_ * fieldXConvert;}
-    double yForDisplay(){ return y_ * fieldYConvert;}
-    double thetaForDisplay(){ return theta_;}
-    Pose(double x, double y, double theta);                                             // takes in Strategy coordinates!
+    double queryX(){ return x_ * fieldXConvert;}   // These do not
+    double queryY(){ return y_ * fieldYConvert;}   // apply gaussian error
+    double queryTheta(){ return theta_;}           // .
+    Pose(double x, double y, double theta);    // takes in Strategy coordinates!
     Pose();
     void update(int vl, int vr, double dt);               // takes vl, vr in ticks. Implicitly converts to cm/s!! updates pose.
     void updateNoDelay(int vl, int vr, double dt);        // updates without any delay mechanics.

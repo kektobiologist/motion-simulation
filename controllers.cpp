@@ -154,7 +154,7 @@ void PolarBidirectional(Pose s, Pose e, int &vl, int &vr, double prevSpeed)
     PolarBased(s, e, vl, vr, prevSpeed);
     double v = (vl+vr)/2.0;
     wasInverted = false;
-    if(v < 0 || (v == 0 && wasInverted)) {
+    if(v < 0 || (v == 0 && wasInverted) ) {
         s.setTheta(normalizeAngle(s.theta()+PI));
         PolarBased(s, e, vl, vr, prevSpeed);
         swap(vl, vr);

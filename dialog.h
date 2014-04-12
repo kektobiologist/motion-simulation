@@ -10,6 +10,10 @@
 #include <utility>
 #include <deque>
 #include "controllers.h"
+#include "visionworker.h"
+#include "beliefstate.h"
+#include <QMutex>
+#include "serial.h"
 using namespace std;
 namespace Ui {
 class Dialog;
@@ -45,11 +49,24 @@ private slots:
 
     void on_batchButton_clicked();
 
+    void on_startSending_clicked();
+
+    void on_stopSending_clicked();
+
 public slots:
     void onCurIdxChanged(int idx); // idx is index of pose array, not botID (there's only 1 bot :/ )
     void onTimeout();
+    void onAlgoTimeout();
 private:
+    QThread *visionThread;
+    VisionWorker *vw;
 
+    BeliefState *beliefStateSh;
+    QMutex *bsMutex;
+
+    HAL::Serial comm;
+    QTimer *algoTimer; //algoTimer for calling controller every 20ms. need to change to seperate thread.
+    ControllerWrapper *algoController;
 
     // don't need curIdx, simply read the position of the slider (otherwise there is duplicacy)
     Ui::Dialog *ui;

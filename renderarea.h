@@ -3,7 +3,8 @@
 
 #include <QWidget>
 #include "pose.h"
-
+#include "beliefstate.h"
+#include <QMutex>
 class RenderArea : public QWidget
 {
     Q_OBJECT

@@ -11,11 +11,13 @@
 #include <gsl/gsl_multifit.h>
 #include <limits.h>
 #include <limits>
+#include "visionworker.h"
 using namespace std;
 Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::Dialog)
 {
+    algoController = NULL;
     srand(time(NULL));
     ui->setupUi(this);
     timer = new QTimer();
@@ -32,6 +34,24 @@ Dialog::Dialog(QWidget *parent) :
     functions.push_back(make_pair("PController", &Controllers::PController));
     for(unsigned int i = 0; i < functions.size(); i++) {
         ui->simCombo->addItem(functions[i].first);
+    }
+    beliefStateSh = new BeliefState;
+    bsMutex = new QMutex;
+    visionThread = new QThread;
+    vw = new VisionWorker;
+    vw->setup(visionThread, beliefStateSh, bsMutex);
+    vw->moveToThread(visionThread);
+    visionThread->start();
+    ui->firaRenderArea->beliefStateSh = beliefStateSh;
+    ui->firaRenderArea->bsMutex = bsMutex;
+    connect(vw, SIGNAL(newData()), ui->firaRenderArea, SLOT(update()));
+
+    algoTimer = new QTimer();
+    connect(algoTimer, SIGNAL(timeout()), this, SLOT(onAlgoTimeout()));
+    if(!comm.Open("/dev/ttyUSB0", 38400)) {
+        qDebug() << "Could not open comm port!";
+    } else {
+        qDebug() << "Connected.";
     }
     onCurIdxChanged(0);
 }
@@ -51,7 +71,7 @@ double Dialog::simulate(Pose startPose, Pose endPose, FType func, bool isBatch)
     //simulating behaviour for all ticks at once
     int endFlag = 0;
     double timeMs = std::numeric_limits<double>::max();
-    ControllerWrapper dc(func, Pose::numPacketDelay);
+    ControllerWrapper dc(func, 0);
     for(int i=1; i < NUMTICKS; i++)
     {
         poses[i] = poses[i-1];
@@ -179,6 +199,23 @@ void Dialog::onTimeout()
     ui->horizontalSlider->setValue(idx);
 }
 
+void Dialog::onAlgoTimeout()
+{
+    bsMutex->lock();
+    BeliefState bs = *beliefStateSh;
+    bsMutex->unlock();
+    Pose start(bs.homeX[1], bs.homeY[1], bs.homeTheta[1]);
+    Pose end = ui->firaRenderArea->getEndPose();
+    int vl, vr;
+    algoController->genControls(start, end, vl, vr);
+    char buf[3];
+    buf[0] = 126; // doesnt matter
+    buf[1] = vl;
+    buf[2] = vr;
+    qDebug() << "sending: " << vl << vr ;
+    comm.Write(buf, 3);
+}
+
 
 void Dialog::on_simButton_clicked()
 {
@@ -266,4 +303,23 @@ double Dialog::fitnessFunction(double k1, double k2, double k3)
         val += timeMs;
     }
     return val;
+}
+
+void Dialog::on_startSending_clicked()
+{
+    algoController = new ControllerWrapper(Controllers::PolarBidirectional, 2);
+    algoTimer->start(timeLCMs);
+}
+
+void Dialog::on_stopSending_clicked()
+{
+    algoTimer->stop();
+    char buf[3];
+    buf[0] = 126; // doesnt matter;
+    buf[1] = buf[2] = 0;
+    comm.Write(buf, 3);
+    if(algoController) {
+        delete algoController;
+        algoController = NULL;
+    }
 }
