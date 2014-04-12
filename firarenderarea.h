@@ -14,6 +14,7 @@ public:
     Pose getEndPose();
     BeliefState *beliefStateSh;
     QMutex *bsMutex;
+    Pose predictedPose; // predicted pose of some bot.
 protected:
     void paintEvent(QPaintEvent *);
     void drawField(QPainter &painter);

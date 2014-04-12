@@ -53,6 +53,7 @@ void FIRARenderArea::paintEvent(QPaintEvent *)
             drawBot(painter, bs.awayX[i], bs.awayY[i], bs.awayTheta[i], false);
         }
     }
+    drawBot(painter, predictedPose.queryX(), predictedPose.queryY(), predictedPose.queryTheta(), false);
     if(bs.ballIsPresent) {
         drawBall(painter, bs.ballX, bs.ballY);
     }

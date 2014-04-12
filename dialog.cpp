@@ -208,6 +208,7 @@ void Dialog::onAlgoTimeout()
     Pose end = ui->firaRenderArea->getEndPose();
     int vl, vr;
     algoController->genControls(start, end, vl, vr);
+    ui->firaRenderArea->predictedPose = algoController->getPredictedPose(start);
     char buf[3];
     buf[0] = 126; // doesnt matter
     buf[1] = vl;

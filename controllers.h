@@ -5,8 +5,8 @@
 #include <deque>
 using namespace std;
 // Constants required by generateControl, directly copied from most recent version of kgpkubs.
-const float MAX_BOT_LINEAR_VEL_CHANGE  = 5;
-const float MAX_BOT_SPEED              = 80.0;
+const float MAX_BOT_LINEAR_VEL_CHANGE  = 4;
+const float MAX_BOT_SPEED              = 100.0;
 const int BOT_POINT_THRESH             = 147;
 const int CLEARANCE_PATH_PLANNER       = 400;
 
@@ -32,20 +32,28 @@ typedef std::pair<QString, FType> FPair;
 class ControllerWrapper { // a wrapper to implement controller for a robot. Currently able to handle packet delay.
     FType fun;
     deque<pair<int,int> > uq; // controls queue. .first = vl, .second = vr
+    double prevSpeed; //storing seperately since k = 0 means uq is empty
     int k;                    // the num of packet delay
 public:
     ControllerWrapper(FType fun, int k):fun(fun), k(k) {
         for(int i = 0; i < k; i++)
             uq.push_back(make_pair<int,int>(0,0));
+        prevSpeed = 0;
+    }
+    Pose getPredictedPose(Pose s) {
+        Pose x = s;
+        for(deque<pair<int,int> >::iterator it = uq.begin(); it != uq.end(); it++) {
+            x.updateNoDelay(it->first, it->second, timeLC);
+        }
+        return x;
     }
     void genControls(Pose s, Pose e, int &vl, int &vr) {
         Pose x = s;
         for(deque<pair<int,int> >::iterator it = uq.begin(); it != uq.end(); it++) {
             x.updateNoDelay(it->first, it->second, timeLC);
         }
-        pair<int,int> previousControl = uq.size()?uq.at(uq.size()-1):make_pair<int,int>(0,0);
-        double prevSpeed = max(fabs(previousControl.first), fabs(previousControl.second));
         (*fun)(x, e, vl, vr, prevSpeed);
+        prevSpeed = max(fabs(vl), fabs(vr));
         uq.push_back(make_pair<int,int>(vl, vr));
         uq.pop_front();
     }
