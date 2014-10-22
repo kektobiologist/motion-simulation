@@ -95,7 +95,7 @@ void PController(Pose s, Pose e, int &vl, int &vr, double prevSpeed)
         v = 0;
     } else {
         if(distance > maxDis/2) {
-            v = 100;
+            v = MAX_BOT_SPEED;
         } else {
             v = (distance/(double)maxDis)*90+10;
         }
@@ -104,10 +104,10 @@ void PController(Pose s, Pose e, int &vl, int &vr, double prevSpeed)
     v *= Pose::ticksToCmS;
     vl = v - Pose::d*w/2;
     vr = v + Pose::d*w/2;
-    if(abs(vl) > 100 || abs(vr) > 100) {
+    if(abs(vl) > MAX_BOT_SPEED || abs(vr) > MAX_BOT_SPEED) {
         double max = abs(vl)>abs(vr)?abs(vl):abs(vr);
-        vl = vl*100/max;
-        vr = vr*100/max;
+        vl = vl*MAX_BOT_SPEED/max;
+        vr = vr*MAX_BOT_SPEED/max;
     }
 }
 

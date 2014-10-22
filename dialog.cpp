@@ -13,6 +13,10 @@
 #include <limits>
 #include "visionworker.h"
 using namespace std;
+// NOTE(arpit): PREDICTION_PACKET_DELAY is NOT used in simulation. It is used to predict bot position in actual run.
+static const int PREDICTION_PACKET_DELAY = 0;
+// bot used for testing (non-sim)
+static const int BOT_ID_TESTING = 0;
 Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::Dialog)
@@ -35,6 +39,8 @@ Dialog::Dialog(QWidget *parent) :
     for(unsigned int i = 0; i < functions.size(); i++) {
         ui->simCombo->addItem(functions[i].first);
     }
+
+    ui->receiveDataTextEdit->setReadOnly(true);
     beliefStateSh = new BeliefState;
     bsMutex = new QMutex;
     visionThread = new QThread;
@@ -45,7 +51,6 @@ Dialog::Dialog(QWidget *parent) :
     ui->firaRenderArea->beliefStateSh = beliefStateSh;
     ui->firaRenderArea->bsMutex = bsMutex;
     connect(vw, SIGNAL(newData()), ui->firaRenderArea, SLOT(update()));
-
     algoTimer = new QTimer();
     connect(algoTimer, SIGNAL(timeout()), this, SLOT(onAlgoTimeout()));
     if(!comm.Open("/dev/ttyUSB0", 38400)) {
@@ -54,6 +59,7 @@ Dialog::Dialog(QWidget *parent) :
         qDebug() << "Connected.";
     }
     onCurIdxChanged(0);
+    counter = 0;
 }
 
 Dialog::~Dialog()
@@ -204,17 +210,24 @@ void Dialog::onAlgoTimeout()
     bsMutex->lock();
     BeliefState bs = *beliefStateSh;
     bsMutex->unlock();
-    Pose start(bs.homeX[1], bs.homeY[1], bs.homeTheta[1]);
+    Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
     Pose end = ui->firaRenderArea->getEndPose();
     int vl, vr;
     algoController->genControls(start, end, vl, vr);
-    ui->firaRenderArea->predictedPose = algoController->getPredictedPose(start);
-    char buf[3];
+    // getPredictedPose gives the predicted pose of the robot after PREDICTION_PACKET_DELAY ticks from now. We need to display what our
+    // prediction was PREDICTION_PACKET_DELAY ticks ago (i.e. what our prediction was for now).
+    predictedPoseQ.push(algoController->getPredictedPose(start));
+    ui->firaRenderArea->predictedPose = predictedPoseQ.front();
+    predictedPoseQ.pop();
+    assert(vl < 120 || -vl < 120);
+    assert(vr < 120 || -vr < 120);
+    char buf[4];
     buf[0] = 126; // doesnt matter
     buf[1] = vl;
     buf[2] = vr;
-    qDebug() << "sending: " << vl << vr ;
-    comm.Write(buf, 3);
+    buf[3] = (++counter)%100;
+    qDebug() << "sending: " << vl << vr << counter%100 << ", packets sent = " << counter ;
+    comm.Write(buf, 4);
 }
 
 
@@ -308,19 +321,59 @@ double Dialog::fitnessFunction(double k1, double k2, double k3)
 
 void Dialog::on_startSending_clicked()
 {
-    algoController = new ControllerWrapper(Controllers::PolarBidirectional, 2);
+    algoController = new ControllerWrapper(Controllers::PolarBidirectional, PREDICTION_PACKET_DELAY);
+    while(!predictedPoseQ.empty())
+        predictedPoseQ.pop();
+    bsMutex->lock();
+    BeliefState bs = *beliefStateSh;
+    bsMutex->unlock();
+    for (int i = 0; i < PREDICTION_PACKET_DELAY; i++) {
+        predictedPoseQ.push(Pose(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]));
+    }
     algoTimer->start(timeLCMs);
 }
 
 void Dialog::on_stopSending_clicked()
 {
     algoTimer->stop();
-    char buf[3];
+    char buf[4];
     buf[0] = 126; // doesnt matter;
     buf[1] = buf[2] = 0;
-    comm.Write(buf, 3);
+    buf[3] = 0; // timestamp
+    comm.Write(buf, 4);
+    qDebug() << "sending: 0 0 0, packets sent = " << ++counter;
     if(algoController) {
         delete algoController;
         algoController = NULL;
     }
+}
+
+void Dialog::on_receiveButton_clicked()
+{
+    comm.WriteByte(122);
+    int numPacketsToReceive = 200;
+    int packetSize = 5;
+    char syncByte = 122;
+    bool ok;
+    // I'll just read the expected number of times, error handling later.
+    int errorCount = 0;
+    for (int i = 0; i < numPacketsToReceive; i++) {
+        char first = 0;
+        while (first != syncByte && errorCount < 100)
+            first = comm.ReadByteTimeout(20, ok), errorCount++;
+        errorCount--;
+        char ts = comm.ReadByteTimeout(20, ok);
+        char vl_target = comm.ReadByteTimeout(20, ok);
+        char vr_target = comm.ReadByteTimeout(20, ok);
+        char vl = comm.ReadByteTimeout(20, ok);
+        char vr = comm.ReadByteTimeout(20, ok);
+        char buf[100];
+        sprintf(buf, "%d: %d:\t\t(%d, %d) ->\t\t(%d, %d)\n", first, ts, vl_target, vr_target, vl, vr);
+        ui->receiveDataTextEdit->insertPlainText(QString(buf));
+    }
+}
+
+void Dialog::on_clearButton_clicked()
+{
+    ui->receiveDataTextEdit->clear();
 }

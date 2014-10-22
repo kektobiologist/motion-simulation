@@ -31,7 +31,8 @@ SOURCES += main.cpp\
     visionworker.cpp \
     beliefstate.cpp \
     firarenderarea.cpp \
-    serial.cpp
+    serial.cpp \
+    vision-velocity.cpp
 
 HEADERS  += dialog.h \
     pose.h \
@@ -43,7 +44,8 @@ HEADERS  += dialog.h \
     visionworker.h \
     beliefstate.h \
     firarenderarea.h \
-    serial.h
+    serial.h \
+    vision-velocity.hpp
 
 LIBS += -lgsl -lgslcblas -lprotobuf
 FORMS    += dialog.ui

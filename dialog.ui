@@ -40,7 +40,6 @@
              <height>410</height>
             </size>
            </property>
-           <zorder>horizontalSlider</zorder>
           </widget>
          </item>
          <item>
@@ -118,54 +117,63 @@
       <attribute name="title">
        <string>Tab 2</string>
       </attribute>
-      <widget class="FIRARenderArea" name="firaRenderArea" native="true">
-       <property name="geometry">
-        <rect>
-         <x>8</x>
-         <y>16</y>
-         <width>605</width>
-         <height>410</height>
-        </rect>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>605</width>
-         <height>410</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>605</width>
-         <height>410</height>
-        </size>
-       </property>
-      </widget>
-      <widget class="QWidget" name="">
-       <property name="geometry">
-        <rect>
-         <x>628</x>
-         <y>48</y>
-         <width>226</width>
-         <height>29</height>
-        </rect>
-       </property>
-       <layout class="QHBoxLayout" name="horizontalLayout_3">
-        <item>
-         <widget class="QPushButton" name="startSending">
-          <property name="text">
-           <string>Start Sending</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="stopSending">
-          <property name="text">
-           <string>Stop Sending</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </widget>
+      <layout class="QHBoxLayout" name="horizontalLayout_4">
+       <item>
+        <widget class="FIRARenderArea" name="firaRenderArea" native="true">
+         <property name="minimumSize">
+          <size>
+           <width>605</width>
+           <height>410</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>605</width>
+           <height>410</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <item>
+            <widget class="QPushButton" name="startSending">
+             <property name="text">
+              <string>Start Sending</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="stopSending">
+             <property name="text">
+              <string>Stop Sending</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QPushButton" name="receiveButton">
+           <property name="text">
+            <string>Receive Data</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPlainTextEdit" name="receiveDataTextEdit"/>
+         </item>
+         <item>
+          <widget class="QPushButton" name="clearButton">
+           <property name="text">
+            <string>Clear</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
      </widget>
     </widget>
    </item>

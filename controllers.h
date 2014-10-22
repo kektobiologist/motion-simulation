@@ -6,6 +6,7 @@
 using namespace std;
 // Constants required by generateControl, directly copied from most recent version of kgpkubs.
 const float MAX_BOT_LINEAR_VEL_CHANGE  = 4;
+// NOTE(arpit): changed for real bots. for sim make this 100.0
 const float MAX_BOT_SPEED              = 100.0;
 const int BOT_POINT_THRESH             = 147;
 const int CLEARANCE_PATH_PLANNER       = 400;

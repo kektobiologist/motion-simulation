@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <utility>
 #include <deque>
+#include <queue>
 #include "controllers.h"
 #include "visionworker.h"
 #include "beliefstate.h"
@@ -53,6 +54,10 @@ private slots:
 
     void on_stopSending_clicked();
 
+    void on_receiveButton_clicked();
+
+    void on_clearButton_clicked();
+
 public slots:
     void onCurIdxChanged(int idx); // idx is index of pose array, not botID (there's only 1 bot :/ )
     void onTimeout();
@@ -67,6 +72,9 @@ private:
     HAL::Serial comm;
     QTimer *algoTimer; //algoTimer for calling controller every 20ms. need to change to seperate thread.
     ControllerWrapper *algoController;
+    // NOTE(arpit): not used in sim. Queue of predicted pose, size of q = PREDICTION_PACKET_DELAY. Needed because we need to display
+    // old predictions side-by-side with the actual position of the bot.
+    std::queue<Pose> predictedPoseQ;
 
     // don't need curIdx, simply read the position of the slider (otherwise there is duplicacy)
     Ui::Dialog *ui;
@@ -82,6 +90,9 @@ private:
 
     // functions for GA
     double fitnessFunction(double k1, double k2, double k3); // runs the PolarBasedGA function with k1, k2, k3 values.
+
+    // counter for counting num of packets sent:
+    int counter;
 };
 
 #endif // DIALOG_H

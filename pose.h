@@ -20,6 +20,7 @@ public:
     static const double ticksToCmS = 1.08; //still only approximate...
     static const double fieldXConvert = 29.75;
     static const double fieldYConvert = 27.33333;
+    // NOTE(arpit): Uncertainties should be non-zero when simulating. Currently 0 since bot data is fetched from vision.
     static const double xUncertainty = 0;//0.5; // Uncertainty is in %age of max value. eg. 1% where fabs(x) <= 1000 means fabs(error) <= 10
     static const double yUncertainty = 0;//0.5;
     static const double thetaUncertainty = 0;//3;
@@ -28,6 +29,7 @@ private:
     void update_2(int vl_ticks, int vr_ticks, double dt); // delay of 1 tick bw updates.
     std::queue<int> vlq, vrq;      // q to implement packet delay.
 public:
+    // NOTE(arpit): numPacketDelay and update() specified here is only used in simulation.
     static const int numPacketDelay = 3; // num of packets to delay in update
     double randStdNormal() {double x = rand()/(double)RAND_MAX; return sqrt(-2*log(x))*cos(2*3.14159265359*x);} // returns random number from std normal distribution
     double x(); // returns in strategy coordinate system

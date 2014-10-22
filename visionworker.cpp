@@ -78,7 +78,7 @@ void VisionWorker::onEntry()
                 if(balls_n) {
                     // only take 1st ball into account;
                     SSL_DetectionBall ball = detection.balls(0);
-                    double ballX, ballY, dummy;
+                    double ballX, ballY, dummy = 0;
                     ballX = ball.x();
                     ballY = ball.y();
                     linearTransform(ballX, ballY, dummy);
