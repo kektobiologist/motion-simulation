@@ -27,6 +27,7 @@
 # include <cstdio>
 #endif
 
+#include <QDebug>
 #include "serial.h"
 
 /**************************** TYPES ******************************************/
@@ -229,7 +230,8 @@ namespace HAL
 
     // open device
     fd = ::open(device.c_str(), O_RDWR | O_SYNC);
-    perror("");
+    perror("><");
+    qDebug() << "fd = " << fd;
     if (fd < 0)
       return(false);
 

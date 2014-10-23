@@ -11,10 +11,14 @@
 #include <gsl/gsl_multifit.h>
 #include <limits.h>
 #include <limits>
+#include <unistd.h>
 #include "visionworker.h"
+#include "vision-velocity.hpp"
+
 using namespace std;
-// NOTE(arpit): PREDICTION_PACKET_DELAY is NOT used in simulation. It is used to predict bot position in actual run.
-static const int PREDICTION_PACKET_DELAY = 0;
+// NOTE(arpit): PREDICTION_PACKET_DELAY is NOT used in simulation. It is used to predict bot position in actual run,
+// as well as the algoController delay
+static const int PREDICTION_PACKET_DELAY = 3;
 // bot used for testing (non-sim)
 static const int BOT_ID_TESTING = 0;
 Dialog::Dialog(QWidget *parent) :
@@ -60,6 +64,7 @@ Dialog::Dialog(QWidget *parent) :
     }
     onCurIdxChanged(0);
     counter = 0;
+    sendDataMutex = new QMutex;
 }
 
 Dialog::~Dialog()
@@ -77,7 +82,7 @@ double Dialog::simulate(Pose startPose, Pose endPose, FType func, bool isBatch)
     //simulating behaviour for all ticks at once
     int endFlag = 0;
     double timeMs = std::numeric_limits<double>::max();
-    ControllerWrapper dc(func, 0);
+    ControllerWrapper dc(func, Pose::numPacketDelay);
     for(int i=1; i < NUMTICKS; i++)
     {
         poses[i] = poses[i-1];
@@ -86,6 +91,7 @@ double Dialog::simulate(Pose startPose, Pose endPose, FType func, bool isBatch)
         vls[i-1] = vl;
         vrs[i-1] = vr;
         poses[i].update(vl, vr, timeLC);
+        VisionVelocity::calcBotVelocity(poses[i-1], poses[i], timeLCMs, vls_calc[i-1], vrs_calc[i-1]);
         if(dist(poses[i], endPose) < 40 && !endFlag) {
             timeMs = i*timeLCMs;
             endFlag = 1;
@@ -186,7 +192,8 @@ void Dialog::onCurIdxChanged(int idx)
     double rho = sqrt(initial.x*initial.x + initial.y*initial.y);
     double gamma = normalizeAngle(atan2(initial.y, initial.x) - theta + PI);
     double delta = normalizeAngle(gamma + theta);
-    qDebug() << idx <<". "<< "vl, vr = " << vls[idx] << ", " << vrs[idx] << ", rho = " << rho << ", gamma = " << gamma << ", delta = " << delta;
+    qDebug() << idx <<". "<< "vl, vr = " << vls[idx] << ", " << vrs[idx] << ", vl_calc, vr_calc = " << vls_calc[idx] << ", " << vrs_calc[idx];
+                //", rho = " << rho << ", gamma = " << gamma << ", delta = " << delta;
 //    qDebug() << "Pose: " << poses[idx].x() << ", " << poses[idx].y() << ", " << poses[idx].theta()*180/PI;
 }
 
@@ -219,15 +226,17 @@ void Dialog::onAlgoTimeout()
     predictedPoseQ.push(algoController->getPredictedPose(start));
     ui->firaRenderArea->predictedPose = predictedPoseQ.front();
     predictedPoseQ.pop();
-    assert(vl < 120 || -vl < 120);
-    assert(vr < 120 || -vr < 120);
+    assert(vl <= 120 && vl >= -120);
+    assert(vr <= 120 && vr >= -120);
     char buf[4];
     buf[0] = 126; // doesnt matter
     buf[1] = vl;
     buf[2] = vr;
     buf[3] = (++counter)%100;
     qDebug() << "sending: " << vl << vr << counter%100 << ", packets sent = " << counter ;
+    sendDataMutex->lock();  
     comm.Write(buf, 4);
+    sendDataMutex->unlock();
 }
 
 
@@ -340,7 +349,10 @@ void Dialog::on_stopSending_clicked()
     buf[0] = 126; // doesnt matter;
     buf[1] = buf[2] = 0;
     buf[3] = 0; // timestamp
+    sendDataMutex->lock();
+    usleep(timeLCMs * 1000);
     comm.Write(buf, 4);
+    sendDataMutex->unlock();
     qDebug() << "sending: 0 0 0, packets sent = " << ++counter;
     if(algoController) {
         delete algoController;
@@ -350,27 +362,46 @@ void Dialog::on_stopSending_clicked()
 
 void Dialog::on_receiveButton_clicked()
 {
+    sendDataMutex->lock();
     comm.WriteByte(122);
-    int numPacketsToReceive = 200;
-    int packetSize = 5;
+    sendDataMutex->unlock();
+    // int packetSize = 6;
     char syncByte = 122;
+    char endByte = 123;
     bool ok;
-    // I'll just read the expected number of times, error handling later.
-    int errorCount = 0;
-    for (int i = 0; i < numPacketsToReceive; i++) {
-        char first = 0;
-        while (first != syncByte && errorCount < 100)
-            first = comm.ReadByteTimeout(20, ok), errorCount++;
-        errorCount--;
-        char ts = comm.ReadByteTimeout(20, ok);
-        char vl_target = comm.ReadByteTimeout(20, ok);
-        char vr_target = comm.ReadByteTimeout(20, ok);
-        char vl = comm.ReadByteTimeout(20, ok);
-        char vr = comm.ReadByteTimeout(20, ok);
-        char buf[100];
-        sprintf(buf, "%d: %d:\t\t(%d, %d) ->\t\t(%d, %d)\n", first, ts, vl_target, vr_target, vl, vr);
-        ui->receiveDataTextEdit->insertPlainText(QString(buf));
+    int parity = 0;
+    char ts = 0, vl_target = 0, vr_target = 0, vl = 0, vr = 0;
+    int upperLimit = 6*200; // don't want to get stuck reading.
+    int byteCounter = 0;
+    while (byteCounter++ < upperLimit) {
+        char b = comm.ReadByteTimeout(20, ok);
+        if (!ok) {
+            qDebug() << "no ok read!";
+        }
+        if (b == endByte)
+            break;
+        switch(parity) {
+        case 0:
+            if (b == syncByte)
+                parity++;
+            break;
+        case 1:
+            ts = b; parity++; break;
+        case 2:
+            vl_target = b; parity++; break;
+        case 3:
+            vr_target = b; parity++; break;
+        case 4:
+            vl = b; parity++; break;
+        case 5:
+            vr = b; parity = 0;
+            char buf[100];
+            sprintf(buf, "%d:\t\t(%d, %d) ->\t\t(%d, %d)\n", ts, vl_target, vr_target, vl, vr);
+            ui->receiveDataTextEdit->insertPlainText(QString(buf));
+            break;
+        }
     }
+
 }
 
 void Dialog::on_clearButton_clicked()

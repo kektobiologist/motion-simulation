@@ -21,9 +21,9 @@ public:
     static const double fieldXConvert = 29.75;
     static const double fieldYConvert = 27.33333;
     // NOTE(arpit): Uncertainties should be non-zero when simulating. Currently 0 since bot data is fetched from vision.
-    static const double xUncertainty = 0;//0.5; // Uncertainty is in %age of max value. eg. 1% where fabs(x) <= 1000 means fabs(error) <= 10
-    static const double yUncertainty = 0;//0.5;
-    static const double thetaUncertainty = 0;//3;
+    static const double xUncertainty = 0.5;//0.5; // Uncertainty is in %age of max value. eg. 1% where fabs(x) <= 1000 means fabs(error) <= 10
+    static const double yUncertainty = 0.5;//0.5;
+    static const double thetaUncertainty = 3;//3;
 private:
     void update_1(int vl_ticks, int vr_ticks, double dt); // simple update, without delay.
     void update_2(int vl_ticks, int vr_ticks, double dt); // delay of 1 tick bw updates.
@@ -35,9 +35,9 @@ public:
     double x(); // returns in strategy coordinate system
     double y(); // returns in strategy coordinate system
     double theta(); // already in strategy coordinates
-    double queryX(){ return x_ * fieldXConvert;}   // These do not
-    double queryY(){ return y_ * fieldYConvert;}   // apply gaussian error
-    double queryTheta(){ return theta_;}           // .
+    double queryX() const { return x_ * fieldXConvert;}   // These do not
+    double queryY() const { return y_ * fieldYConvert;}   // apply gaussian error
+    double queryTheta() const { return theta_;}           // .
     Pose(double x, double y, double theta);    // takes in Strategy coordinates!
     Pose();
     void update(int vl, int vr, double dt);               // takes vl, vr in ticks. Implicitly converts to cm/s!! updates pose.

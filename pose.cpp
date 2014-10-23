@@ -44,7 +44,7 @@ void Pose::update_1(int vl_ticks, int vr_ticks, double dt)
     }
 
     double rho = d/2*(vr+vl)/(vr-vl);
-    double w = 2*(vr-vl)/d;
+    double w = (vr-vl)/d;
 
     x_ += rho*(sin(theta_ + w * dt) - sin(theta_));
     y_ += -rho*(cos(theta_ + w * dt) - cos(theta_));

@@ -81,6 +81,8 @@ private:
     QTimer *timer;
     Pose poses[NUMTICKS];
     int vls[NUMTICKS], vrs[NUMTICKS];
+    float vls_calc[NUMTICKS], vrs_calc[NUMTICKS];  // vl, vr reverse-calculated from vision data using VisionVelocity
+    // vls_calc[i] ~ vls[i] etc.
     double simulate(Pose startPose, Pose endPose, FType func, bool isBatch = false); // implements delay control logic, for any given controller. (I removed the old simulate function that did not use wrapper)
                                                                                      // returns the time(ms) to reach endPose. A dist threshold is taken, no angle considerations yet.
     void batchSimulation(FType fun);
@@ -93,6 +95,8 @@ private:
 
     // counter for counting num of packets sent:
     int counter;
+    // so that comm.Write() commands don't overlap. ideally should also have a time gap between comm.Write() calls.
+    QMutex *sendDataMutex;
 };
 
 #endif // DIALOG_H
