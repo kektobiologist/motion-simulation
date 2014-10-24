@@ -5,6 +5,8 @@
 #include <QThread>
 #include "beliefstate.h"
 #include <QMutex>
+#include <sys/time.h>
+
 class VisionWorker : public QObject
 {
     Q_OBJECT
@@ -22,6 +24,7 @@ private:
     QThread *myThread;
     BeliefState *bs;
     QMutex *bsMutex;
+    struct timeval lastTime;
 };
 
 #endif // VISIONTHREAD_H

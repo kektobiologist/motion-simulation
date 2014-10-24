@@ -213,7 +213,7 @@ void Dialog::onTimeout()
 }
 
 void Dialog::onAlgoTimeout()
-{
+{    
     bsMutex->lock();
     BeliefState bs = *beliefStateSh;
     bsMutex->unlock();
@@ -242,6 +242,15 @@ void Dialog::onAlgoTimeout()
     // store data in sysData
     Logging::SystemData data;
     data.set_ts(counter%100);
+    {
+        Logging::RobotPose pose;
+        Logging::Velocities sent, vision;
+        sent.set_vl(vl);
+        sent.set_vr(vr);
+        // calculation using VisionVelocity
+        float vl_vis, vr_vis;
+
+    }
 //    data.mutable_pose() = Logging::RobotPose()
 }
 

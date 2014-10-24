@@ -13,7 +13,7 @@ public:
     // vision calculated velocities
     double homeVl[5], homeVr[5];
     double awayVl[5], awayVr[5];
-    double ballVx[5], ballVy[5];
+    double ballVx, ballVy;
 };
 
 #endif // BELIEFSTATE_H
