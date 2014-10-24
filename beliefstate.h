@@ -9,6 +9,11 @@ public:
     double homeX[5], homeY[5], homeTheta[5];
     double awayX[5], awayY[5], awayTheta[5];
     bool homeIsPresent[5], awayIsPresent[5], ballIsPresent;
+
+    // vision calculated velocities
+    double homeVl[5], homeVr[5];
+    double awayVl[5], awayVr[5];
+    double ballVx[5], ballVy[5];
 };
 
 #endif // BELIEFSTATE_H

@@ -15,6 +15,8 @@
 #include "beliefstate.h"
 #include <QMutex>
 #include "serial.h"
+#include "logging.pb.h"
+
 using namespace std;
 namespace Ui {
 class Dialog;
@@ -97,6 +99,11 @@ private:
     int counter;
     // so that comm.Write() commands don't overlap. ideally should also have a time gap between comm.Write() calls.
     QMutex *sendDataMutex;
+
+    // structs for logging (actual bots, not sim)
+    vector<Logging::SystemData> sysData;
+    vector<Logging::ReceivedData> recvData;
+
 };
 
 #endif // DIALOG_H

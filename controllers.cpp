@@ -111,6 +111,10 @@ void PController(Pose s, Pose e, int &vl, int &vr, double prevSpeed)
     }
 }
 
+/*  Aicardi M, Casalino G, Bicchi A, Balestrino A 1995 Closed loop steering of
+unicycle-like vehicles via Lyapunov techniques. IEEE Robotics & Automation
+Magazine 2(1):27–35
+*/
 void PolarBased(Pose s, Pose e, int &vl, int &vr, double prevSpeed)
 {
     // NOTE: its preferable to call x(), y(), and theta() of each object exactly once since they may return different

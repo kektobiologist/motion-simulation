@@ -220,7 +220,8 @@ void Dialog::onAlgoTimeout()
     Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
     Pose end = ui->firaRenderArea->getEndPose();
     int vl, vr;
-    algoController->genControls(start, end, vl, vr);
+    algoController->genControls(start, end, vl, vr);    
+
     // getPredictedPose gives the predicted pose of the robot after PREDICTION_PACKET_DELAY ticks from now. We need to display what our
     // prediction was PREDICTION_PACKET_DELAY ticks ago (i.e. what our prediction was for now).
     predictedPoseQ.push(algoController->getPredictedPose(start));
@@ -237,6 +238,11 @@ void Dialog::onAlgoTimeout()
     sendDataMutex->lock();  
     comm.Write(buf, 4);
     sendDataMutex->unlock();
+
+    // store data in sysData
+    Logging::SystemData data;
+    data.set_ts(counter%100);
+//    data.mutable_pose() = Logging::RobotPose()
 }
 
 

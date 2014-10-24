@@ -42,9 +42,9 @@ void calcBotVelocity(BotPose p1, BotPose p2, float timeMs, float &vl, float &vr)
 
 void calcBallVelocity(int delx, int dely, int timeMs, float &vx, float &vy) {
     BotPose p(delx, dely, 0);
-    strategyToRealConversion(p);
-    vx = p.x / (timeMs * 0.001) / Pose::ticksToCmS;
-    vy = p.y / (timeMs * 0.001) / Pose::ticksToCmS;
+//    strategyToRealConversion(p);
+    vx = p.x / (timeMs * 0.001); // / Pose::ticksToCmS;
+    vy = p.y / (timeMs * 0.001); // / Pose::ticksToCmS;
     return;
 }
 }

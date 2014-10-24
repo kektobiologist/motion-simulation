@@ -17,7 +17,7 @@ struct BotPose {
 
 // takes in Strategy coordinates, returns in ticks
 void calcBotVelocity(BotPose p1, BotPose p2, float timeMs, float &vl, float &vr);
-// takes in Strategy coordinates, returns in ticks (do ticks have meaning in vx, vy?)
+// takes in Strategy coordinates, returns in Strategy coordinates per second.
 void calcBallVelocity(int delx, int dely, int timeMs, float &vx, float &vy);
 }
 

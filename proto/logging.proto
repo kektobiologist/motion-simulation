@@ -1,12 +1,15 @@
+package Logging;
+
 message Velocities {
   required int32 vl = 1;
   required int32 vr = 2;
 }
 
 message ReceivedData {  // data sent by bot
-	required int32 ts            = 1;
-  required Velocities target   = 2;
-  required Velocities measured = 3;
+  required int32 id            = 1;
+	required int32 ts            = 2;
+  required Velocities target   = 3;
+  required Velocities measured = 4;
 }
 
 message RobotPose {
@@ -15,10 +18,14 @@ message RobotPose {
   required float theta = 3;
 }
 
-message LoggingData {
-	required int32 ts          = 1;
+message SystemData {
+  required int32 ts          = 1;
   required Velocities sent   = 2;
   required Velocities vision = 3;
-  required RobotPose pose      = 4;
-  required ReceivedData data = 5;
+  required RobotPose pose    = 4;
+}
+
+message LoggingData {
+	required SystemData sysData    = 1;
+  required ReceivedData recvData = 2;
 }
