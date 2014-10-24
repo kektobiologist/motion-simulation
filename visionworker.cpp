@@ -61,7 +61,7 @@ void VisionWorker::onEntry()
             if (packet.has_detection()) {
                 struct timeval nowTime;
                 gettimeofday(&nowTime, NULL);
-                double timeMs = (nowTime.tv_sec*1000+nowTime.tv_usec/1000.0) - (lastTime.tv_sec*1000+lastTime.tv_usec/1000.0);
+                double timeMs = (nowTime.tv_sec*1000.0+nowTime.tv_usec/1000.0) - (lastTime.tv_sec*1000.0+lastTime.tv_usec/1000.0);
                 assert(timeMs > 0);
                 lastTime = nowTime;
                 detectionCount++;

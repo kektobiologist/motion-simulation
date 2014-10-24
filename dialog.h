@@ -16,6 +16,7 @@
 #include <QMutex>
 #include "serial.h"
 #include "logging.pb.h"
+#include <sys/time.h>
 
 using namespace std;
 namespace Ui {
@@ -103,7 +104,6 @@ private:
     // structs for logging (actual bots, not sim)
     vector<Logging::SystemData> sysData;
     vector<Logging::ReceivedData> recvData;
-
 };
 
 #endif // DIALOG_H
