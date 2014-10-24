@@ -20,7 +20,7 @@ message RobotPose {
 
 message SystemData {
   required int32 ts          = 1;
-  required int32 timeMs      = 2;  // the actual time in ms of this packet
+  required float timeMs      = 2;  // the actual time in ms of this packet
   required Velocities sent   = 3;
   required Velocities vision = 4;
   required RobotPose pose    = 5;

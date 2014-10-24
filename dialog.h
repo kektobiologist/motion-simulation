@@ -17,6 +17,7 @@
 #include "serial.h"
 #include "attacker.hpp"
 #include "logging.pb.h"
+#include <sys/time.h>
 
 using namespace std;
 namespace Ui {

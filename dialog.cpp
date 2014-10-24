@@ -230,29 +230,40 @@ void Dialog::onAlgoTimeout()
     predictedPoseQ.pop();
     assert(vl <= 120 && vl >= -120);
     assert(vr <= 120 && vr >= -120);
-    char buf[4];
+    char buf[12];
     buf[0] = 126; // doesnt matter
-    buf[1] = vl;
-    buf[2] = vr;
-    buf[3] = (++counter)%100;
+    buf[BOT_ID_TESTING*2 + 1] = vl;
+    buf[BOT_ID_TESTING*2 + 1] = vr;
+    buf[11] = (++counter)%100;
     qDebug() << "sending: " << vl << vr << counter%100 << ", packets sent = " << counter ;
     sendDataMutex->lock();  
-    comm.Write(buf, 4);
+    comm.Write(buf, 12);
     sendDataMutex->unlock();
 
     // store data in sysData
+    struct timeval nowTime;
+    gettimeofday(&nowTime, NULL);
+    float elapsedMs = (nowTime.tv_sec*1000.0+nowTime.tv_usec/1000.0);
     Logging::SystemData data;
     data.set_ts(counter%100);
+    data.set_timems(elapsedMs);
     {
-        Logging::RobotPose pose;
         Logging::Velocities sent, vision;
         sent.set_vl(vl);
         sent.set_vr(vr);
-        // calculation using VisionVelocity
-        float vl_vis, vr_vis;
-
+        vision.set_vl(bs.homeVl[BOT_ID_TESTING]);
+        vision.set_vr(bs.homeVr[BOT_ID_TESTING]);
+        *data.mutable_sent() = sent;
+        *data.mutable_vision() = vision;
     }
-//    data.mutable_pose() = Logging::RobotPose()
+    {
+        Logging::RobotPose pose;
+        pose.set_x(bs.homeX[BOT_ID_TESTING]);
+        pose.set_y(bs.homeY[BOT_ID_TESTING]);
+        pose.set_theta(bs.homeTheta[BOT_ID_TESTING]);
+        *data.mutable_pose() = pose;
+    }
+    sysData.push_back(data);
 }
 
 
@@ -391,14 +402,17 @@ void Dialog::on_stopSending_clicked()
 void Dialog::on_receiveButton_clicked()
 {
     sendDataMutex->lock();
-    comm.WriteByte(122);
+    char buf[2];
+    buf[0] = 122;
+    buf[1] = BOT_ID_TESTING;
+    comm.Write(buf, 2);
     sendDataMutex->unlock();
-    // int packetSize = 6;
+    // int packetSize = 7;
     char syncByte = 122;
     char endByte = 123;
     bool ok;
     int parity = 0;
-    char ts = 0, vl_target = 0, vr_target = 0, vl = 0, vr = 0;
+    char ts = 0, botid = 0, vl_target = 0, vr_target = 0, vl = 0, vr = 0;
     int upperLimit = 6*200; // don't want to get stuck reading.
     int byteCounter = 0;
     while (byteCounter++ < upperLimit) {
@@ -414,25 +428,33 @@ void Dialog::on_receiveButton_clicked()
                 parity++;
             break;
         case 1:
-            ts = b; parity++; break;
+            botid = b; parity++; break;
         case 2:
-            vl_target = b; parity++; break;
+            ts = b; parity++; break;
         case 3:
-            vr_target = b; parity++; break;
+            vl_target = b; parity++; break;
         case 4:
-            vl = b; parity++; break;
+            vr_target = b; parity++; break;
         case 5:
+            vl = b; parity++; break;
+        case 6:
             vr = b; parity = 0;
             char buf[100];
             sprintf(buf, "%d:\t\t(%d, %d) ->\t\t(%d, %d)\n", ts, vl_target, vr_target, vl, vr);
             ui->receiveDataTextEdit->insertPlainText(QString(buf));
+            Logging::ReceivedData data;
+
             break;
         }
     }
+    // clear logging structs
+    sysData.clear();
+    recvData.clear();
 
 }
 
 void Dialog::on_clearButton_clicked()
 {
     ui->receiveDataTextEdit->clear();
+
 }
