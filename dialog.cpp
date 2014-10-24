@@ -219,8 +219,7 @@ void Dialog::onAlgoTimeout()
     bsMutex->unlock();
     Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
     //Pose end = ui->firaRenderArea->getEndPose();
-    tattack(&state,BOT_ID_TESTING);
-    Pose end = tattack.execute(bs,BOT_ID_TESTING);
+    Pose end = tattack.execute(&bs,BOT_ID_TESTING);
     int vl, vr;
     algoController->genControls(start, end, vl, vr);    
 

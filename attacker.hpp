@@ -16,10 +16,9 @@ class TAttack
   Point2D<int> prevBotPos;
   float prevBotAngle;
   public:
-    TAttack(const BeliefState* state, int botID)
+    TAttack()
     {
       iState = APPROACHING;
-      hasAchievedOffset = 0;
     } // TAttack
 
     ~TAttack()
