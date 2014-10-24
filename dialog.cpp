@@ -218,7 +218,9 @@ void Dialog::onAlgoTimeout()
     BeliefState bs = *beliefStateSh;
     bsMutex->unlock();
     Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
-    Pose end = ui->firaRenderArea->getEndPose();
+    //Pose end = ui->firaRenderArea->getEndPose();
+    tattack(&state,BOT_ID_TESTING);
+    Pose end = tattack.execute(bs,BOT_ID_TESTING);
     int vl, vr;
     algoController->genControls(start, end, vl, vr);
     // getPredictedPose gives the predicted pose of the robot after PREDICTION_PACKET_DELAY ticks from now. We need to display what our

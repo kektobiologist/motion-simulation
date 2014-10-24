@@ -8,6 +8,8 @@
 #define GEOMETRY_H
 
 #include <cmath>
+#include <pose.h>
+#include "constants.h"
 
 #define PI  (3.14159265358979323f)
 #define INF (9999999)
@@ -250,4 +252,11 @@ inline float firaNormalizeAngle(float angle)
   else if(angle <= -PI/2) angle = angle + PI;
   return angle;
 }
+
+inline bool isPointinField(const Vector2D<int>& point){
+
+    if(abs(point.x) <= HALF_FIELD_MAXX && abs(point.y) <= HALF_FIELD_MAXY)return 1;
+    else return 0;
+}
+
 #endif // GEOMETRY_H

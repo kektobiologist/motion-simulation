@@ -15,6 +15,7 @@
 #include "beliefstate.h"
 #include <QMutex>
 #include "serial.h"
+#include "attacker.hpp"
 using namespace std;
 namespace Ui {
 class Dialog;
@@ -97,6 +98,7 @@ private:
     int counter;
     // so that comm.Write() commands don't overlap. ideally should also have a time gap between comm.Write() calls.
     QMutex *sendDataMutex;
+    TAttack tattack;
 };
 
 #endif // DIALOG_H

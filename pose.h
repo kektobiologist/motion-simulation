@@ -6,12 +6,11 @@
 #include <sys/time.h>
 #include <stdlib.h>
 #include "geometry.h"
+#include "constants.h"
 /* Pose defines the position and angle of the robot.
  * It is in REAL WORLD coordinates (m and radians).
  * NOTE: vl, vr are taken in ticks only. dt is in ms
  */
-const int HALF_FIELD_MAXX              = 3025;
-const int HALF_FIELD_MAXY              = 2050;
 class Pose
 {
     double x_, y_, theta_;

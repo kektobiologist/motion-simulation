@@ -45,7 +45,10 @@ HEADERS  += dialog.h \
     beliefstate.h \
     firarenderarea.h \
     serial.h \
-    vision-velocity.hpp
+    vision-velocity.hpp \
+    attacker.hpp \
+    attacker.hpp \
+    constants.h
 
 LIBS += -lgsl -lgslcblas -lprotobuf
 FORMS    += dialog.ui
