@@ -213,7 +213,7 @@ void Dialog::onTimeout()
 }
 
 void Dialog::onAlgoTimeout()
-{
+{    
     bsMutex->lock();
     BeliefState bs = *beliefStateSh;
     bsMutex->unlock();
@@ -222,7 +222,8 @@ void Dialog::onAlgoTimeout()
     tattack(&state,BOT_ID_TESTING);
     Pose end = tattack.execute(bs,BOT_ID_TESTING);
     int vl, vr;
-    algoController->genControls(start, end, vl, vr);
+    algoController->genControls(start, end, vl, vr);    
+
     // getPredictedPose gives the predicted pose of the robot after PREDICTION_PACKET_DELAY ticks from now. We need to display what our
     // prediction was PREDICTION_PACKET_DELAY ticks ago (i.e. what our prediction was for now).
     predictedPoseQ.push(algoController->getPredictedPose(start));
@@ -239,6 +240,20 @@ void Dialog::onAlgoTimeout()
     sendDataMutex->lock();  
     comm.Write(buf, 4);
     sendDataMutex->unlock();
+
+    // store data in sysData
+    Logging::SystemData data;
+    data.set_ts(counter%100);
+    {
+        Logging::RobotPose pose;
+        Logging::Velocities sent, vision;
+        sent.set_vl(vl);
+        sent.set_vr(vr);
+        // calculation using VisionVelocity
+        float vl_vis, vr_vis;
+
+    }
+//    data.mutable_pose() = Logging::RobotPose()
 }
 
 
