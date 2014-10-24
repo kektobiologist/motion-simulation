@@ -13,8 +13,8 @@ TEMPLATE = app
 CONFIG += link_pkgconfig
 PKGCONFIG += opencv
 
-PROTOFILES_CPP = proto/cpp/messages_robocup_ssl_detection.pb.cc proto/cpp/messages_robocup_ssl_geometry.pb.cc proto/cpp/messages_robocup_ssl_refbox_log.pb.cc proto/cpp/messages_robocup_ssl_wrapper.pb.cc
-PROTOFILES_H = proto/cpp/messages_robocup_ssl_detection.pb.h proto/cpp/messages_robocup_ssl_geometry.pb.h proto/cpp/messages_robocup_ssl_refbox_log.pb.h proto/cpp/messages_robocup_ssl_wrapper.pb.h
+PROTOFILES_CPP = proto/cpp/messages_robocup_ssl_detection.pb.cc proto/cpp/messages_robocup_ssl_geometry.pb.cc proto/cpp/messages_robocup_ssl_refbox_log.pb.cc proto/cpp/messages_robocup_ssl_wrapper.pb.cc proto/cpp/logging.pb.cc
+PROTOFILES_H = proto/cpp/messages_robocup_ssl_detection.pb.h proto/cpp/messages_robocup_ssl_geometry.pb.h proto/cpp/messages_robocup_ssl_refbox_log.pb.h proto/cpp/messages_robocup_ssl_wrapper.pb.h proto/cpp/logging.pb.h
 
 NETFILES_H = net/netraw.h net/robocup_ssl_client.h
 NETFILES_CPP = net/netraw.cpp net/robocup_ssl_client.cpp

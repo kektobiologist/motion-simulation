@@ -18,7 +18,7 @@
 using namespace std;
 // NOTE(arpit): PREDICTION_PACKET_DELAY is NOT used in simulation. It is used to predict bot position in actual run,
 // as well as the algoController delay
-static const int PREDICTION_PACKET_DELAY = 3;
+static const int PREDICTION_PACKET_DELAY = 0;
 // bot used for testing (non-sim)
 static const int BOT_ID_TESTING = 0;
 Dialog::Dialog(QWidget *parent) :
@@ -261,25 +261,37 @@ void Dialog::on_batchButton_clicked()
 void Dialog::regression(vector<RegData> func)
 {
     int n = func.size();
-    gsl_matrix *X = gsl_matrix_calloc(n, 2);
+    gsl_matrix *X = gsl_matrix_calloc(n, 7);
     gsl_vector *Y = gsl_vector_alloc(n);
-    gsl_vector *beta = gsl_vector_alloc(2);
+    gsl_vector *beta = gsl_vector_alloc(7);
 
     for (int i = 0; i < n; i++) {
         gsl_vector_set(Y, i, func[i].timeMs);
 
 //        gsl_matrix_set(X, i, 0, 1);
-        gsl_matrix_set(X, i, 0, pow(func[i].rho, 1/2.0));
-        gsl_matrix_set(X, i, 1, pow(func[i].rho, 1/3.0));
+        gsl_matrix_set(X, i, 0, pow(func[i].rho, 1));
+        gsl_matrix_set(X, i, 1, pow(func[i].rho, 1/2.0));
+        gsl_matrix_set(X, i, 2, pow(fabs(func[i].gamma), 1));
+        gsl_matrix_set(X, i, 3, pow(fabs(func[i].delta), 1));
+        gsl_matrix_set(X, i, 4, pow(fabs(func[i].gamma), 2));
+        gsl_matrix_set(X, i, 5, pow(fabs(func[i].delta), 2));
+        gsl_matrix_set(X, i, 6, pow(fabs(normalizeAngle(func[i].gamma - func[i].delta)), 2));
 //        gsl_matrix_set(X, i, 1, func[i].gamma);
 //        gsl_matrix_set(X, i, 1, func[i].delta);
     }
 
     double chisq;
-    gsl_matrix *cov = gsl_matrix_alloc(2, 2);
-    gsl_multifit_linear_workspace * wspc = gsl_multifit_linear_alloc(n, 2);
+    gsl_matrix *cov = gsl_matrix_alloc(7, 7);
+    gsl_multifit_linear_workspace * wspc = gsl_multifit_linear_alloc(n, 7);
     gsl_multifit_linear(X, Y, beta, cov, &chisq, wspc);
-    qDebug() << "Beta = " << gsl_vector_get(beta, 0) << ", " << gsl_vector_get(beta, 1) << ", chisq = " << chisq;// << ", " << gsl_vector_get(beta, 2);
+    qDebug() << "Beta = " << gsl_vector_get(beta, 0)
+             << ", " << gsl_vector_get(beta, 1)
+             << ", " << gsl_vector_get(beta, 2)
+             << ", " << gsl_vector_get(beta, 3)
+             << ", " << gsl_vector_get(beta, 4)
+             << ", " << gsl_vector_get(beta, 5)
+             << ", " << gsl_vector_get(beta, 6)
+             <<  ", chisq = " << chisq;// << ", " << gsl_vector_get(beta, 2);
 
     gsl_matrix_free(X);
     gsl_matrix_free(cov);
