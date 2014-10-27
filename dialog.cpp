@@ -218,8 +218,8 @@ void Dialog::onAlgoTimeout()
     BeliefState bs = *beliefStateSh;
     bsMutex->unlock();
     Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
-    //Pose end = ui->firaRenderArea->getEndPose();
-    Pose end = tattack.execute(&bs,BOT_ID_TESTING);
+    Pose end = ui->firaRenderArea->getEndPose();
+//    Pose end = tattack.execute(&bs,BOT_ID_TESTING);
     int vl, vr;
     algoController->genControls(start, end, vl, vr);    
 
@@ -233,7 +233,7 @@ void Dialog::onAlgoTimeout()
     char buf[12];
     buf[0] = 126; // doesnt matter
     buf[BOT_ID_TESTING*2 + 1] = vl;
-    buf[BOT_ID_TESTING*2 + 1] = vr;
+    buf[BOT_ID_TESTING*2 + 2] = vr;
     buf[11] = (++counter)%100;
     qDebug() << "sending: " << vl << vr << counter%100 << ", packets sent = " << counter ;
     sendDataMutex->lock();  

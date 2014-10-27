@@ -152,7 +152,7 @@ class TAttack
           offset/=1.25;
           /// log search to place offset at a point not co-inciding with a bot.
           Point2D<int> offsetpt(x3,y3);
-          while(1)
+          /*while(1)
           {
             bool flag = false;
             for(int i=0; i < 5; i++)
@@ -186,7 +186,8 @@ class TAttack
               //y3 = (ballPosY * (ballgoaldist + offset)) / ballgoaldist;
               break;
             }
-          }
+          }*/
+
           int dist2 = Vector2D<int>::dist(offsetpt, homePos);
           if(dist2 < 200)
             hasAchievedOffset = 1;
