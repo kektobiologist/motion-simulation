@@ -165,6 +165,13 @@
           <widget class="QPlainTextEdit" name="receiveDataTextEdit"/>
          </item>
          <item>
+          <widget class="QLineEdit" name="logFileLineEdit">
+           <property name="text">
+            <string>/home/robocup/motion-simulation/logs/1</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QPushButton" name="clearButton">
            <property name="text">
             <string>Clear</string>
