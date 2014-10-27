@@ -14,6 +14,8 @@
 #include <unistd.h>
 #include "visionworker.h"
 #include "vision-velocity.hpp"
+#include "logging.hpp"
+#include <fstream>
 
 using namespace std;
 // NOTE(arpit): PREDICTION_PACKET_DELAY is NOT used in simulation. It is used to predict bot position in actual run,
@@ -232,7 +234,7 @@ void Dialog::onAlgoTimeout()
     char buf[12];
     buf[0] = 126; // doesnt matter
     buf[BOT_ID_TESTING*2 + 1] = vl;
-    buf[BOT_ID_TESTING*2 + 1] = vr;
+    buf[BOT_ID_TESTING*2 + 2] = vr;
     buf[11] = (++counter)%100;
     qDebug() << "sending: " << vl << vr << counter%100 << ", packets sent = " << counter ;
     sendDataMutex->lock();  
@@ -240,29 +242,7 @@ void Dialog::onAlgoTimeout()
     sendDataMutex->unlock();
 
     // store data in sysData
-    struct timeval nowTime;
-    gettimeofday(&nowTime, NULL);
-    float elapsedMs = (nowTime.tv_sec*1000.0+nowTime.tv_usec/1000.0);
-    Logging::SystemData data;
-    data.set_ts(counter%100);
-    data.set_timems(elapsedMs);
-    {
-        Logging::Velocities sent, vision;
-        sent.set_vl(vl);
-        sent.set_vr(vr);
-        vision.set_vl(bs.homeVl[BOT_ID_TESTING]);
-        vision.set_vr(bs.homeVr[BOT_ID_TESTING]);
-        *data.mutable_sent() = sent;
-        *data.mutable_vision() = vision;
-    }
-    {
-        Logging::RobotPose pose;
-        pose.set_x(bs.homeX[BOT_ID_TESTING]);
-        pose.set_y(bs.homeY[BOT_ID_TESTING]);
-        pose.set_theta(bs.homeTheta[BOT_ID_TESTING]);
-        *data.mutable_pose() = pose;
-    }
-    sysData.push_back(data);
+    sysData.push_back(Logging::populateSystemData(counter%100, vl, vr, bs, BOT_ID_TESTING));
 }
 
 
@@ -383,15 +363,15 @@ void Dialog::on_startSending_clicked()
 void Dialog::on_stopSending_clicked()
 {
     algoTimer->stop();
-    char buf[4];
+    char buf[12];
     buf[0] = 126; // doesnt matter;
-    buf[1] = buf[2] = 0;
-    buf[3] = 0; // timestamp
+    buf[BOT_ID_TESTING*2+1] = buf[BOT_ID_TESTING*2+2] = 0;
+    buf[11] = (++counter)%100; // timestamp
     sendDataMutex->lock();
     usleep(timeLCMs * 1000);
-    comm.Write(buf, 4);
+    comm.Write(buf, 12);
     sendDataMutex->unlock();
-    qDebug() << "sending: 0 0 0, packets sent = " << ++counter;
+    qDebug() << "sending: 0 0 0, packets sent = " << counter;
     if(algoController) {
         delete algoController;
         algoController = NULL;
@@ -441,15 +421,26 @@ void Dialog::on_receiveButton_clicked()
             char buf[100];
             sprintf(buf, "%d:\t\t(%d, %d) ->\t\t(%d, %d)\n", ts, vl_target, vr_target, vl, vr);
             ui->receiveDataTextEdit->insertPlainText(QString(buf));
-            Logging::ReceivedData data;
-
+            recvData.push_back(Logging::populateReceivedData(botid, ts, vl_target, vr_target, vl, vr));
             break;
         }
     }
+    if (recvData.size())
+        recvData.pop_back();  // removing the stop command packet.
+    vector<Logging::LoggingData> loggingData = Logging::mergeSysRecvLists(sysData, recvData);
+    fstream output(ui->logFileLineEdit->text().toStdString().c_str(),  ios::out | ios::trunc | ios::binary);
+    if (!output.is_open()) {
+        qDebug() << "Failed to open output file " << ui->logFileLineEdit->text();
+    }
+    for (int i = 0; i < loggingData.size(); i++) {
+        if (!loggingData[i].SerializeToOstream(&output)) {
+            qDebug() << "Failed to write log to file.";
+        }
+    }
+    output.close();
     // clear logging structs
     sysData.clear();
     recvData.clear();
-
 }
 
 void Dialog::on_clearButton_clicked()

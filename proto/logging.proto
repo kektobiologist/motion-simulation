@@ -28,5 +28,5 @@ message SystemData {
 
 message LoggingData {
 	required SystemData sysData    = 1;
-  required ReceivedData recvData = 2;
+  optional ReceivedData recvData = 2;
 }
