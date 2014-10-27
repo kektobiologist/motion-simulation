@@ -76,6 +76,7 @@ private:
     HAL::Serial comm;
     QTimer *algoTimer; //algoTimer for calling controller every 20ms. need to change to seperate thread.
     ControllerWrapper *algoController;
+    ControllerWrapper *algoController_near;
     // NOTE(arpit): not used in sim. Queue of predicted pose, size of q = PREDICTION_PACKET_DELAY. Needed because we need to display
     // old predictions side-by-side with the actual position of the bot.
     std::queue<Pose> predictedPoseQ;

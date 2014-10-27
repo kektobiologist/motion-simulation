@@ -28,6 +28,7 @@ Dialog::Dialog(QWidget *parent) :
     ui(new Ui::Dialog)
 {
     algoController = NULL;
+    algoController_near = NULL;
     srand(time(NULL));
     ui->setupUi(this);
     timer = new QTimer();
@@ -220,14 +221,23 @@ void Dialog::onAlgoTimeout()
     BeliefState bs = *beliefStateSh;
     bsMutex->unlock();
     Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
-    Pose end = ui->firaRenderArea->getEndPose();
-//    Pose end = tattack.execute(&bs,BOT_ID_TESTING);
+    //Pose end = ui->firaRenderArea->getEndPose();
+    Pose end = tattack.execute(&bs,BOT_ID_TESTING);
+//    Pose end(bs.ballX,bs.ballY,0);
     int vl, vr;
-    algoController->genControls(start, end, vl, vr);    
+    if(((start.x()-end.x())*(start.x()-end.x()) + (start.y()-end.y())*(start.y()-end.y())) > 250000){
+        algoController->genControls(start, end, vl, vr);
+        predictedPoseQ.push(algoController->getPredictedPose(start));
+    }
+    else{
+        algoController_near->genControls(start,end,vl,vr);
+        predictedPoseQ.push(algoController_near->getPredictedPose(start));
+    }
 
+    qDebug() << ((start.x()-end.x())*(start.x()-end.x()) + (start.y()-end.y())*(start.y()-end.y())) << "\n";
     // getPredictedPose gives the predicted pose of the robot after PREDICTION_PACKET_DELAY ticks from now. We need to display what our
     // prediction was PREDICTION_PACKET_DELAY ticks ago (i.e. what our prediction was for now).
-    predictedPoseQ.push(algoController->getPredictedPose(start));
+
     ui->firaRenderArea->predictedPose = predictedPoseQ.front();
     predictedPoseQ.pop();
     assert(vl <= 120 && vl >= -120);
@@ -350,6 +360,7 @@ double Dialog::fitnessFunction(double k1, double k2, double k3)
 void Dialog::on_startSending_clicked()
 {
     algoController = new ControllerWrapper(Controllers::PolarBidirectional, PREDICTION_PACKET_DELAY);
+    algoController_near = new ControllerWrapper(Controllers::kgpkubs, PREDICTION_PACKET_DELAY);
     while(!predictedPoseQ.empty())
         predictedPoseQ.pop();
     bsMutex->lock();
@@ -376,6 +387,10 @@ void Dialog::on_stopSending_clicked()
     if(algoController) {
         delete algoController;
         algoController = NULL;
+    }
+    if(algoController_near){
+        delete algoController_near;
+        algoController_near = NULL;
     }
 }
 
