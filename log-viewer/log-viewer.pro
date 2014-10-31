@@ -13,15 +13,20 @@ TEMPLATE = app
 SOURCES += main.cpp\
         dialog.cpp \
     ../proto/cpp/logging.pb.cc \
-    firarenderarea.cpp \
     ../beliefstate.cpp \
-    ../pose.cpp
+    ../pose.cpp \
+    firarenderarea2.cpp
 
 HEADERS  += dialog.h \
     ../proto/cpp/logging.pb.h \
-    firarenderarea.h \
     ../beliefstate.h \
     ../pose.h \
-    ../geometry.h
+    ../geometry.h \
+    firarenderarea2.h
+
+INCLUDEPATH += ../ \
+               ../proto/cpp
 
 FORMS    += dialog.ui
+
+LIBS += -lprotobuf

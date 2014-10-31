@@ -6,14 +6,14 @@
 
 namespace Logging {
 
-vector<LoggingData> mergeSysRecvLists(const vector<SystemData> &sysData, const vector<ReceivedData> &recvData) {
+Log mergeSysRecvLists(const vector<SystemData> &sysData, const vector<ReceivedData> &recvData) {
     if (recvData.size() > sysData.size()) {
-        qDebug() << "SystemData < ReceivedData. Aborting.";
-        return vector<LoggingData>();
+        qDebug() << "SystemData = " << sysData.size() << " < ReceivedData = " << recvData.size() <<". Aborting.";
+        return Log();
     }
     int idx = sysData.size() - 1;  // corresponding idx in the sysData arr.
     vector<LoggingData> loggingData;
-    for (int i = recvData.size() - 1; i >= 0; i--) {
+    for (int i = recvData.size() - 1; i >= 0; i--, idx--) {
         while (idx >= 0 && sysData[idx].ts() != recvData[i].ts()) {
             LoggingData data;
             *data.mutable_sysdata() = sysData[idx--];
@@ -29,7 +29,11 @@ vector<LoggingData> mergeSysRecvLists(const vector<SystemData> &sysData, const v
         loggingData.push_back(data);
     }
     std::reverse(loggingData.begin(), loggingData.end());
-    return loggingData;
+    Log log;
+    for (unsigned int i = 0; i < loggingData.size(); i++) {
+        *log.add_data() = loggingData[i];
+    }
+    return log;
 }
 
 SystemData populateSystemData(int ts, int vl_sent, int vr_sent, const BeliefState &bs, int botid) {
@@ -37,6 +41,7 @@ SystemData populateSystemData(int ts, int vl_sent, int vr_sent, const BeliefStat
     gettimeofday(&nowTime, NULL);
     float elapsedMs = (nowTime.tv_sec*1000.0+nowTime.tv_usec/1000.0);
     Logging::SystemData data;
+    data.set_id(botid);
     data.set_ts(ts);
     data.set_timems(elapsedMs);
     {

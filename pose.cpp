@@ -63,19 +63,19 @@ void Pose::update_2(int vl_ticks, int vr_ticks, double dt)
     update_1(vl, vr, dt);
 }
 
-double Pose::x()
+double Pose::x() const
 {
     double withError =  x_ * fieldXConvert + randStdNormal()*HALF_FIELD_MAXX*xUncertainty/100.0;
     return withError;
 }
 
-double Pose::y()
+double Pose::y() const
 {
     double withError =  y_ * fieldYConvert + randStdNormal()*HALF_FIELD_MAXY*yUncertainty/100.0;
     return withError;
 }
 
-double Pose::theta()
+double Pose::theta() const
 {
     double withError = normalizeAngle(theta_ + thetaUncertainty*randStdNormal()*PI/100);
     return withError;

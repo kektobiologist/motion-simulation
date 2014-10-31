@@ -47,7 +47,9 @@ void VisionWorker::setup(QThread *cThread, BeliefState *bs_, QMutex *bsMutex_)
     bsMutex = bsMutex_;
     connect(cThread, SIGNAL(started()), this, SLOT(onEntry()));
     connect(cThread, SIGNAL(destroyed()), this, SLOT(onExit()));
-    gettimeofday(&lastTime, NULL);
+    for (int i = 0; i < MAX_BS_Q; i++) {
+        bsQ.push(make_pair(BeliefState(), 0));
+    }
 }
 
 void VisionWorker::onEntry()
@@ -59,11 +61,12 @@ void VisionWorker::onEntry()
     while(true) {
         if (client.receive(packet)) {
             if (packet.has_detection()) {
-                struct timeval nowTime;
-                gettimeofday(&nowTime, NULL);
-                double timeMs = (nowTime.tv_sec*1000.0+nowTime.tv_usec/1000.0) - (lastTime.tv_sec*1000.0+lastTime.tv_usec/1000.0);
-                assert(timeMs > 0);
-                lastTime = nowTime;
+                double nowTime = packet.detection().t_capture();
+                double timeMs = (nowTime - bsQ.front().second)*1000.0;
+                if (timeMs <= 0) {
+                    timeMs = 0.001; // this can happen at the beginning. who cares.
+                    qDebug() << "timeMs is negative!";
+                }
                 detectionCount++;
                 if(detectionCount == maxDetectionCount) {
                     detectionCount = 0;
@@ -92,7 +95,7 @@ void VisionWorker::onEntry()
                     ballX = ball.x();
                     ballY = ball.y();
                     linearTransform(ballX, ballY, dummy);
-                    VisionVelocity::calcBallVelocity(ballX - bs->ballX, ballY - bs->ballY, timeMs, ballVx, ballVy);
+                    VisionVelocity::calcBallVelocity(ballX - bsQ.front().first.ballX, ballY - bsQ.front().first.ballY, timeMs, ballVx, ballVy);
                     bsMutex->lock();
                     bs->ballX = ballX;
                     bs->ballY = ballY;
@@ -117,7 +120,7 @@ void VisionWorker::onEntry()
                     else
                         botTheta = 0;
                     linearTransform(botX, botY, botTheta);
-                    VisionVelocity::BotPose p1(bs->homeX[botId], bs->homeY[botId], bs->homeTheta[botId]);
+                    VisionVelocity::BotPose p1(bsQ.front().first.homeX[botId], bsQ.front().first.homeY[botId], bsQ.front().first.homeTheta[botId]);
                     VisionVelocity::BotPose p2(botX, botY, botTheta);
                     VisionVelocity::calcBotVelocity(p1, p2, timeMs, botVl, botVr);
                     bsMutex->lock();
@@ -144,7 +147,7 @@ void VisionWorker::onEntry()
                     else
                         botTheta = 0;
                     linearTransform(botX, botY, botTheta);
-                    VisionVelocity::BotPose p1(bs->awayX[botId], bs->awayY[botId], bs->awayTheta[botId]);
+                    VisionVelocity::BotPose p1(bsQ.front().first.awayX[botId], bsQ.front().first.awayY[botId], bsQ.front().first.awayTheta[botId]);
                     VisionVelocity::BotPose p2(botX, botY, botTheta);
                     VisionVelocity::calcBotVelocity(p1, p2, timeMs, botVl, botVr);
                     bsMutex->lock();
@@ -156,8 +159,11 @@ void VisionWorker::onEntry()
                     bs->awayIsPresent[botId] = true;
                     bsMutex->unlock();
                 }
+                bsQ.pop();
+                bsMutex->lock();
+                bsQ.push(make_pair(*bs, nowTime));
+                bsMutex->unlock();
                 emit newData();
-
             }
 
         }

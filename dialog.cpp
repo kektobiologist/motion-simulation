@@ -20,7 +20,7 @@
 using namespace std;
 // NOTE(arpit): PREDICTION_PACKET_DELAY is NOT used in simulation. It is used to predict bot position in actual run,
 // as well as the algoController delay
-static const int PREDICTION_PACKET_DELAY = 0;
+static const int PREDICTION_PACKET_DELAY = 6;
 // bot used for testing (non-sim)
 static const int BOT_ID_TESTING = 0;
 Dialog::Dialog(QWidget *parent) :
@@ -33,7 +33,7 @@ Dialog::Dialog(QWidget *parent) :
     timer = new QTimer();
     Pose start = ui->renderArea->getStartPose();
     Pose end = ui->renderArea->getEndPose();
-    simulate(start, end, &Controllers::kgpkubs);
+    simulate(start, end, &Controllers::kgpkubs, 0, 0);
     ui->horizontalSlider->setRange(0, NUMTICKS-1);
     connect(ui->horizontalSlider, SIGNAL(valueChanged(int)), this, SLOT(onCurIdxChanged(int)));
     connect(timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
@@ -57,6 +57,8 @@ Dialog::Dialog(QWidget *parent) :
     ui->firaRenderArea->beliefStateSh = beliefStateSh;
     ui->firaRenderArea->bsMutex = bsMutex;
     connect(vw, SIGNAL(newData()), ui->firaRenderArea, SLOT(update()));
+    // Removing this, i think it slows down everything.
+//    connect(vw, SIGNAL(newData()), this, SLOT(onNewData()));
     algoTimer = new QTimer();
     connect(algoTimer, SIGNAL(timeout()), this, SLOT(onAlgoTimeout()));
     if(!comm.Open("/dev/ttyUSB0", 38400)) {
@@ -78,13 +80,13 @@ Dialog::~Dialog()
 
 
 
-double Dialog::simulate(Pose startPose, Pose endPose, FType func, bool isBatch)
+double Dialog::simulate(Pose startPose, Pose endPose, FType func, int start_vl, int start_vr, bool isBatch)
 {
     poses[0] = startPose;
     //simulating behaviour for all ticks at once
     int endFlag = 0;
     double timeMs = std::numeric_limits<double>::max();
-    ControllerWrapper dc(func, Pose::numPacketDelay);
+    ControllerWrapper dc(func, start_vl, start_vr, Pose::numPacketDelay);
     for(int i=1; i < NUMTICKS; i++)
     {
         poses[i] = poses[i-1];
@@ -127,7 +129,11 @@ void Dialog::batchSimulation(FType fun)
         }
         Pose start(x1, y1, theta1);
         Pose end(x2, y2, theta2);
-        double timeMs = simulate(start, end, fun, true);
+        int start_vl = rand()%((int)MAX_BOT_SPEED+1) * (rand()%2?-1:1);
+        int start_vr = rand()%((int)MAX_BOT_SPEED+1) * (rand()%2?-1:1);
+        // just set start vel as max only...
+        start_vl = start_vr = MAX_BOT_SPEED;
+        double timeMs = simulate(start, end, fun, start_vl, start_vr, true);
         {
             // calculate rho, gamma, delta
             Pose s(x1, y1, theta1);
@@ -141,7 +147,7 @@ void Dialog::batchSimulation(FType fun)
             double rho = sqrt(initial.x*initial.x + initial.y*initial.y);
             double gamma = normalizeAngle(atan2(initial.y, initial.x) - theta + PI);
             double delta = normalizeAngle(gamma + theta);
-            func.push_back(RegData(rho, gamma, delta, timeMs));
+            func.push_back(RegData(rho, gamma, delta, start_vl, start_vr, timeMs));
             char buf[1000];
             sprintf(buf, "%g %g %g %g", rho, fabs(gamma), fabs(delta), timeMs);
             ui->textEdit->append(buf);
@@ -233,6 +239,10 @@ void Dialog::onAlgoTimeout()
     assert(vr <= 120 && vr >= -120);
     char buf[12];
     buf[0] = 126; // doesnt matter
+    // NOTE: testing, remove these 2 lines pls
+//    vl = 80;
+//    vr = 80;
+
     buf[BOT_ID_TESTING*2 + 1] = vl;
     buf[BOT_ID_TESTING*2 + 2] = vr;
     buf[11] = (++counter)%100;
@@ -245,13 +255,25 @@ void Dialog::onAlgoTimeout()
     sysData.push_back(Logging::populateSystemData(counter%100, vl, vr, bs, BOT_ID_TESTING));
 }
 
+void Dialog::onNewData()
+{
+    bsMutex->lock();
+    BeliefState bs = *beliefStateSh;
+    bsMutex->unlock();
+    // print ball pos
+    if (bs.ballIsPresent)
+        ui->ballPosLabel->setText(QString("Ball: %1, %2").arg(QString::number(bs.ballX), QString::number(bs.ballY)));
+    else
+        ui->ballPosLabel->setText("Ball: -");
+}
+
 
 void Dialog::on_simButton_clicked()
 {
     Pose start = ui->renderArea->getStartPose();
     Pose end = ui->renderArea->getEndPose();
     FType fun = functions[ui->simCombo->currentIndex()].second;
-    double timeMs = simulate(start, end, fun);
+    double timeMs = simulate(start, end, fun, 0, 0);
     qDebug() << "Bot reached at time tick = " << timeMs/timeLCMs;
     onCurIdxChanged(0);
     on_resetButton_clicked();
@@ -267,36 +289,37 @@ void Dialog::on_batchButton_clicked()
 void Dialog::regression(vector<RegData> func)
 {
     int n = func.size();
-    gsl_matrix *X = gsl_matrix_calloc(n, 7);
+    gsl_matrix *X = gsl_matrix_calloc(n, 4);
     gsl_vector *Y = gsl_vector_alloc(n);
-    gsl_vector *beta = gsl_vector_alloc(7);
+    gsl_vector *beta = gsl_vector_alloc(4);
 
     for (int i = 0; i < n; i++) {
         gsl_vector_set(Y, i, func[i].timeMs);
-
+        double v_trans = (func[i].v_l + func[i].v_r)/2;
+        double v_rot = (func[i].v_r - func[i].v_l)/Pose::d;
 //        gsl_matrix_set(X, i, 0, 1);
         gsl_matrix_set(X, i, 0, pow(func[i].rho, 1));
         gsl_matrix_set(X, i, 1, pow(func[i].rho, 1/2.0));
-        gsl_matrix_set(X, i, 2, pow(fabs(func[i].gamma), 1));
-        gsl_matrix_set(X, i, 3, pow(fabs(func[i].delta), 1));
-        gsl_matrix_set(X, i, 4, pow(fabs(func[i].gamma), 2));
-        gsl_matrix_set(X, i, 5, pow(fabs(func[i].delta), 2));
-        gsl_matrix_set(X, i, 6, pow(fabs(normalizeAngle(func[i].gamma - func[i].delta)), 2));
+        gsl_matrix_set(X, i, 2, pow(fabs(v_trans), 1));
+        gsl_matrix_set(X, i, 3, pow(fabs(v_rot), 1));
+//        gsl_matrix_set(X, i, 4, pow(fabs(func[i].gamma), 2));
+//        gsl_matrix_set(X, i, 5, pow(fabs(func[i].delta), 2));
+//        gsl_matrix_set(X, i, 6, pow(fabs(normalizeAngle(func[i].gamma - func[i].delta)), 2));
 //        gsl_matrix_set(X, i, 1, func[i].gamma);
 //        gsl_matrix_set(X, i, 1, func[i].delta);
     }
 
     double chisq;
-    gsl_matrix *cov = gsl_matrix_alloc(7, 7);
-    gsl_multifit_linear_workspace * wspc = gsl_multifit_linear_alloc(n, 7);
+    gsl_matrix *cov = gsl_matrix_alloc(4, 4);
+    gsl_multifit_linear_workspace * wspc = gsl_multifit_linear_alloc(n, 4);
     gsl_multifit_linear(X, Y, beta, cov, &chisq, wspc);
     qDebug() << "Beta = " << gsl_vector_get(beta, 0)
              << ", " << gsl_vector_get(beta, 1)
              << ", " << gsl_vector_get(beta, 2)
              << ", " << gsl_vector_get(beta, 3)
-             << ", " << gsl_vector_get(beta, 4)
-             << ", " << gsl_vector_get(beta, 5)
-             << ", " << gsl_vector_get(beta, 6)
+//             << ", " << gsl_vector_get(beta, 4)
+//             << ", " << gsl_vector_get(beta, 5)
+//             << ", " << gsl_vector_get(beta, 6)
              <<  ", chisq = " << chisq;// << ", " << gsl_vector_get(beta, 2);
 
     gsl_matrix_free(X);
@@ -348,7 +371,7 @@ double Dialog::fitnessFunction(double k1, double k2, double k3)
 
 void Dialog::on_startSending_clicked()
 {
-    algoController = new ControllerWrapper(Controllers::PolarBidirectional, PREDICTION_PACKET_DELAY);
+    algoController = new ControllerWrapper(Controllers::PolarBidirectional, 0, 0, PREDICTION_PACKET_DELAY);
     while(!predictedPoseQ.empty())
         predictedPoseQ.pop();
     bsMutex->lock();
@@ -371,6 +394,11 @@ void Dialog::on_stopSending_clicked()
     usleep(timeLCMs * 1000);
     comm.Write(buf, 12);
     sendDataMutex->unlock();
+    // store data in sysData
+    bsMutex->lock();
+    BeliefState bs = *beliefStateSh;
+    bsMutex->unlock();
+    sysData.push_back(Logging::populateSystemData(counter%100, 0, 0, bs, BOT_ID_TESTING));
     qDebug() << "sending: 0 0 0, packets sent = " << counter;
     if(algoController) {
         delete algoController;
@@ -378,8 +406,8 @@ void Dialog::on_stopSending_clicked()
     }
 }
 
-void Dialog::on_receiveButton_clicked()
-{
+// temp function for usage here only
+void Dialog::readDataAndAppendToLog() {
     sendDataMutex->lock();
     char buf[2];
     buf[0] = 122;
@@ -393,11 +421,15 @@ void Dialog::on_receiveButton_clicked()
     int parity = 0;
     char ts = 0, botid = 0, vl_target = 0, vr_target = 0, vl = 0, vr = 0;
     int upperLimit = 6*200; // don't want to get stuck reading.
+    int maxMisreadsAllowed = 100;
+    int numMisreads = 0;
     int byteCounter = 0;
-    while (byteCounter++ < upperLimit) {
+    while (byteCounter++ < upperLimit && numMisreads < maxMisreadsAllowed) {
         char b = comm.ReadByteTimeout(20, ok);
         if (!ok) {
             qDebug() << "no ok read!";
+            numMisreads++;
+            continue;
         }
         if (b == endByte)
             break;
@@ -425,26 +457,41 @@ void Dialog::on_receiveButton_clicked()
             break;
         }
     }
-    if (recvData.size())
-        recvData.pop_back();  // removing the stop command packet.
-    vector<Logging::LoggingData> loggingData = Logging::mergeSysRecvLists(sysData, recvData);
-    fstream output(ui->logFileLineEdit->text().toStdString().c_str(),  ios::out | ios::trunc | ios::binary);
-    if (!output.is_open()) {
-        qDebug() << "Failed to open output file " << ui->logFileLineEdit->text();
+//    if (recvData.size())
+//        recvData.pop_back();  // removing the stop command packet.
+
+    Logging::Log log_temp = Logging::mergeSysRecvLists(sysData, recvData);
+    for (int i = 0; i < log_temp.data_size(); i++) {
+        *log.add_data() = log_temp.data(i);
     }
-    for (int i = 0; i < loggingData.size(); i++) {
-        if (!loggingData[i].SerializeToOstream(&output)) {
-            qDebug() << "Failed to write log to file.";
-        }
-    }
-    output.close();
+
     // clear logging structs
     sysData.clear();
     recvData.clear();
 }
 
+void Dialog::on_receiveButton_clicked()
+{
+    readDataAndAppendToLog();
+}
+
 void Dialog::on_clearButton_clicked()
 {
-    ui->receiveDataTextEdit->clear();
+    log.clear_data();
+    ui->receiveDataTextEdit->clear();    
+}
 
+void Dialog::on_writeLogButton_clicked()
+{
+    fstream output(ui->logFileLineEdit->text().toStdString().c_str(),  ios::out | ios::trunc | ios::binary);
+    if (!output.is_open()) {
+        qDebug() << "Failed to open output file " << ui->logFileLineEdit->text();
+    }
+    if (!log.SerializeToOstream(&output))
+        qDebug() << "Failed to write log to file.";
+    qDebug() << "Successfully wrote log to " << ui->logFileLineEdit->text();
+    output.close();
+    log.clear_data();
+    sysData.clear();
+    recvData.clear();
 }

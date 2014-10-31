@@ -36,9 +36,9 @@ class ControllerWrapper { // a wrapper to implement controller for a robot. Curr
     double prevSpeed; //storing seperately since k = 0 means uq is empty
     int k;                    // the num of packet delay
 public:
-    ControllerWrapper(FType fun, int k):fun(fun), k(k) {
+    ControllerWrapper(FType fun, int start_vl, int start_vr, int k):fun(fun), k(k) {
         for(int i = 0; i < k; i++)
-            uq.push_back(make_pair<int,int>(0,0));
+            uq.push_back(make_pair<int,int>(start_vl,start_vr));
         prevSpeed = 0;
     }
     Pose getPredictedPose(Pose s) {

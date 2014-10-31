@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>motion-simulation</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_2">
    <item row="0" column="0">
@@ -119,20 +119,31 @@
       </attribute>
       <layout class="QHBoxLayout" name="horizontalLayout_4">
        <item>
-        <widget class="FIRARenderArea" name="firaRenderArea" native="true">
-         <property name="minimumSize">
-          <size>
-           <width>605</width>
-           <height>410</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>605</width>
-           <height>410</height>
-          </size>
-         </property>
-        </widget>
+        <layout class="QVBoxLayout" name="verticalLayout_3">
+         <item>
+          <widget class="QLabel" name="ballPosLabel">
+           <property name="text">
+            <string>Ball:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="FIRARenderArea" name="firaRenderArea" native="true">
+           <property name="minimumSize">
+            <size>
+             <width>605</width>
+             <height>410</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>605</width>
+             <height>410</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
        <item>
         <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -168,6 +179,13 @@
           <widget class="QLineEdit" name="logFileLineEdit">
            <property name="text">
             <string>/home/robocup/motion-simulation/logs/1</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="writeLogButton">
+           <property name="text">
+            <string>Write Log</string>
            </property>
           </widget>
          </item>

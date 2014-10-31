@@ -6,7 +6,11 @@
 #include "beliefstate.h"
 #include <QMutex>
 #include <sys/time.h>
+#include <queue>
+#include <utility>
+#include <algorithm>
 
+using namespace std;
 class VisionWorker : public QObject
 {
     Q_OBJECT
@@ -19,12 +23,16 @@ public slots:
     void onEntry();
     void onExit();
 private:
-    int detectionCount; //
+    int detectionCount;
     static const int maxDetectionCount = 10; // after every these many detections, everything will be set as not detected
     QThread *myThread;
     BeliefState *bs;
     QMutex *bsMutex;
-    struct timeval lastTime;
+    // for velocity calc, just seeing last packet might give poor results
+    // instead, look at old pose (and time) k packets ago
+    std::queue<pair<BeliefState, double> > bsQ;
+    // NOTE: can't be less than 1!
+    static const int MAX_BS_Q = 2;
 };
 
 #endif // VISIONTHREAD_H

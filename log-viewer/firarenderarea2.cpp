@@ -1,4 +1,4 @@
-#include "firarenderarea.h"
+#include "firarenderarea2.h"
 #include <QPainter>
 #include <QTime>
 #include <QPen>
@@ -7,27 +7,21 @@
 #include <QMouseEvent>
 #include <math.h>
 #include <assert.h>
-FIRARenderArea::FIRARenderArea(QWidget *parent) :
+FIRARenderArea2::FIRARenderArea2(QWidget *parent) :
     QWidget(parent)
-{
-    scribbling = false;
-    x[0] = 605*2/3;
-    y[0] = 410*2/3;
-    theta[0] = 3.1418/8;
+{   
 }
 
-void FIRARenderArea::paintEvent(QPaintEvent *)
+void FIRARenderArea2::setBeliefState(const BeliefState &bs_)
+{
+    bs = bs_;
+}
+
+void FIRARenderArea2::paintEvent(QPaintEvent *)
 {
 //    qDebug() << "Pose in render area: " << pose.x() << ", " << pose.y() << ", " << pose.theta()*180/3.141;
     QPainter painter(this);
-    drawField(painter);
-    BeliefState bs;
-    if(bsMutex) {
-        bsMutex->lock();
-        if(beliefStateSh)
-            bs = *beliefStateSh;
-        bsMutex->unlock();
-    }
+    drawField(painter);    
     for(int i = 0; i < 5; i++) {
         if(bs.homeIsPresent[i]) {
             drawBot(painter, bs.homeX[i], bs.homeY[i], bs.homeTheta[i], true);
@@ -36,14 +30,12 @@ void FIRARenderArea::paintEvent(QPaintEvent *)
             drawBot(painter, bs.awayX[i], bs.awayY[i], bs.awayTheta[i], false);
         }
     }
-    drawBot(painter, predictedPose.queryX(), predictedPose.queryY(), predictedPose.queryTheta(), false);
     if(bs.ballIsPresent) {
         drawBall(painter, bs.ballX, bs.ballY);
     }
-    drawPose(painter);
 }
 
-void FIRARenderArea::drawField(QPainter &painter)
+void FIRARenderArea2::drawField(QPainter &painter)
 {
     painter.save();
     painter.setRenderHint(QPainter::Antialiasing);
@@ -56,7 +48,7 @@ void FIRARenderArea::drawField(QPainter &painter)
     painter.restore();
 }
 
-void FIRARenderArea::drawBot(QPainter &painter, double botX, double botY, double botTheta, bool isHome)
+void FIRARenderArea2::drawBot(QPainter &painter, double botX, double botY, double botTheta, bool isHome)
 {
     // size of field in qt is 605x410, same ratio as in ssl-vision.
     painter.save();
@@ -83,7 +75,7 @@ void FIRARenderArea::drawBot(QPainter &painter, double botX, double botY, double
     painter.restore();
 }
 
-void FIRARenderArea::drawBall(QPainter &painter, double ballX, double ballY)
+void FIRARenderArea2::drawBall(QPainter &painter, double ballX, double ballY)
 {
     painter.save();
     painter.setRenderHint(QPainter::Antialiasing);
@@ -103,20 +95,3 @@ void FIRARenderArea::drawBall(QPainter &painter, double ballX, double ballY)
     painter.restore();
 }
 
-void FIRARenderArea::drawPose(QPainter &painter)
-{
-    painter.save();
-    painter.setRenderHint(QPainter::Antialiasing);
-    QPen pen;
-    pen.setColor(Qt::black);
-    pen.setWidth(2);
-    painter.setPen(pen);
-    int x2, y2;
-    x2 = x[0] + cos(theta[0])*50;
-    y2 = y[0] + sin(theta[0])*50;
-    painter.drawLine(x[0], y[0], x2, y2);
-    pen.setColor(Qt::red);
-    painter.setPen(pen);
-    painter.drawEllipse(QPointF(x[0], y[0]), 10, 10);
-    painter.restore();
-}

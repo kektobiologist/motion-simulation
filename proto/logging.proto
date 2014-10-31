@@ -19,14 +19,19 @@ message RobotPose {
 }
 
 message SystemData {
-  required int32 ts          = 1;
-  required float timeMs      = 2;  // the actual time in ms of this packet
-  required Velocities sent   = 3;
-  required Velocities vision = 4;
-  required RobotPose pose    = 5;
+  required int32 id          = 1;  // bot id
+  required int32 ts          = 2;
+  required float timeMs      = 3;  // the actual time in ms of this packet
+  required Velocities sent   = 4;
+  required Velocities vision = 5;
+  required RobotPose pose    = 6;
 }
 
 message LoggingData {
 	required SystemData sysData    = 1;
   optional ReceivedData recvData = 2;
+}
+
+message Log {
+  repeated LoggingData data = 1;
 }

@@ -17,9 +17,9 @@ class Pose
     double x_, y_, theta_;
 public:
     static const double d          = 6.5; //distance between wheels in cm
-    static const double ticksToCmS = 1.08; //still only approximate...
-    static const double fieldXConvert = 29.75;
-    static const double fieldYConvert = 27.33333;
+    static const double ticksToCmS = 1.107; //still only approximate...
+    static const double fieldXConvert = 23.79;
+    static const double fieldYConvert = 22.02;
     // NOTE(arpit): Uncertainties should be non-zero when simulating. Currently 0 since bot data is fetched from vision.
     static const double xUncertainty = 0.5;//0.5; // Uncertainty is in %age of max value. eg. 1% where fabs(x) <= 1000 means fabs(error) <= 10
     static const double yUncertainty = 0.5;//0.5;
@@ -30,11 +30,11 @@ private:
     std::queue<int> vlq, vrq;      // q to implement packet delay.
 public:
     // NOTE(arpit): numPacketDelay and update() specified here is only used in simulation.
-    static const int numPacketDelay = 3; // num of packets to delay in update
-    double randStdNormal() {double x = rand()/(double)RAND_MAX; return sqrt(-2*log(x))*cos(2*3.14159265359*x);} // returns random number from std normal distribution
-    double x(); // returns in strategy coordinate system
-    double y(); // returns in strategy coordinate system
-    double theta(); // already in strategy coordinates
+    static const int numPacketDelay = 6; // num of packets to delay in update
+    double randStdNormal() const {double x = rand()/(double)RAND_MAX; return sqrt(-2*log(x))*cos(2*3.14159265359*x);} // returns random number from std normal distribution
+    double x() const; // returns in strategy coordinate system
+    double y() const; // returns in strategy coordinate system
+    double theta() const; // already in strategy coordinates
     double queryX() const { return x_ * fieldXConvert;}   // These do not
     double queryY() const { return y_ * fieldYConvert;}   // apply gaussian error
     double queryTheta() const { return theta_;}           // .
