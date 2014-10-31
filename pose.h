@@ -6,12 +6,11 @@
 #include <sys/time.h>
 #include <stdlib.h>
 #include "geometry.h"
+#include "constants.h"
 /* Pose defines the position and angle of the robot.
  * It is in REAL WORLD coordinates (m and radians).
  * NOTE: vl, vr are taken in ticks only. dt is in ms
  */
-const int HALF_FIELD_MAXX              = 3025;
-const int HALF_FIELD_MAXY              = 2050;
 class Pose
 {
     double x_, y_, theta_;
@@ -21,9 +20,9 @@ public:
     static const double fieldXConvert = 23.79;
     static const double fieldYConvert = 22.02;
     // NOTE(arpit): Uncertainties should be non-zero when simulating. Currently 0 since bot data is fetched from vision.
-    static const double xUncertainty = 0.5;//0.5; // Uncertainty is in %age of max value. eg. 1% where fabs(x) <= 1000 means fabs(error) <= 10
-    static const double yUncertainty = 0.5;//0.5;
-    static const double thetaUncertainty = 3;//3;
+    static const double xUncertainty = 0;//0.5; // Uncertainty is in %age of max value. eg. 1% where fabs(x) <= 1000 means fabs(error) <= 10
+    static const double yUncertainty = 0;//0.5;
+    static const double thetaUncertainty = 0;//3;
 private:
     void update_1(int vl_ticks, int vr_ticks, double dt); // simple update, without delay.
     void update_2(int vl_ticks, int vr_ticks, double dt); // delay of 1 tick bw updates.

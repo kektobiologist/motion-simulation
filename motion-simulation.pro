@@ -47,6 +47,9 @@ HEADERS  += dialog.h \
     firarenderarea.h \
     serial.h \
     vision-velocity.hpp \
+    attacker.hpp \
+    attacker.hpp \
+    constants.h \
     logging.hpp
 
 LIBS += -lgsl -lgslcblas -lprotobuf

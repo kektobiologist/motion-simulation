@@ -15,6 +15,7 @@
 #include "beliefstate.h"
 #include <QMutex>
 #include "serial.h"
+#include "attacker.hpp"
 #include "logging.pb.h"
 #include <sys/time.h>
 
@@ -78,6 +79,7 @@ private:
     HAL::Serial comm;
     QTimer *algoTimer; //algoTimer for calling controller every 20ms. need to change to seperate thread.
     ControllerWrapper *algoController;
+    ControllerWrapper *algoController_near;
     // NOTE(arpit): not used in sim. Queue of predicted pose, size of q = PREDICTION_PACKET_DELAY. Needed because we need to display
     // old predictions side-by-side with the actual position of the bot.
     std::queue<Pose> predictedPoseQ;
@@ -103,7 +105,7 @@ private:
     int counter;
     // so that comm.Write() commands don't overlap. ideally should also have a time gap between comm.Write() calls.
     QMutex *sendDataMutex;
-
+    TAttack tattack;
     // structs for logging (actual bots, not sim)
     vector<Logging::SystemData> sysData;
     vector<Logging::ReceivedData> recvData;
