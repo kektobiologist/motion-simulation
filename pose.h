@@ -11,6 +11,13 @@
  * It is in REAL WORLD coordinates (m and radians).
  * NOTE: vl, vr are taken in ticks only. dt is in ms
  */
+struct MiscData {
+    double k;  // curvature
+    double v_curve;
+    double finalSpeed, rangeMin, rangeMax;
+    MiscData(): k(-1), v_curve(0), finalSpeed(0), rangeMin(0), rangeMax(0) {}
+    MiscData(double k, double v_curve, double finalSpeed, double rangeMin, double rangeMax): k(k), v_curve(v_curve), finalSpeed(finalSpeed), rangeMin(rangeMin), rangeMax(rangeMax) {}
+};
 class Pose
 {
     double x_, y_, theta_;
@@ -29,7 +36,7 @@ private:
     std::queue<int> vlq, vrq;      // q to implement packet delay.
 public:
     // NOTE(arpit): numPacketDelay and update() specified here is only used in simulation.
-    static const int numPacketDelay = 6; // num of packets to delay in update
+    static const int numPacketDelay = 0; // num of packets to delay in update
     double randStdNormal() const {double x = rand()/(double)RAND_MAX; return sqrt(-2*log(x))*cos(2*3.14159265359*x);} // returns random number from std normal distribution
     double x() const; // returns in strategy coordinate system
     double y() const; // returns in strategy coordinate system

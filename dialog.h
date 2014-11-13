@@ -32,6 +32,8 @@ struct RegData {
     RegData(double rho, double gamma, double delta, double v_l, double v_r, double timeMs):rho(rho), gamma(gamma), delta(delta), v_l(v_l), v_r(v_r), timeMs(timeMs){}
 };
 
+
+
 class Dialog : public QDialog
 {
     Q_OBJECT
@@ -90,6 +92,7 @@ private:
     Pose poses[NUMTICKS];
     int vls[NUMTICKS], vrs[NUMTICKS];
     float vls_calc[NUMTICKS], vrs_calc[NUMTICKS];  // vl, vr reverse-calculated from vision data using VisionVelocity
+    MiscData miscData[NUMTICKS];
     // vls_calc[i] ~ vls[i] etc.
     double simulate(Pose startPose, Pose endPose, FType func, int start_vl, int start_vr, bool isBatch = false); // implements delay control logic, for any given controller. (I removed the old simulate function that did not use wrapper)
                                                                                      // returns the time(ms) to reach endPose. A dist threshold is taken, no angle considerations yet.

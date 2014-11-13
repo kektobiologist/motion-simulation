@@ -22,7 +22,8 @@ using namespace std;
 // as well as the algoController delay
 static const int PREDICTION_PACKET_DELAY = 6;
 // bot used for testing (non-sim)
-static const int BOT_ID_TESTING = 0;
+static const int BOT_ID_TESTING = 1;
+static const double FINAL_VEL = 50;
 Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::Dialog)
@@ -92,7 +93,8 @@ double Dialog::simulate(Pose startPose, Pose endPose, FType func, int start_vl, 
     {
         poses[i] = poses[i-1];
         int vl, vr;
-        dc.genControls(poses[i], endPose, vl, vr);
+        // NOTE: setting final velocity hardcoded here.
+        miscData[i] = dc.genControls(poses[i], endPose, vl, vr, FINAL_VEL);
         vls[i-1] = vl;
         vrs[i-1] = vr;
         poses[i].update(vl, vr, timeLC);
@@ -201,7 +203,9 @@ void Dialog::onCurIdxChanged(int idx)
     double rho = sqrt(initial.x*initial.x + initial.y*initial.y);
     double gamma = normalizeAngle(atan2(initial.y, initial.x) - theta + PI);
     double delta = normalizeAngle(gamma + theta);
-    qDebug() << idx <<". "<< "vl, vr = " << vls[idx] << ", " << vrs[idx] << ", vl_calc, vr_calc = " << vls_calc[idx] << ", " << vrs_calc[idx];
+    qDebug() << idx <<". "<< "vl, vr = " << vls[idx] << ", " << vrs[idx] << ", vl_calc, vr_calc = " <<
+                vls_calc[idx] << ", " << vrs_calc[idx] << ", k = " << miscData[idx].k << ", v_curve = " << miscData[idx].v_curve
+             << "finalSpeed = " << miscData[idx].finalSpeed << ", rangeMin = " << miscData[idx].rangeMin << ", rangemax = " << miscData[idx].rangeMax;
                 //", rho = " << rho << ", gamma = " << gamma << ", delta = " << delta;
 //    qDebug() << "Pose: " << poses[idx].x() << ", " << poses[idx].y() << ", " << poses[idx].theta()*180/PI;
 }
@@ -227,20 +231,13 @@ void Dialog::onAlgoTimeout()
     BeliefState bs = *beliefStateSh;
     bsMutex->unlock();
     Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
-    //Pose end = ui->firaRenderArea->getEndPose();
-    Pose end = tattack.execute(&bs,BOT_ID_TESTING);
+    Pose end = ui->firaRenderArea->getEndPose();
+//    Pose end = tattack.execute(&bs,BOT_ID_TESTING);
 //    Pose end(bs.ballX,bs.ballY,0);
     int vl, vr;
-    if(((start.x()-end.x())*(start.x()-end.x()) + (start.y()-end.y())*(start.y()-end.y())) > 250000){
-        algoController->genControls(start, end, vl, vr);
-        predictedPoseQ.push(algoController->getPredictedPose(start));
-    }
-    else{
-        algoController_near->genControls(start,end,vl,vr);
-        predictedPoseQ.push(algoController_near->getPredictedPose(start));
-    }
-
-    qDebug() << ((start.x()-end.x())*(start.x()-end.x()) + (start.y()-end.y())*(start.y()-end.y())) << "\n";
+    // NOTE: set finalvel!!
+    algoController->genControls(start, end, vl, vr, FINAL_VEL);
+    predictedPoseQ.push(algoController->getPredictedPose(start));
     // getPredictedPose gives the predicted pose of the robot after PREDICTION_PACKET_DELAY ticks from now. We need to display what our
     // prediction was PREDICTION_PACKET_DELAY ticks ago (i.e. what our prediction was for now).
 
@@ -249,6 +246,8 @@ void Dialog::onAlgoTimeout()
     assert(vl <= 120 && vl >= -120);
     assert(vr <= 120 && vr >= -120);
     char buf[12];
+    for (int i = 0; i < 12; i++)
+        buf[i] = 0;
     buf[0] = 126; // doesnt matter
     // NOTE: testing, remove these 2 lines pls
 //    vl = 80;
@@ -283,7 +282,7 @@ void Dialog::on_simButton_clicked()
 {
     Pose start = ui->renderArea->getStartPose();
     Pose end = ui->renderArea->getEndPose();
-    FType fun = functions[ui->simCombo->currentIndex()].second;
+    FType fun = functions[ui->simCombo->currentIndex()].second;    
     double timeMs = simulate(start, end, fun, 0, 0);
     qDebug() << "Bot reached at time tick = " << timeMs/timeLCMs;
     onCurIdxChanged(0);
