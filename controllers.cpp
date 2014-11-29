@@ -145,7 +145,7 @@ MiscData PolarBased(Pose s, Pose e, int &vl, int &vr, double prevSpeed, double f
     // scale curvature by 50.
     k *= 20;
     double lambda = 2;
-    double beta = 0.4;
+    double beta = 0.7;
     double v_curve = MAX_BOT_SPEED/(1+beta*pow(fabs(k),lambda));
     if (v_curve < MIN_BOT_SPEED)
         v_curve = MIN_BOT_SPEED;    

@@ -22,7 +22,7 @@ using namespace std;
 // as well as the algoController delay
 static const int PREDICTION_PACKET_DELAY = 6;
 // bot used for testing (non-sim)
-static const int BOT_ID_TESTING = 1;
+static const int BOT_ID_TESTING = 2;
 static const double FINAL_VEL = 50;
 Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
