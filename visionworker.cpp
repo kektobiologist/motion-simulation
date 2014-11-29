@@ -138,7 +138,7 @@ void VisionWorker::onEntry()
                 for (int i = 0; i < robots_yellow_n; i++) {
                     double botX, botY, botTheta;
                     float botVl, botVr;
-                    SSL_DetectionRobot robot = detection.robots_blue(i);
+                    SSL_DetectionRobot robot = detection.robots_yellow(i);
                     int botId = robot.robot_id();
                     botX = robot.x();
                     botY = robot.y();

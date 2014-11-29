@@ -121,7 +121,7 @@ Magazine 2(1):27–35
 MiscData PolarBased(Pose s, Pose e, int &vl, int &vr, double prevSpeed, double finalSpeed)
 {
     // NOTE: its preferable to call x(), y(), and theta() of each object exactly once since they may return different
-    // values on each call.
+    // values on each call (when simulating, gaussian errors non-zero).
     Vector2D<int> initial(s.x()-e.x(), s.y()-e.y());
     double etheta = e.theta();
     double theta = normalizeAngle(s.theta() - etheta);
