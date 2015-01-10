@@ -5,6 +5,8 @@
 #include "pose.h"
 #include "beliefstate.h"
 #include <QMutex>
+#include <QPainterPath>
+
 class RenderArea : public QWidget
 {
     Q_OBJECT
@@ -17,11 +19,14 @@ public:
     Pose getEndPose();
     void setStartPose(Pose p);
     void setEndPose(Pose p);
+    void setTrajectory(QPainterPath p);
+    void unsetTrajectory() { drawTraj = false;}
 protected:
     void paintEvent(QPaintEvent *);
     void drawField(QPainter &painter);
     void drawBot(QPainter &painter);
     void drawPose(QPainter &painter, int index); //index is 0 or 1, for start or end pose respectively.
+    void drawTrajectory(QPainter &painter);
     void mousePressEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *);
     void mouseMoveEvent(QMouseEvent *event);
@@ -29,6 +34,8 @@ protected:
     int x[2], y[2];    //
     double theta[2];   // All in QWidget coordinate system. Needs to be converted to our coordinates.
     int idx;
+    QPainterPath traj;
+    bool drawTraj;
 signals:
     
 public slots:

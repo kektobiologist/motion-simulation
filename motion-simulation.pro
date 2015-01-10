@@ -33,7 +33,8 @@ SOURCES += main.cpp\
     firarenderarea.cpp \
     serial.cpp \
     vision-velocity.cpp \
-    logging.cpp
+    logging.cpp \
+    trajectory-drawing.cpp
 
 HEADERS  += dialog.h \
     pose.h \
@@ -50,7 +51,8 @@ HEADERS  += dialog.h \
     attacker.hpp \
     attacker.hpp \
     constants.h \
-    logging.hpp
+    logging.hpp \
+    trajectory-drawing.hpp
 
 LIBS += -lgsl -lgslcblas -lprotobuf
 FORMS    += dialog.ui

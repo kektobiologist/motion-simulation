@@ -19,6 +19,7 @@ RenderArea::RenderArea(QWidget *parent) :
     y[1] = 410/2;
     theta[1] = 0;
 //    x[1] = y[1] = theta[1] = 0;
+    drawTraj = false;
 }
 
 Pose RenderArea::getStartPose()
@@ -52,6 +53,12 @@ void RenderArea::setEndPose(Pose p)
     update();
 }
 
+void RenderArea::setTrajectory(QPainterPath p)
+{
+    traj = p;
+    drawTraj = true;
+}
+
 void RenderArea::paintEvent(QPaintEvent *)
 {
 //    qDebug() << "Pose in render area: " << pose.x() << ", " << pose.y() << ", " << pose.theta()*180/3.141;
@@ -60,6 +67,7 @@ void RenderArea::paintEvent(QPaintEvent *)
     drawBot(painter);    
     drawPose(painter, 0);
     drawPose(painter, 1);
+    drawTrajectory(painter);
 }
 
 void RenderArea::drawField(QPainter &painter)
@@ -118,6 +126,22 @@ void RenderArea::drawPose(QPainter &painter, int index)
         pen.setColor(Qt::blue);
     painter.setPen(pen);
     painter.drawEllipse(QPointF(x[index], y[index]), 10, 10);
+    painter.restore();
+}
+
+void RenderArea::drawTrajectory(QPainter &painter)
+{
+    if (!drawTraj)
+        return;
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.translate(this->width()/2, this->height()/2);
+    painter.scale(this->width()/(double)(2*HALF_FIELD_MAXX), this->height()/(double)(2*HALF_FIELD_MAXY));
+    QPen pen;
+    pen.setColor(Qt::blue);
+    pen.setWidth(2);
+    painter.setPen(pen);
+    painter.drawPath(traj);
     painter.restore();
 }
 

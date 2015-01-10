@@ -20,10 +20,10 @@
 using namespace std;
 // NOTE(arpit): PREDICTION_PACKET_DELAY is NOT used in simulation. It is used to predict bot position in actual run,
 // as well as the algoController delay
-static const int PREDICTION_PACKET_DELAY = 6;
+static const int PREDICTION_PACKET_DELAY = 0;
 // bot used for testing (non-sim)
 static const int BOT_ID_TESTING = 1;
-static const double FINAL_VEL = 0;
+static const double FINAL_VEL = 50;
 Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::Dialog)
