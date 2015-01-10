@@ -22,8 +22,8 @@ using namespace std;
 // as well as the algoController delay
 static const int PREDICTION_PACKET_DELAY = 6;
 // bot used for testing (non-sim)
-static const int BOT_ID_TESTING = 2;
-static const double FINAL_VEL = 50;
+static const int BOT_ID_TESTING = 1;
+static const double FINAL_VEL = 0;
 Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::Dialog)
@@ -232,8 +232,6 @@ void Dialog::onAlgoTimeout()
     bsMutex->unlock();
     Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
     Pose end = ui->firaRenderArea->getEndPose();
-//    Pose end = tattack.execute(&bs,BOT_ID_TESTING);
-//    Pose end(bs.ballX,bs.ballY,0);
     int vl, vr;
     // NOTE: set finalvel!!
     algoController->genControls(start, end, vl, vr, FINAL_VEL);
@@ -399,7 +397,8 @@ void Dialog::on_stopSending_clicked()
     algoTimer->stop();
     char buf[12];
     buf[0] = 126; // doesnt matter;
-    buf[BOT_ID_TESTING*2+1] = buf[BOT_ID_TESTING*2+2] = 0;
+    for (int i = 1; i < 11; i++)
+        buf[i] = 0;
     buf[11] = (++counter)%100; // timestamp
     sendDataMutex->lock();
     usleep(timeLCMs * 1000);
@@ -435,7 +434,7 @@ void Dialog::readDataAndAppendToLog() {
     bool ok;
     int parity = 0;
     char ts = 0, botid = 0, vl_target = 0, vr_target = 0, vl = 0, vr = 0;
-    int upperLimit = 6*200; // don't want to get stuck reading.
+    int upperLimit = 8*300; // don't want to get stuck reading.
     int maxMisreadsAllowed = 100;
     int numMisreads = 0;
     int byteCounter = 0;
@@ -471,6 +470,12 @@ void Dialog::readDataAndAppendToLog() {
             recvData.push_back(Logging::populateReceivedData(botid, ts, vl_target, vr_target, vl, vr));
             break;
         }
+    }
+    if (byteCounter >= upperLimit) {
+        qDebug() << "Read more than allowed number of bytes in receiving data.";
+    }
+    if (numMisreads > maxMisreadsAllowed ) {
+        qDebug() << "Exceeded maximum allowed misreads in receiving data.";
     }
 //    if (recvData.size())
 //        recvData.pop_back();  // removing the stop command packet.
