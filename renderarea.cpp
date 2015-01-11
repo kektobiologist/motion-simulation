@@ -56,7 +56,7 @@ void RenderArea::setEndPose(Pose p)
 void RenderArea::setTrajectory(QPainterPath p)
 {
     traj = p;
-    drawTraj = true;
+    update();
 }
 
 void RenderArea::paintEvent(QPaintEvent *)
@@ -136,10 +136,10 @@ void RenderArea::drawTrajectory(QPainter &painter)
     painter.save();
     painter.setRenderHint(QPainter::Antialiasing);
     painter.translate(this->width()/2, this->height()/2);
-    painter.scale(this->width()/(double)(2*HALF_FIELD_MAXX), this->height()/(double)(2*HALF_FIELD_MAXY));
+    painter.scale(this->width()/(double)(2*HALF_FIELD_MAXX), -this->height()/(double)(2*HALF_FIELD_MAXY));
     QPen pen;
     pen.setColor(Qt::blue);
-    pen.setWidth(2);
+    pen.setWidth(4);
     painter.setPen(pen);
     painter.drawPath(traj);
     painter.restore();

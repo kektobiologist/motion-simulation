@@ -16,6 +16,7 @@ FIRARenderArea::FIRARenderArea(QWidget *parent) :
     x[0] = 605*2/3;
     y[0] = 410*2/3;
     theta[0] = 3.1418/8;
+    drawTraj = false;
 }
 
 void FIRARenderArea::setEndPose(Pose p)
@@ -31,6 +32,12 @@ Pose FIRARenderArea::getEndPose()
     int xx = (x[0] * HALF_FIELD_MAXX * 2) / this->width() - HALF_FIELD_MAXX;
     int yy = -((y[0] * HALF_FIELD_MAXY * 2) / this->height() - HALF_FIELD_MAXY);
     return Pose(xx, yy, -theta[0]);
+}
+
+void FIRARenderArea::setTrajectory(QPainterPath p)
+{
+    traj = p;
+    update();
 }
 
 void FIRARenderArea::paintEvent(QPaintEvent *)
@@ -58,6 +65,7 @@ void FIRARenderArea::paintEvent(QPaintEvent *)
         drawBall(painter, bs.ballX, bs.ballY);
     }
     drawPose(painter);
+    drawTrajectory(painter);
 }
 
 void FIRARenderArea::drawField(QPainter &painter)
@@ -135,6 +143,22 @@ void FIRARenderArea::drawPose(QPainter &painter)
     pen.setColor(Qt::red);
     painter.setPen(pen);
     painter.drawEllipse(QPointF(x[0], y[0]), 10, 10);
+    painter.restore();
+}
+
+void FIRARenderArea::drawTrajectory(QPainter &painter)
+{
+    if (!drawTraj)
+        return;
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.translate(this->width()/2, this->height()/2);
+    painter.scale(this->width()/(double)(2*HALF_FIELD_MAXX), -this->height()/(double)(2*HALF_FIELD_MAXY));
+    QPen pen;
+    pen.setColor(Qt::blue);
+    pen.setWidth(4);
+    painter.setPen(pen);
+    painter.drawPath(traj);
     painter.restore();
 }
 

@@ -20,7 +20,7 @@ public:
     void setStartPose(Pose p);
     void setEndPose(Pose p);
     void setTrajectory(QPainterPath p);
-    void unsetTrajectory() { drawTraj = false;}
+    void toggleTrajectory(bool x) { drawTraj = x; this->update();}
 protected:
     void paintEvent(QPaintEvent *);
     void drawField(QPainter &painter);

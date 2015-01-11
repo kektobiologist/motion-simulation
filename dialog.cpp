@@ -15,6 +15,7 @@
 #include "visionworker.h"
 #include "vision-velocity.hpp"
 #include "logging.hpp"
+#include "trajectory-drawing.hpp"
 #include <fstream>
 
 using namespace std;
@@ -23,7 +24,7 @@ using namespace std;
 static const int PREDICTION_PACKET_DELAY = 0;
 // bot used for testing (non-sim)
 static const int BOT_ID_TESTING = 1;
-static const double FINAL_VEL = 50;
+static const double FINAL_VEL = 0;
 Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::Dialog)
@@ -514,4 +515,35 @@ void Dialog::on_writeLogButton_clicked()
     log.clear_data();
     sysData.clear();
     recvData.clear();
+}
+
+void Dialog::on_trajCheckbox_toggled(bool checked)
+{
+    ui->renderArea->toggleTrajectory(checked);
+}
+
+void Dialog::on_trajButton_clicked()
+{
+    Pose start = ui->renderArea->getStartPose();
+    Pose end = ui->renderArea->getEndPose();
+    FType fun = functions[ui->simCombo->currentIndex()].second;
+    ui->renderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(fun, start, 0, 0, end, FINAL_VEL,
+                                                                       FINAL_VEL, 4000, timeLCMs));
+    if (!ui->trajCheckbox->isEnabled()) {
+        ui->trajCheckbox->setEnabled(true);
+        ui->trajCheckbox->setChecked(true);
+    }
+}
+
+void Dialog::on_traj2Button_clicked()
+{
+    bsMutex->lock();
+    BeliefState bs = *beliefStateSh;
+    bsMutex->unlock();
+    Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
+    Pose end = ui->firaRenderArea->getEndPose();
+    FType fun = functions[ui->simCombo->currentIndex()].second;
+    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(fun, start, 0, 0, end, FINAL_VEL,
+                                                                       FINAL_VEL, 4000, timeLCMs));
+    ui->firaRenderArea->toggleTrajectory(true);
 }

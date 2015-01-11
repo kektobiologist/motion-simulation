@@ -28,15 +28,17 @@ QPainterPath getTrajectoryPath(FType func, Pose s, int vl_s, int vr_s, Pose e, i
                                           double timespanMs, double timeLCMs) {
     // using some code from simulate() in dialog.cpp
     QPainterPath p;
-    p.moveTo(s.x(), s.y());
+    p.moveTo(s.queryX(), s.queryY());
     double final_vel = max(fabs(vl_e), fabs(vr_e));
     ControllerWrapper dc(func, vl_s, vr_s, 0);  // not using any delay for trajectory drawing.
     Pose curPose = s;
     for (int i = 0; i*timeLCMs < timespanMs; i++) {
         int vl, vr;
-        MiscData = dc.genControls(curPose, e, vl, vr, final_vel);
-        insertArcInPath(p, curPose.theta(), vl, vr, timeLCMs*0.001);
+        dc.genControls(curPose, e, vl, vr, final_vel);
+        // patch up code;
+//        insertArcInPath(p, curPose.theta(), vl, vr, timeLCMs*0.001);
         curPose.update(vl, vr, timeLCMs*0.001);
+        p.lineTo(curPose.queryX(), curPose.queryY());
     }
     return p;
 }

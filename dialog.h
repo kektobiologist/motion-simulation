@@ -66,6 +66,12 @@ private slots:
 
     void on_writeLogButton_clicked();
 
+    void on_trajCheckbox_toggled(bool checked);
+
+    void on_trajButton_clicked();
+
+    void on_traj2Button_clicked();
+
 public slots:
     void onCurIdxChanged(int idx); // idx is index of pose array, not botID (there's only 1 bot :/ )
     void onTimeout();

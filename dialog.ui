@@ -109,6 +109,23 @@
            </property>
           </widget>
          </item>
+         <item row="0" column="0">
+          <widget class="QCheckBox" name="trajCheckbox">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>Draw trajectory</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QPushButton" name="trajButton">
+           <property name="text">
+            <string>Calculate Trajectory</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
       </layout>
@@ -117,88 +134,109 @@
       <attribute name="title">
        <string>Tab 2</string>
       </attribute>
-      <layout class="QHBoxLayout" name="horizontalLayout_4">
-       <item>
-        <layout class="QVBoxLayout" name="verticalLayout_3">
-         <item>
-          <widget class="QLabel" name="ballPosLabel">
-           <property name="text">
-            <string>Ball:</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="FIRARenderArea" name="firaRenderArea" native="true">
-           <property name="minimumSize">
-            <size>
-             <width>605</width>
-             <height>410</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>605</width>
-             <height>410</height>
-            </size>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <layout class="QVBoxLayout" name="verticalLayout_2">
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_3">
-           <item>
-            <widget class="QPushButton" name="startSending">
-             <property name="text">
-              <string>Start Sending</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="stopSending">
-             <property name="text">
-              <string>Stop Sending</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <widget class="QPushButton" name="receiveButton">
-           <property name="text">
-            <string>Receive Data</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPlainTextEdit" name="receiveDataTextEdit"/>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="logFileLineEdit">
-           <property name="text">
-            <string>/home/robocup/motion-simulation/logs/1</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="writeLogButton">
-           <property name="text">
-            <string>Write Log</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="clearButton">
-           <property name="text">
-            <string>Clear</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-      </layout>
+      <widget class="QWidget" name="">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>9</y>
+         <width>873</width>
+         <height>449</height>
+        </rect>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_5">
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_4">
+            <item>
+             <widget class="QLabel" name="ballPosLabel">
+              <property name="text">
+               <string>Ball:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="traj2Button">
+              <property name="text">
+               <string>Compute Trajectory</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="FIRARenderArea" name="firaRenderArea" native="true">
+            <property name="minimumSize">
+             <size>
+              <width>605</width>
+              <height>410</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>605</width>
+              <height>410</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_3">
+            <item>
+             <widget class="QPushButton" name="startSending">
+              <property name="text">
+               <string>Start Sending</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="stopSending">
+              <property name="text">
+               <string>Stop Sending</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QPushButton" name="receiveButton">
+            <property name="text">
+             <string>Receive Data</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPlainTextEdit" name="receiveDataTextEdit"/>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="logFileLineEdit">
+            <property name="text">
+             <string>/home/robocup/motion-simulation/logs/1</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="writeLogButton">
+            <property name="text">
+             <string>Write Log</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="clearButton">
+            <property name="text">
+             <string>Clear</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
      </widget>
     </widget>
    </item>
