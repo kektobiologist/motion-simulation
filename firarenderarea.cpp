@@ -124,7 +124,7 @@ void FIRARenderArea::drawBall(QPainter &painter, double ballX, double ballY)
     painter.scale(this->width()/(double)(2*HALF_FIELD_MAXX), this->height()/(double)(2*HALF_FIELD_MAXY));
     painter.translate(ballX, -ballY);
     // dia = 4.2 cm
-    painter.drawEllipse(QPointF(0, 0), 4.2/2*Pose::fieldXConvert, 4.2/2*Pose::fieldYConvert);
+    painter.drawEllipse(QPointF(0, 0), 4.2/2*Constants::fieldXConvert, 4.2/2*Constants::fieldYConvert);
     painter.restore();
 }
 

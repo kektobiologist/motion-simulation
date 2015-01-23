@@ -13,6 +13,7 @@ namespace Logging {
 // this function merges these lists into a list of LoggingData, making sure only corresponding packets from sys, recv
 // are merged together. some sysData packets might be missing recvData due to packet loss / small memory of bot, which stores
 // only ~200 packets of recvData at a time.
+// TODO: very naive merging, make it better
 Log mergeSysRecvLists(const vector<SystemData> &sysData, const vector<ReceivedData> &recvData);
 
 // make system data packet from given information.

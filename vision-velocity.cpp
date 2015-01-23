@@ -7,8 +7,8 @@ namespace VisionVelocity {
 
 void strategyToRealConversion(BotPose &p) {
     // converts from strategy to actual coordinates (cm)
-    p.x /= Pose::fieldXConvert;
-    p.y /= Pose::fieldYConvert;
+    p.x /= Constants::fieldXConvert;
+    p.y /= Constants::fieldYConvert;
 }
 
 void calcBotVelocity(BotPose p1, BotPose p2, float timeMs, float &vl, float &vr) {
@@ -27,7 +27,7 @@ void calcBotVelocity(BotPose p1, BotPose p2, float timeMs, float &vl, float &vr)
         // so taking projection of (delX, delY) along (cos(theta), sin(theta)) as displacement.
         double dispLength = delX*cos(p1.theta) + delY*sin(p1.theta);
         vl = dispLength / (timeMs * 0.001);
-        vl = vl / Pose::ticksToCmS;
+        vl = vl / Constants::ticksToCmS;
         vr = vl;
         return;
     }
@@ -37,16 +37,16 @@ void calcBotVelocity(BotPose p1, BotPose p2, float timeMs, float &vl, float &vr)
     // try harmonic mean?
 //    double rho = (rho1 + rho2) / 2;
     double rho = 2*rho1*rho2 / (rho1 + rho2);
-    vl = w * (rho - Pose::d/2.0) / Pose::ticksToCmS;
-    vr = w * (rho + Pose::d/2.0) / Pose::ticksToCmS;
+    vl = w * (rho - Constants::d/2.0) / Constants::ticksToCmS;
+    vr = w * (rho + Constants::d/2.0) / Constants::ticksToCmS;
 
     // use the translational, rotational system
 //    double v_trans = sqrt(delX*delX + delY*delY) / (timeMs * 0.001);
 //    double v_rot = w;
-//    vl = v_trans - Pose::d*v_rot/2;
-//    vr = v_trans + Pose::d*v_rot/2;
-//    vl /= Pose::ticksToCmS;
-//    vr /= Pose::ticksToCmS;
+//    vl = v_trans - Constants::d*v_rot/2;
+//    vr = v_trans + Constants::d*v_rot/2;
+//    vl /= Constants::ticksToCmS;
+//    vr /= Constants::ticksToCmS;
     return;
 }
 

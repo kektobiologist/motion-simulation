@@ -18,25 +18,19 @@ struct MiscData {
     MiscData(): k(-1), v_curve(0), finalSpeed(0), rangeMin(0), rangeMax(0) {}
     MiscData(double k, double v_curve, double finalSpeed, double rangeMin, double rangeMax): k(k), v_curve(v_curve), finalSpeed(finalSpeed), rangeMin(rangeMin), rangeMax(rangeMax) {}
 };
+
+using namespace Constants;
+
 class Pose
 {
     double x_, y_, theta_;
 public:
-    static const double d          = 6.5; //distance between wheels in cm
-    static const double ticksToCmS = 1.107; //still only approximate...
-    static const double fieldXConvert = 23.79;
-    static const double fieldYConvert = 22.02;
-    // NOTE(arpit): Uncertainties should be non-zero when simulating. Currently 0 since bot data is fetched from vision.
-    static const double xUncertainty = 0;//0.5; // Uncertainty is in %age of max value. eg. 1% where fabs(x) <= 1000 means fabs(error) <= 10
-    static const double yUncertainty = 0;//0.5;
-    static const double thetaUncertainty = 0;//3;
 private:
     void update_1(int vl_ticks, int vr_ticks, double dt); // simple update, without delay.
     void update_2(int vl_ticks, int vr_ticks, double dt); // delay of 1 tick bw updates.
     std::queue<int> vlq, vrq;      // q to implement packet delay.
 public:
-    // NOTE(arpit): numPacketDelay and update() specified here is only used in simulation.
-    static const int numPacketDelay = 0; // num of packets to delay in update
+
     double randStdNormal() const {double x = rand()/(double)RAND_MAX; return sqrt(-2*log(x))*cos(2*3.14159265359*x);} // returns random number from std normal distribution
     double x() const; // returns in strategy coordinate system
     double y() const; // returns in strategy coordinate system
@@ -48,7 +42,10 @@ public:
     Pose();
     void update(int vl, int vr, double dt);               // takes vl, vr in ticks. Implicitly converts to cm/s!! updates pose.
     void updateNoDelay(int vl, int vr, double dt);        // updates without any delay mechanics.
-    void setTheta(double newtheta) {theta_ = newtheta;}   // will add setX and setY if/when needed
+    void setTheta(double newtheta) {theta_ = newtheta;}   // will add setX and setY if/when needed    
+    Pose operator-(const Pose &p) {
+        return Pose(queryX()-p.queryX(), queryY()-p.queryY(), queryTheta()- p.queryTheta());
+    }
 };
 
 inline double dist(Pose p1, Pose p2) {

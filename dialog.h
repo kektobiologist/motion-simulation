@@ -72,6 +72,8 @@ private slots:
 
     void on_traj2Button_clicked();
 
+    void on_circleTrajButton_clicked();
+
 public slots:
     void onCurIdxChanged(int idx); // idx is index of pose array, not botID (there's only 1 bot :/ )
     void onTimeout();

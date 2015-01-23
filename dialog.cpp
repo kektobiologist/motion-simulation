@@ -16,19 +16,22 @@
 #include "vision-velocity.hpp"
 #include "logging.hpp"
 #include "trajectory-drawing.hpp"
+#include "trajectory-generators.hpp"
 #include <fstream>
+#include <functional>
 
 using namespace std;
 // NOTE(arpit): PREDICTION_PACKET_DELAY is NOT used in simulation. It is used to predict bot position in actual run,
 // as well as the algoController delay
 static const int PREDICTION_PACKET_DELAY = 0;
 // bot used for testing (non-sim)
-static const int BOT_ID_TESTING = 1;
+static const int BOT_ID_TESTING = 2;
 static const double FINAL_VEL = 0;
 Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::Dialog)
 {
+    std::function<void (void)> func = []() {qDebug() << "hello world";};
     algoController = NULL;
     algoController_near = NULL;
     srand(time(NULL));
@@ -89,7 +92,7 @@ double Dialog::simulate(Pose startPose, Pose endPose, FType func, int start_vl, 
     //simulating behaviour for all ticks at once
     int endFlag = 0;
     double timeMs = std::numeric_limits<double>::max();
-    ControllerWrapper dc(func, start_vl, start_vr, Pose::numPacketDelay);
+    ControllerWrapper dc(func, start_vl, start_vr, Constants::numPacketDelay);
     for(int i=1; i < NUMTICKS; i++)
     {
         poses[i] = poses[i-1];
@@ -305,7 +308,7 @@ void Dialog::regression(vector<RegData> func)
     for (int i = 0; i < n; i++) {
         gsl_vector_set(Y, i, func[i].timeMs);
         double v_trans = (func[i].v_l + func[i].v_r)/2;
-        double v_rot = (func[i].v_r - func[i].v_l)/Pose::d;
+        double v_rot = (func[i].v_r - func[i].v_l)/Constants::d;
 //        gsl_matrix_set(X, i, 0, 1);
         gsl_matrix_set(X, i, 0, pow(func[i].rho, 1));
         gsl_matrix_set(X, i, 1, pow(func[i].rho, 1/2.0));
@@ -380,7 +383,8 @@ double Dialog::fitnessFunction(double k1, double k2, double k3)
 
 void Dialog::on_startSending_clicked()
 {
-    algoController = new ControllerWrapper(Controllers::PolarBidirectional, 0, 0, PREDICTION_PACKET_DELAY);
+    FType fun = functions[ui->simCombo->currentIndex()].second;
+    algoController = new ControllerWrapper(fun, 0, 0, PREDICTION_PACKET_DELAY);
     algoController_near = new ControllerWrapper(Controllers::kgpkubs, 0, 0, PREDICTION_PACKET_DELAY);
     while(!predictedPoseQ.empty())
         predictedPoseQ.pop();
@@ -546,4 +550,16 @@ void Dialog::on_traj2Button_clicked()
     ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(fun, start, 0, 0, end, FINAL_VEL,
                                                                        FINAL_VEL, 4000, timeLCMs));
     ui->firaRenderArea->toggleTrajectory(true);
+}
+
+void Dialog::on_circleTrajButton_clicked()
+{
+    using namespace TrajectoryGenerators;
+    double x = ui->xCircle->text().toDouble();
+    double y = ui->yCircle->text().toDouble();
+    double startTheta = ui->thetaCircle->text().toDouble();
+    double r = ui->rCircle->text().toDouble();
+    double f = ui->fCircle->text().toDouble();
+    Trajectory traj = circleGenerator(x,y,r,startTheta,f);
+    ui->renderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(traj, 4000, timeLCMs));
 }

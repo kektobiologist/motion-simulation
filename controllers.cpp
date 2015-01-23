@@ -103,9 +103,9 @@ MiscData PController(Pose s, Pose e, int &vl, int &vr, double prevSpeed, double 
         }
     }
     double w = -1.5*angleError;
-    v *= Pose::ticksToCmS;
-    vl = v - Pose::d*w/2;
-    vr = v + Pose::d*w/2;
+    v *= Constants::ticksToCmS;
+    vl = v - Constants::d*w/2;
+    vr = v + Constants::d*w/2;
     if(abs(vl) > MAX_BOT_SPEED || abs(vr) > MAX_BOT_SPEED) {
         double max = abs(vl)>abs(vr)?abs(vl):abs(vr);
         vl = vl*MAX_BOT_SPEED/max;
@@ -149,9 +149,9 @@ MiscData PolarBased(Pose s, Pose e, int &vl, int &vr, double prevSpeed, double f
     double v_curve = MAX_BOT_SPEED/(1+beta*pow(fabs(k),lambda));
     if (v_curve < MIN_BOT_SPEED)
         v_curve = MIN_BOT_SPEED;    
-    v *= Pose::ticksToCmS;
-    vl = v - Pose::d*w/2;
-    vr = v + Pose::d*w/2;
+    v *= Constants::ticksToCmS;
+    vl = v - Constants::d*w/2;
+    vr = v + Constants::d*w/2;
     double timeMs = 0.250*rho + 14.0 * sqrt(rho) + 100.0 * fabs(gamma);
     double speed = timeMs/timeLCMs<(prevSpeed/MAX_BOT_LINEAR_VEL_CHANGE)?prevSpeed-MAX_BOT_LINEAR_VEL_CHANGE:prevSpeed+MAX_BOT_LINEAR_VEL_CHANGE;    
     // use vcurve as the velocity
@@ -223,9 +223,9 @@ void PolarBasedGA(Pose s, Pose e, int &vl, int &vr, double k1, double k2, double
     } else {
         w = k2*gamma+k1*sin(gamma)*cos(gamma)/gamma*(gamma + k3*delta);
     }
-    v *= Pose::ticksToCmS;
-    vl = v - Pose::d*w/2;
-    vr = v + Pose::d*w/2;
+    v *= Constants::ticksToCmS;
+    vl = v - Constants::d*w/2;
+    vr = v + Constants::d*w/2;
     double timeMs = 23 * sqrt(rho); // empirical
     double speed = timeMs<timeLCMs*5?timeMs/timeLCMs*(80/5):80;
     double max = fabs(vl)>fabs(vr)?fabs(vl):fabs(vr);

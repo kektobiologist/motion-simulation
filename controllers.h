@@ -40,7 +40,7 @@ class ControllerWrapper { // a wrapper to implement controller for a robot. Curr
 public:
     ControllerWrapper(FType fun, int start_vl, int start_vr, int k):fun(fun), k(k) {
         for(int i = 0; i < k; i++)
-            uq.push_back(make_pair<int,int>(start_vl,start_vr));
+            uq.push_back(make_pair<int,int>((int)start_vl,(int)start_vr));
         prevSpeed = 0;
     }
     Pose getPredictedPose(Pose s) {
@@ -57,7 +57,7 @@ public:
         }
         MiscData m = (*fun)(x, e, vl, vr, prevSpeed, finalVel);
         prevSpeed = max(fabs(vl), fabs(vr));
-        uq.push_back(make_pair<int,int>(vl, vr));
+        uq.push_back(make_pair<int,int>((int)vl, (int)vr));
         uq.pop_front();
         return m;
     }

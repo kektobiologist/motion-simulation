@@ -16,7 +16,7 @@
 
 // Vector2D can also be called as Point2D
 #define Point2D Vector2D
-
+using namespace Constants;
 // Function definitions
 template <class T>
 class Vector2D

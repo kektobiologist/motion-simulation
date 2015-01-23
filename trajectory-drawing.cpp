@@ -1,6 +1,7 @@
 #include "trajectory-drawing.hpp"
 
 namespace TrajectoryDrawing {
+// what's wrong with this function? :(
 void insertArcInPath(QPainterPath &p, double currentAngle, int vl, int vr, double dt) {  // NOTE: dt is in seconds!
     double x = p.currentPosition().x();
     double y = p.currentPosition().y();
@@ -13,8 +14,8 @@ void insertArcInPath(QPainterPath &p, double currentAngle, int vl, int vr, doubl
         return;
     }
 
-    double rho = Pose::d/2 * Pose::fieldXConvert *(vr+vl)/(vr-vl); //NOTE: assuming fieldXConvert ~ fieldYConvert!!
-    double w = (vr-vl)/(Pose::d * Pose::fieldXConvert);
+    double rho = Constants::d/2 * Constants::fieldXConvert *(vr+vl)/(vr-vl); //NOTE: assuming fieldXConvert ~ fieldYConvert!!
+    double w = (vr-vl)/(Constants::d * Constants::fieldXConvert);
 
     double ICCx = x - rho * sin(currentAngle);
     double ICCy = y + rho * cos(currentAngle);
@@ -39,6 +40,14 @@ QPainterPath getTrajectoryPath(FType func, Pose s, int vl_s, int vr_s, Pose e, i
 //        insertArcInPath(p, curPose.theta(), vl, vr, timeLCMs*0.001);
         curPose.update(vl, vr, timeLCMs*0.001);
         p.lineTo(curPose.queryX(), curPose.queryY());
+    }
+    return p;
+}
+QPainterPath getTrajectoryPath(const Trajectory& traj, double timespanMs, double timeLCMs) {
+    QPainterPath p;
+    p.moveTo(traj.x(0), traj.y(0));
+    for (int i = 1; i*timeLCMs < timespanMs; i++) {
+        p.lineTo(traj.x(i*timeLCMs*0.001), traj.y(i*timeLCMs*0.001));
     }
     return p;
 }

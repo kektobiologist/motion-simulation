@@ -1,6 +1,7 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
+namespace Constants {
 const int GOAL_DEPTH                   = 300;
 
 const int CENTER_X                     = 0;
@@ -62,7 +63,17 @@ const int BOT_BALL_THRESH_FOR_PR       = 200;                  // mm
 const int OUR_GOAL_Y = 500;
 
 const int OPP_GOAL_Y = 0;
-
+static const double d          = 6.5; //distance between wheels in cm
+static const double ticksToCmS = 1.107; //still only approximate...
+static const double fieldXConvert = 23.79;
+static const double fieldYConvert = 22.02;
+// NOTE(arpit): Uncertainties should be non-zero when simulating. Currently 0 since bot data is fetched from vision.
+static const double xUncertainty = 0;//0.5; // Uncertainty is in %age of max value. eg. 1% where fabs(x) <= 1000 means fabs(error) <= 10
+static const double yUncertainty = 0;//0.5;
+static const double thetaUncertainty = 0;//3;
+// NOTE(arpit): numPacketDelay and update() specified here is only used in simulation.
+static const int numPacketDelay = 0; // num of packets to delay in update
+}
 
 
 #endif // CONSTANTS_H
