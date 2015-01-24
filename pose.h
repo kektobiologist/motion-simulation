@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include "geometry.h"
 #include "constants.h"
+#include <QDebug>
 /* Pose defines the position and angle of the robot.
  * It is in REAL WORLD coordinates (m and radians).
  * NOTE: vl, vr are taken in ticks only. dt is in ms
@@ -15,8 +16,12 @@ struct MiscData {
     double k;  // curvature
     double v_curve;
     double finalSpeed, rangeMin, rangeMax;
-    MiscData(): k(-1), v_curve(0), finalSpeed(0), rangeMin(0), rangeMax(0) {}
+    // misc data for tracker debugging
+    double v_ref, omega_ref, v1, v2;
+    MiscData(): k(-1), v_curve(0), finalSpeed(0), rangeMin(0), rangeMax(0), v_ref(0), omega_ref(0), v1(0), v2(0) {}
     MiscData(double k, double v_curve, double finalSpeed, double rangeMin, double rangeMax): k(k), v_curve(v_curve), finalSpeed(finalSpeed), rangeMin(rangeMin), rangeMax(rangeMax) {}
+    MiscData(double v_ref, double omega_ref, double v1, double v2): k(0), v_curve(0), finalSpeed(0), rangeMin(0), rangeMax(0),
+        v_ref(v_ref), omega_ref(omega_ref), v1(v1), v2(v2) {}
 };
 
 using namespace Constants;

@@ -111,10 +111,12 @@ void Dialog::on_horizontalSlider_sliderMoved(int )
 void Dialog::onCurIdxChanged(int idx)
 {
     ui->renderArea->changePose(sim.getPoses(idx));
+    MiscData m = sim.getMiscData(idx);
     // lets print for traj sim
 //    Pose s = sim.getPoses(idx);
     qDebug() << idx << ". " << "vl, vr = " << sim.getVls(idx) << ", " << sim.getVrs(idx) << ", vl_calc, vr_calc = " <<
-                sim.getVls_calc(idx) << ", " << sim.getVrs_calc(idx);
+                sim.getVls_calc(idx) << ", " << sim.getVrs_calc(idx) << "v_ref, omega_ref = " << m.v_ref << ", " << m.omega_ref << ", "
+             << "v1, v2 = " << m.v1 << ", " << m.v2;
 //    Pose e = ui->renderArea->getEndPose();
     // some debug prints:
 //    Vector2D<int> initial(s.x()-e.x(), s.y()-e.y());
@@ -393,6 +395,11 @@ void Dialog::on_circleTrajButton_clicked()
     ui->renderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)
         ui->trajSimButton->setEnabled(true);
+    if (!ui->trajCheckbox->isEnabled()) {
+        ui->trajCheckbox->setEnabled(true);
+        ui->trajCheckbox->setChecked(true);
+    }
+    ui->renderArea->toggleTrajectory(true);
 }
 
 void Dialog::on_trajSimButton_clicked()

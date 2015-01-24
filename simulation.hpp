@@ -38,7 +38,9 @@ public:
     int getVrs(int idx) const { return vrs[idx];}
     int getVls_calc(int idx) const { return vls_calc[idx];}
     int getVrs_calc(int idx) const { return vrs_calc[idx];}
-    MiscData getMiscData(int idx) const { return miscData[idx];}
+    MiscData getMiscData(int idx) const {
+        return miscData[idx];
+    }
     Pose getPoses(int idx) const { return poses[idx];}
 
 };

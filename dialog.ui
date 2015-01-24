@@ -132,7 +132,7 @@
                    </size>
                   </property>
                   <property name="text">
-                   <string>500</string>
+                   <string>1000</string>
                   </property>
                  </widget>
                 </item>
@@ -172,7 +172,7 @@
                    </size>
                   </property>
                   <property name="text">
-                   <string>0.5</string>
+                   <string>0.2</string>
                   </property>
                  </widget>
                 </item>
@@ -252,6 +252,9 @@
             <string>Draw trajectory</string>
            </property>
            <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="checked">
             <bool>true</bool>
            </property>
           </widget>
