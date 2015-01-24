@@ -28,10 +28,9 @@ public:
 };
 
 // for tracking a trajectory.
-// tracker should maintain its own time!(?)
+// tracker should maintain its own time!(?) no, ControllerWrapper does it now.
 class Tracker {
     Trajectory traj;
-    int prevVl, prevVr;
     struct Error {
         double e1, e2, e3;
         Error():e1(0), e2(0), e3(0) {}
@@ -42,18 +41,13 @@ class Tracker {
             e3 = diff.theta();
         }
     };
-    struct timeval startTime;
-    bool isFirstCall;
 public:
-    Tracker(): traj(), prevVl(0), prevVr(0), startTime(), isFirstCall(true) {}
-    void reset() {  // set the clock to zero.
-        isFirstCall = true;
-        gettimeofday(&startTime, NULL);
-    }
+    Tracker(): traj() {}
+    Tracker(const Trajectory &tr): traj(tr) {}
     void setTraj(Trajectory tr) {
         traj = tr;
     }
-    MiscData genControls(Pose s, int &vl, int &vr);
+    MiscData genControls(Pose s, int &vl, int &vr, int prevVl, int prevVr, double t);
 };
 
 #endif // TRACKING_HPP

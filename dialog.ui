@@ -58,9 +58,19 @@
              </property>
              <layout class="QVBoxLayout" name="verticalLayout">
               <item>
+               <widget class="QPushButton" name="trajSimButton">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="text">
+                 <string>Simulate Circle Traj</string>
+                </property>
+               </widget>
+              </item>
+              <item>
                <widget class="QPushButton" name="circleTrajButton">
                 <property name="text">
-                 <string>Draw Circle Traj</string>
+                 <string>Set Circle Traj</string>
                 </property>
                </widget>
               </item>
@@ -162,7 +172,7 @@
                    </size>
                   </property>
                   <property name="text">
-                   <string>1</string>
+                   <string>0.5</string>
                   </property>
                  </widget>
                 </item>
@@ -393,12 +403,92 @@
    <slot>setNum(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>735</x>
-     <y>440</y>
+     <x>747</x>
+     <y>505</y>
     </hint>
     <hint type="destinationlabel">
-     <x>773</x>
-     <y>437</y>
+     <x>877</x>
+     <y>505</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>xCircle</sender>
+   <signal>returnPressed()</signal>
+   <receiver>circleTrajButton</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>719</x>
+     <y>381</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>718</x>
+     <y>350</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>yCircle</sender>
+   <signal>returnPressed()</signal>
+   <receiver>circleTrajButton</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>830</x>
+     <y>385</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>827</x>
+     <y>346</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rCircle</sender>
+   <signal>returnPressed()</signal>
+   <receiver>circleTrajButton</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>711</x>
+     <y>405</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>684</x>
+     <y>346</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>thetaCircle</sender>
+   <signal>returnPressed()</signal>
+   <receiver>circleTrajButton</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>840</x>
+     <y>410</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>797</x>
+     <y>344</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>fCircle</sender>
+   <signal>returnPressed()</signal>
+   <receiver>circleTrajButton</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>707</x>
+     <y>441</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>670</x>
+     <y>352</y>
     </hint>
    </hints>
   </connection>

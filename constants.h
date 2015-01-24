@@ -2,6 +2,7 @@
 #define CONSTANTS_H
 
 namespace Constants {
+const double FINAL_VEL = 0;
 const int GOAL_DEPTH                   = 300;
 
 const int CENTER_X                     = 0;

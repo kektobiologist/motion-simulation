@@ -4,6 +4,9 @@
 #include <assert.h>
 
 const double Trajectory::deltaT = 0.001;
+double sgn(double x) {
+    return (x > 0) - (0 > x);
+}
 
 double Trajectory::x (double t) const{
     return x_(t);
@@ -49,19 +52,29 @@ double Trajectory::v(double t) const{
     return sqrt(xd_*xd_ + yd_*yd_);
 }
 
-MiscData Tracker::genControls(Pose s, int &vl, int &vr) {
-    if (isFirstCall) {
-        isFirstCall = false;
-        gettimeofday(&startTime, 0);
-    }
-    struct timeval nowTime;
-    gettimeofday(&nowTime, 0);
-    float t = nowTime.tv_sec+nowTime.tv_usec/1000000.0;
+MiscData Tracker::genControls(Pose s, int &vl, int &vr, int prevVl, int prevVr, double t) {
+    Q_UNUSED(prevVl);
+    Q_UNUSED(prevVr);
     Pose ref(traj.x(t), traj.y(t), traj.theta(t));
     double ur1 = traj.v(t);
     double ur2 = traj.thetad(t);
     Error err(ref, s);
-    double zeta = 1, omegan = 1000.0;
-//    double k1 = k2 = 2*zeta*omegan;
-
+    double zeta = 2, omegan = 0.01, g = 1;
+    double k1 = 2*zeta*omegan;
+    double k2 = k1;
+    double k3;
+    if (fabs(ur1) < 1) {
+        k3 = g*fabs(ur1);
+    } else {
+        k3 = (omegan*omegan - ur2*ur2)/fabs(ur1);
+    }
+    // v = K.e
+    double v1 = -k1*err.e1;
+    double v2 = -sgn(ur1)*k2*err.e2 -k3*err.e3;
+    double v = ur1*cos(err.e3) - v1;
+    double w = ur2-v2;
+    vl = v - Constants::d*w/2;
+    vr = v + Constants::d*w/2;
+    // vl, vr transform now
+    return MiscData();
 }

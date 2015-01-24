@@ -36,7 +36,9 @@ SOURCES += main.cpp\
     vision-velocity.cpp \
     logging.cpp \
     trajectory-drawing.cpp \
-    tracking.cpp
+    tracking.cpp \
+    controller-wrapper.cpp \
+    simulation.cpp
 
 HEADERS  += dialog.h \
     pose.h \
@@ -56,7 +58,9 @@ HEADERS  += dialog.h \
     logging.hpp \
     trajectory-drawing.hpp \
     tracking.hpp \
-    trajectory-generators.hpp
+    trajectory-generators.hpp \
+    controller-wrapper.hpp \
+    simulation.hpp
 
 LIBS += -lgsl -lgslcblas -lprotobuf
 FORMS    += dialog.ui

@@ -1,5 +1,5 @@
 #include "trajectory-drawing.hpp"
-
+#include "controller-wrapper.hpp"
 namespace TrajectoryDrawing {
 // what's wrong with this function? :(
 void insertArcInPath(QPainterPath &p, double currentAngle, int vl, int vr, double dt) {  // NOTE: dt is in seconds!

@@ -11,6 +11,7 @@
 #include <deque>
 #include <queue>
 #include "controllers.h"
+#include "controller-wrapper.hpp"
 #include "visionworker.h"
 #include "beliefstate.h"
 #include <QMutex>
@@ -18,19 +19,12 @@
 #include "attacker.hpp"
 #include "logging.pb.h"
 #include <sys/time.h>
-
+#include "simulation.hpp"
 using namespace std;
 namespace Ui {
 class Dialog;
 }
 
-
-struct RegData {
-    double rho, gamma, delta, v_l, v_r;
-    double timeMs;
-    RegData():rho(0), gamma(0), delta(0), v_l(0), v_r(0), timeMs(0){}
-    RegData(double rho, double gamma, double delta, double v_l, double v_r, double timeMs):rho(rho), gamma(gamma), delta(delta), v_l(v_l), v_r(v_r), timeMs(timeMs){}
-};
 
 
 
@@ -74,6 +68,8 @@ private slots:
 
     void on_circleTrajButton_clicked();
 
+    void on_trajSimButton_clicked();
+
 public slots:
     void onCurIdxChanged(int idx); // idx is index of pose array, not botID (there's only 1 bot :/ )
     void onTimeout();
@@ -89,7 +85,6 @@ private:
     HAL::Serial comm;
     QTimer *algoTimer; //algoTimer for calling controller every 20ms. need to change to seperate thread.
     ControllerWrapper *algoController;
-    ControllerWrapper *algoController_near;
     // NOTE(arpit): not used in sim. Queue of predicted pose, size of q = PREDICTION_PACKET_DELAY. Needed because we need to display
     // old predictions side-by-side with the actual position of the bot.
     std::queue<Pose> predictedPoseQ;
@@ -97,31 +92,20 @@ private:
     // don't need curIdx, simply read the position of the slider (otherwise there is duplicacy)
     Ui::Dialog *ui;
     QTimer *timer;
-    Pose poses[NUMTICKS];
-    int vls[NUMTICKS], vrs[NUMTICKS];
-    float vls_calc[NUMTICKS], vrs_calc[NUMTICKS];  // vl, vr reverse-calculated from vision data using VisionVelocity
-    MiscData miscData[NUMTICKS];
-    // vls_calc[i] ~ vls[i] etc.
-    double simulate(Pose startPose, Pose endPose, FType func, int start_vl, int start_vr, bool isBatch = false); // implements delay control logic, for any given controller. (I removed the old simulate function that did not use wrapper)
-                                                                                     // returns the time(ms) to reach endPose. A dist threshold is taken, no angle considerations yet.
-    void batchSimulation(FType fun);
-    vector<FPair> functions;
-    void drawControlArc(int idx, Pose endPose);
-    void regression(vector<RegData> func);
-
-    // functions for GA
-    double fitnessFunction(double k1, double k2, double k3); // runs the PolarBasedGA function with k1, k2, k3 values.
-
+    // simulator
+    Simulator sim;
+    vector<FPair> functions;  // for display the spin box of choosing p2p controller
     // counter for counting num of packets sent:
     int counter;
     // so that comm.Write() commands don't overlap. ideally should also have a time gap between comm.Write() calls.
     QMutex *sendDataMutex;
-    TAttack tattack;
     // structs for logging (actual bots, not sim)
     vector<Logging::SystemData> sysData;
     vector<Logging::ReceivedData> recvData;
     Logging::Log log;
     void readDataAndAppendToLog();
+
+    Trajectory traj;
 };
 
 #endif // DIALOG_H
