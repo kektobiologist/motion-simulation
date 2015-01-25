@@ -116,7 +116,7 @@ void Dialog::onCurIdxChanged(int idx)
 //    Pose s = sim.getPoses(idx);
     qDebug() << idx << ". " << "vl, vr = " << sim.getVls(idx) << ", " << sim.getVrs(idx) << ", vl_calc, vr_calc = " <<
                 sim.getVls_calc(idx) << ", " << sim.getVrs_calc(idx) << "v_ref, omega_ref = " << m.v_ref << ", " << m.omega_ref << ", "
-             << "v1, v2 = " << m.v1 << ", " << m.v2;
+             << "v1, v2 = " << m.v1 << ", " << m.v2 << "time = " << m.t;
 //    Pose e = ui->renderArea->getEndPose();
     // some debug prints:
 //    Vector2D<int> initial(s.x()-e.x(), s.y()-e.y());

@@ -13,7 +13,7 @@ MiscData ControllerWrapper::genControls_(Pose s, Pose e, int &vl, int &vr, doubl
     uq.pop_front();
     return m;
 }
-MiscData ControllerWrapper::genControls_(Pose s, int &vl, int &vr) {
+MiscData ControllerWrapper::genControls_(Pose s, int &vl, int &vr, double time, bool useTime) {
     assert(ctrlType == TRACKCTRL);
     Pose x = s;
     for(deque<pair<int,int> >::iterator it = uq.begin(); it != uq.end(); it++) {
@@ -23,9 +23,14 @@ MiscData ControllerWrapper::genControls_(Pose s, int &vl, int &vr) {
         isFirstCall = false;
         gettimeofday(&startTime, NULL);
     }
-    struct timeval nowTime;
-    gettimeofday(&nowTime, NULL);
-    double elapsedS = (nowTime.tv_sec-startTime.tv_sec)+(nowTime.tv_usec-startTime.tv_usec)/1000000.0;
+    double elapsedS;
+    if (!useTime) {
+        struct timeval nowTime;
+        gettimeofday(&nowTime, NULL);
+        elapsedS = (nowTime.tv_sec-startTime.tv_sec)+(nowTime.tv_usec-startTime.tv_usec)/1000000.0;
+    } else {
+        elapsedS = time;
+    }
     MiscData m = tracker.genControls(x, vl, vr, prevVl, prevVr, elapsedS);
     prevVl = vl; prevVr = vr;
     uq.push_back(make_pair<int,int>((int)vl, (int)vr));
@@ -65,5 +70,11 @@ MiscData ControllerWrapper::genControls(Pose s, Pose e, int &vl, int &vr, double
     } else {
         return genControls_(s, vl, vr);
     }
+}
+
+MiscData ControllerWrapper::genControlsTrajSim(Pose s, int &vl, int &vr, double t)
+{
+    assert (ctrlType == TRACKCTRL);
+    return genControls_(s, vl, vr, t, true);
 }
 

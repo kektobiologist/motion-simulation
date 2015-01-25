@@ -57,9 +57,10 @@ MiscData Tracker::genControls(Pose s, int &vl, int &vr, int prevVl, int prevVr, 
     Q_UNUSED(prevVr);
     Pose ref(traj.x(t), traj.y(t), traj.theta(t));
     double ur1 = traj.v(t);
+    ur1 = ur1/(fieldXConvert*ticksToCmS);
     double ur2 = traj.thetad(t);
     Error err(ref, s);
-    double zeta = 0, omegan = 0, g = 0;
+    double zeta = .5, omegan = .1, g = .1;
     double k1 = 2*zeta*omegan;
     double k2 = k1;
     double k3;
@@ -69,8 +70,9 @@ MiscData Tracker::genControls(Pose s, int &vl, int &vr, int prevVl, int prevVr, 
         k3 = (omegan*omegan - ur2*ur2)/fabs(ur1);
     }
     // NOTE: hardcoding k3 = 0!
-    k3 = 0;
+//    k3 = 0;
     // v = K.e
+//    err.e3 = 0;
     double v1 = -k1*err.e1;
     double v2 = -sgn(ur1)*k2*err.e2 -k3*err.e3;
     double v = ur1*cos(err.e3) - v1;
@@ -78,5 +80,5 @@ MiscData Tracker::genControls(Pose s, int &vl, int &vr, int prevVl, int prevVr, 
     vl = v - Constants::d*w/2;
     vr = v + Constants::d*w/2;
     // vl, vr transform now
-    return MiscData(ur1, ur2, v1, v2);
+    return MiscData(ur1, ur2, v1, v2, t, v);
 }

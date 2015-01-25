@@ -18,10 +18,11 @@ struct MiscData {
     double finalSpeed, rangeMin, rangeMax;
     // misc data for tracker debugging
     double v_ref, omega_ref, v1, v2;
+    double t, v;
     MiscData(): k(-1), v_curve(0), finalSpeed(0), rangeMin(0), rangeMax(0), v_ref(0), omega_ref(0), v1(0), v2(0) {}
     MiscData(double k, double v_curve, double finalSpeed, double rangeMin, double rangeMax): k(k), v_curve(v_curve), finalSpeed(finalSpeed), rangeMin(rangeMin), rangeMax(rangeMax) {}
-    MiscData(double v_ref, double omega_ref, double v1, double v2): k(0), v_curve(0), finalSpeed(0), rangeMin(0), rangeMax(0),
-        v_ref(v_ref), omega_ref(omega_ref), v1(v1), v2(v2) {}
+    MiscData(double v_ref, double omega_ref, double v1, double v2, double t, double v): k(0), v_curve(0), finalSpeed(0),
+        rangeMin(0), rangeMax(0), v_ref(v_ref), omega_ref(omega_ref), v1(v1), v2(v2), t(t), v(v) {}
 };
 
 using namespace Constants;
