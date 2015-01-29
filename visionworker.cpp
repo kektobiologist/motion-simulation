@@ -38,13 +38,15 @@ VisionWorker::VisionWorker(QObject *parent) :
     QObject(parent)
 {
     detectionCount = 0;
+    isTeamYellow = false;
 }
 
-void VisionWorker::setup(QThread *cThread, BeliefState *bs_, QMutex *bsMutex_)
+void VisionWorker::setup(QThread *cThread, BeliefState *bs_, QMutex *bsMutex_, bool isTeamYellow_)
 {
     myThread = cThread;
     bs = bs_;
     bsMutex = bsMutex_;
+    isTeamYellow = isTeamYellow_;
     connect(cThread, SIGNAL(started()), this, SLOT(onEntry()));
     connect(cThread, SIGNAL(destroyed()), this, SLOT(onExit()));
     for (int i = 0; i < MAX_BS_Q; i++) {
@@ -120,17 +122,31 @@ void VisionWorker::onEntry()
                     else
                         botTheta = 0;
                     linearTransform(botX, botY, botTheta);
-                    VisionVelocity::BotPose p1(bsQ.front().first.homeX[botId], bsQ.front().first.homeY[botId], bsQ.front().first.homeTheta[botId]);
-                    VisionVelocity::BotPose p2(botX, botY, botTheta);
-                    VisionVelocity::calcBotVelocity(p1, p2, timeMs, botVl, botVr);
-                    bsMutex->lock();
-                    bs->homeX[botId] = botX;
-                    bs->homeY[botId] = botY;
-                    bs->homeTheta[botId] = botTheta;
-                    bs->homeVl[botId] = botVl;
-                    bs->homeVr[botId] = botVr;
-                    bs->homeIsPresent[botId] = true;
-                    bsMutex->unlock();
+                    if (isTeamYellow) {
+                        VisionVelocity::BotPose p1(bsQ.front().first.awayX[botId], bsQ.front().first.awayY[botId], bsQ.front().first.awayTheta[botId]);
+                        VisionVelocity::BotPose p2(botX, botY, botTheta);
+                        VisionVelocity::calcBotVelocity(p1, p2, timeMs, botVl, botVr);
+                        bsMutex->lock();
+                        bs->awayX[botId] = botX;
+                        bs->awayY[botId] = botY;
+                        bs->awayTheta[botId] = botTheta;
+                        bs->awayVl[botId] = botVl;
+                        bs->awayVr[botId] = botVr;
+                        bs->awayIsPresent[botId] = true;
+                        bsMutex->unlock();
+                    } else {
+                        VisionVelocity::BotPose p1(bsQ.front().first.homeX[botId], bsQ.front().first.homeY[botId], bsQ.front().first.homeTheta[botId]);
+                        VisionVelocity::BotPose p2(botX, botY, botTheta);
+                        VisionVelocity::calcBotVelocity(p1, p2, timeMs, botVl, botVr);
+                        bsMutex->lock();
+                        bs->homeX[botId] = botX;
+                        bs->homeY[botId] = botY;
+                        bs->homeTheta[botId] = botTheta;
+                        bs->homeVl[botId] = botVl;
+                        bs->homeVr[botId] = botVr;
+                        bs->homeIsPresent[botId] = true;
+                        bsMutex->unlock();
+                    }
                 }
 
                 //Yellow robot info:
@@ -147,18 +163,32 @@ void VisionWorker::onEntry()
                     else
                         botTheta = 0;
                     linearTransform(botX, botY, botTheta);
-                    VisionVelocity::BotPose p1(bsQ.front().first.awayX[botId], bsQ.front().first.awayY[botId], bsQ.front().first.awayTheta[botId]);
-                    VisionVelocity::BotPose p2(botX, botY, botTheta);
-                    VisionVelocity::calcBotVelocity(p1, p2, timeMs, botVl, botVr);
-                    bsMutex->lock();
-                    bs->awayX[botId] = botX;
-                    bs->awayY[botId] = botY;
-                    bs->awayTheta[botId] = botTheta;
-                    bs->awayVl[botId] = botVl;
-                    bs->awayVr[botId] = botVr;
-                    bs->awayIsPresent[botId] = true;
-                    bsMutex->unlock();
-                }
+                    if (isTeamYellow) {
+                        VisionVelocity::BotPose p1(bsQ.front().first.homeX[botId], bsQ.front().first.homeY[botId], bsQ.front().first.homeTheta[botId]);
+                        VisionVelocity::BotPose p2(botX, botY, botTheta);
+                        VisionVelocity::calcBotVelocity(p1, p2, timeMs, botVl, botVr);
+                        bsMutex->lock();
+                        bs->homeX[botId] = botX;
+                        bs->homeY[botId] = botY;
+                        bs->homeTheta[botId] = botTheta;
+                        bs->homeVl[botId] = botVl;
+                        bs->homeVr[botId] = botVr;
+                        bs->homeIsPresent[botId] = true;
+                        bsMutex->unlock();
+                    } else {
+                        VisionVelocity::BotPose p1(bsQ.front().first.awayX[botId], bsQ.front().first.awayY[botId], bsQ.front().first.awayTheta[botId]);
+                        VisionVelocity::BotPose p2(botX, botY, botTheta);
+                        VisionVelocity::calcBotVelocity(p1, p2, timeMs, botVl, botVr);
+                        bsMutex->lock();
+                        bs->awayX[botId] = botX;
+                        bs->awayY[botId] = botY;
+                        bs->awayTheta[botId] = botTheta;
+                        bs->awayVl[botId] = botVl;
+                        bs->awayVr[botId] = botVr;
+                        bs->awayIsPresent[botId] = true;
+                        bsMutex->unlock();
+                    }
+                }                
                 bsQ.pop();
                 bsMutex->lock();
                 bsQ.push(make_pair(*bs, nowTime));
