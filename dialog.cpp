@@ -394,7 +394,7 @@ void Dialog::on_circleTrajButton_clicked()
     double startTheta = ui->thetaCircle->text().toDouble();
     double r = ui->rCircle->text().toDouble();
     double f = ui->fCircle->text().toDouble();
-    traj = circleGenerator(x,y,r,startTheta,f);
+    traj = cubic(ui->renderArea->getStartPose(), ui->renderArea->getEndPose());
     ui->renderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)
         ui->trajSimButton->setEnabled(true);
