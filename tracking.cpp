@@ -80,7 +80,6 @@ MiscData Tracker::genControls(Pose s, int &vl, int &vr, int prevVl, int prevVr, 
     vl = v - Constants::d*w/2;
     vr = v + Constants::d*w/2;
     // vl, vr transform now
-    // cap vl vr
     if (vl > 120)
         vl = 120;
     else if (vl < -120)

@@ -406,8 +406,7 @@ void Dialog::on_circleTrajButton_clicked()
     double r1 = ui->rCircle1->text().toDouble();
     double r2 = ui->rCircle2->text().toDouble();
     double f = ui->fCircle->text().toDouble();
-//    traj = circleGenerator(x,y,r,startTheta,f);
-    traj = ellipseGenerator(r1,r2, startTheta, f);
+    traj = cubic(ui->renderArea->getStartPose(), ui->renderArea->getEndPose());
     ui->renderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)
         ui->trajSimButton->setEnabled(true);
