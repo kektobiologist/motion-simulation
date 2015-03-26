@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 38
+/svn/!svn/ver/184/trunk/src/shared/net
+END
+netraw.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/184/trunk/src/shared/net/netraw.cpp
+END
+robocup_ssl_server.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/138/trunk/src/shared/net/robocup_ssl_server.cpp
+END
+netraw.h
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/61/trunk/src/shared/net/netraw.h
+END
+robocup_ssl_server.h
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/184/trunk/src/shared/net/robocup_ssl_server.h
+END
+robocup_ssl_client.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/61/trunk/src/shared/net/robocup_ssl_client.cpp
+END
+robocup_ssl_client.h
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/175/trunk/src/shared/net/robocup_ssl_client.h
+END

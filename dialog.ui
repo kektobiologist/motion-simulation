@@ -17,7 +17,7 @@
    <item row="0" column="0">
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
@@ -76,6 +76,13 @@
               </item>
               <item>
                <layout class="QGridLayout" name="gridLayout_3">
+                <item row="0" column="2">
+                 <widget class="QLabel" name="label_2">
+                  <property name="text">
+                   <string>y</string>
+                  </property>
+                 </widget>
+                </item>
                 <item row="0" column="0">
                  <widget class="QLabel" name="label">
                   <property name="text">
@@ -83,8 +90,8 @@
                   </property>
                  </widget>
                 </item>
-                <item row="0" column="1">
-                 <widget class="QLineEdit" name="xCircle">
+                <item row="2" column="3">
+                 <widget class="QLineEdit" name="thetaCircle">
                   <property name="maximumSize">
                    <size>
                     <width>30</width>
@@ -93,13 +100,6 @@
                   </property>
                   <property name="text">
                    <string>0</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="2">
-                 <widget class="QLabel" name="label_2">
-                  <property name="text">
-                   <string>y</string>
                   </property>
                  </widget>
                 </item>
@@ -116,35 +116,8 @@
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="0">
-                 <widget class="QLabel" name="label_3">
-                  <property name="text">
-                   <string>r</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="1">
-                 <widget class="QLineEdit" name="rCircle">
-                  <property name="maximumSize">
-                   <size>
-                    <width>30</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string>1000</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="2">
-                 <widget class="QLabel" name="label_4">
-                  <property name="text">
-                   <string>theta</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="3">
-                 <widget class="QLineEdit" name="thetaCircle">
+                <item row="0" column="1">
+                 <widget class="QLineEdit" name="xCircle">
                   <property name="maximumSize">
                    <size>
                     <width>30</width>
@@ -156,6 +129,26 @@
                   </property>
                  </widget>
                 </item>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="label_3">
+                  <property name="text">
+                   <string>r1</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QLineEdit" name="rCircle1">
+                  <property name="maximumSize">
+                   <size>
+                    <width>40</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>1000</string>
+                  </property>
+                 </widget>
+                </item>
                 <item row="2" column="0">
                  <widget class="QLabel" name="label_5">
                   <property name="text">
@@ -163,7 +156,14 @@
                   </property>
                  </widget>
                 </item>
-                <item row="2" column="1" colspan="2">
+                <item row="2" column="2">
+                 <widget class="QLabel" name="label_4">
+                  <property name="text">
+                   <string>theta</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
                  <widget class="QLineEdit" name="fCircle">
                   <property name="maximumSize">
                    <size>
@@ -173,6 +173,26 @@
                   </property>
                   <property name="text">
                    <string>0.2</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="2">
+                 <widget class="QLabel" name="label_6">
+                  <property name="text">
+                   <string>r2</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="3">
+                 <widget class="QLineEdit" name="rCircle2">
+                  <property name="maximumSize">
+                   <size>
+                    <width>40</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>1000</string>
                   </property>
                  </widget>
                 </item>
@@ -448,7 +468,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>rCircle</sender>
+   <sender>rCircle1</sender>
    <signal>returnPressed()</signal>
    <receiver>circleTrajButton</receiver>
    <slot>click()</slot>

@@ -25,7 +25,7 @@ using namespace std;
 // as well as the algoController delay
 static const int PREDICTION_PACKET_DELAY = 4;
 // bot used for testing (non-sim)
-static const int BOT_ID_TESTING = 0;
+static const int BOT_ID_TESTING = 4;
 
 Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
@@ -39,7 +39,6 @@ Dialog::Dialog(QWidget *parent) :
     Pose start = ui->renderArea->getStartPose();
     Pose end = ui->renderArea->getEndPose();
     sim.simulate(start, end, &Controllers::kgpkubs, 0, 0);
-//    simulate(start, end, &Controllers::kgpkubs, 0, 0);
     ui->horizontalSlider->setRange(0, NUMTICKS-1);
     connect(ui->horizontalSlider, SIGNAL(valueChanged(int)), this, SLOT(onCurIdxChanged(int)));
     connect(timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
@@ -67,7 +66,11 @@ Dialog::Dialog(QWidget *parent) :
 //    connect(vw, SIGNAL(newData()), this, SLOT(onNewData()));
     algoTimer = new QTimer();
     connect(algoTimer, SIGNAL(timeout()), this, SLOT(onAlgoTimeout()));
-    if(!comm.Open("/dev/ttyUSB0", 38400)) {
+    QTimer *printTimer = new QTimer();
+    printTimer->setSingleShot(false);
+    printTimer->start(500);
+    connect(printTimer, SIGNAL(timeout()), this, SLOT(onNewData()));
+    if(!comm.Open("/dev/ttyUSB1", 38400)) {
         qDebug() << "Could not open comm port!";
     } else {
         qDebug() << "Connected.";
@@ -195,6 +198,13 @@ void Dialog::onNewData()
         ui->ballPosLabel->setText(QString("Ball: %1, %2").arg(QString::number(bs.ballX), QString::number(bs.ballY)));
     else
         ui->ballPosLabel->setText("Ball: -");
+    // print bot velocitys
+    if (bs.homeIsPresent[BOT_ID_TESTING]) {
+        ui->ballPosLabel->setText(QString("bot: %1, %2").arg(QString::number(bs.homeVl[BOT_ID_TESTING]),
+                                                             QString::number(bs.homeVr[BOT_ID_TESTING])));
+    } else {
+        ui->ballPosLabel->setText("Bot: -");
+    }
 }
 
 
@@ -386,15 +396,18 @@ void Dialog::on_traj2Button_clicked()
 //    ui->firaRenderArea->toggleTrajectory(true);
 }
 
+
 void Dialog::on_circleTrajButton_clicked()
 {
     using namespace TrajectoryGenerators;
     double x = ui->xCircle->text().toDouble();
     double y = ui->yCircle->text().toDouble();
     double startTheta = ui->thetaCircle->text().toDouble();
-    double r = ui->rCircle->text().toDouble();
+    double r1 = ui->rCircle1->text().toDouble();
+    double r2 = ui->rCircle2->text().toDouble();
     double f = ui->fCircle->text().toDouble();
-    traj = circleGenerator(x,y,r,startTheta,f);
+//    traj = circleGenerator(x,y,r,startTheta,f);
+    traj = ellipseGenerator(r1,r2, startTheta, f);
     ui->renderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)
         ui->trajSimButton->setEnabled(true);

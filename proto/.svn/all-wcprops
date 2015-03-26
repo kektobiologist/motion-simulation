@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 40
+/svn/!svn/ver/175/trunk/src/shared/proto
+END
+messages_robocup_ssl_detection.proto
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/73/trunk/src/shared/proto/messages_robocup_ssl_detection.proto
+END
+compile.sh
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/!svn/ver/13/trunk/src/shared/proto/compile.sh
+END
+messages_robocup_ssl_wrapper.proto
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/!svn/ver/27/trunk/src/shared/proto/messages_robocup_ssl_wrapper.proto
+END
+messages_robocup_ssl_refbox_log.proto
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/!svn/ver/175/trunk/src/shared/proto/messages_robocup_ssl_refbox_log.proto
+END
+messages_robocup_ssl_geometry.proto
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/133/trunk/src/shared/proto/messages_robocup_ssl_geometry.proto
+END
