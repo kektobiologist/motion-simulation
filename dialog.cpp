@@ -25,7 +25,7 @@ using namespace std;
 // as well as the algoController delay
 static const int PREDICTION_PACKET_DELAY = 4;
 // bot used for testing (non-sim)
-static const int BOT_ID_TESTING = 4;
+static const int BOT_ID_TESTING = 0;
 
 Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
@@ -70,7 +70,7 @@ Dialog::Dialog(QWidget *parent) :
     printTimer->setSingleShot(false);
     printTimer->start(500);
     connect(printTimer, SIGNAL(timeout()), this, SLOT(onNewData()));
-    if(!comm.Open("/dev/ttyUSB1", 38400)) {
+    if(!comm.Open("/dev/ttyUSB0", 38400)) {
         qDebug() << "Could not open comm port!";
     } else {
         qDebug() << "Connected.";
@@ -394,6 +394,23 @@ void Dialog::on_traj2Button_clicked()
 //    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(fun, start, 0, 0, end, FINAL_VEL,
 //                                                                       FINAL_VEL, 4000, timeLCMs));
 //    ui->firaRenderArea->toggleTrajectory(true);
+    bsMutex->lock();
+    BeliefState bs = *beliefStateSh;
+    bsMutex->unlock();
+    using namespace TrajectoryGenerators;
+    Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
+    traj = cubic(start, ui->firaRenderArea->getEndPose());
+    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(traj, 4000, timeLCMs));
+    if (ui->trajSimButton->isEnabled() == false)
+        ui->trajSimButton->setEnabled(true);
+    if (!ui->trajCheckbox->isEnabled()) {
+        ui->trajCheckbox->setEnabled(true);
+        ui->trajCheckbox->setChecked(true);
+    }
+    ui->renderArea->toggleTrajectory(true);
+
+    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(traj, 4000, timeLCMs));
+    ui->firaRenderArea->toggleTrajectory(true);
 }
 
 

@@ -3,6 +3,7 @@
 #include <tracking.hpp>
 #include <functional>
 #include "geometry.h"
+#include <QDebug>
 using namespace std;
 namespace TrajectoryGenerators {
 Trajectory circleGenerator(double x, double y, double r, double startTheta, double f) {
@@ -42,8 +43,8 @@ Trajectory ellipseGen(double x, double y, double a, double b, double startTheta,
     return Trajectory(xfunc, yfunc);
 }
 Trajectory cubic(Pose start, Pose end) {
-    double k = 1 / 4.8;
     double d = sqrt((start.x() - end.x())*(start.x() - end.x()) + (start.y() - end.y())*(start.y() - end.y()));
+    double k = 1500. / d;
     double x1 = start.x();
     double x2 = end.x();
     double y1 = start.y();
@@ -66,7 +67,25 @@ Trajectory cubic(Pose start, Pose end) {
         double b4 = y1;
         return b1 * u * u * u + b2 * u * u + b3 * u + b4;
     };
-    return Trajectory(xfunc, yfunc);
+    Trajectory traj(xfunc, yfunc);
+    double maxvw=0, maxvl=0, maxvr =0;
+    double i=0.0;
+    while( i < 1/k){
+    double v = traj.v(i);
+    double w = traj.thetad(i);
+    v /=Constants::fieldXConvert;
+    double vl = v - Constants::d*w/2;
+    double vr = v + Constants::d*w/2;
+    if( vl > maxvl)
+           maxvl = vl;
+    if(maxvr < vr)
+        maxvr = vr;
+    if(maxvw < fabs(v*w))
+        maxvw=fabs(v*w);
+    i+=0.2;
+    }
+    qDebug() << maxvw << " " << maxvl << " " << maxvr << endl;
+    return traj;
 }
 }
 #endif // TRAJECTORYGENERATORS_HPP
