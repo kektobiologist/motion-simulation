@@ -58,4 +58,8 @@ inline double dist(Pose p1, Pose p2) {
     return sqrt((double)(p1.x()-p2.x())*(p1.x()-p2.x()) + (p1.y()-p2.y())*(p1.y()-p2.y()));
 }
 
+inline double distSq(Pose p1, Pose p2) {
+    return (double)(p1.x()-p2.x())*(p1.x()-p2.x()) + (p1.y()-p2.y())*(p1.y()-p2.y());
+}
+
 #endif // POSE_H

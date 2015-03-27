@@ -391,7 +391,10 @@ void Dialog::on_circleTrajButton_clicked()
     double startTheta = ui->thetaCircle->text().toDouble();
     double r = ui->rCircle->text().toDouble();
     double f = ui->fCircle->text().toDouble();
-    traj = circleGenerator(x,y,r,startTheta,f);
+    Pose start = ui->renderArea->getStartPose();
+    Pose end = ui->renderArea->getEndPose();
+//    traj = circleGenerator(x,y,r,startTheta,f);
+    traj = quinticBezierSplineGenerator(start, end, 30, 40, 0, 60);
     ui->renderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)
         ui->trajSimButton->setEnabled(true);
@@ -403,7 +406,7 @@ void Dialog::on_circleTrajButton_clicked()
 }
 
 void Dialog::on_trajSimButton_clicked()
-{
+{    
     Pose start = ui->renderArea->getStartPose();
     sim.simulate(start, traj, 0, 0, false);
     onCurIdxChanged(0);
