@@ -3,10 +3,11 @@
 #include <assert.h>
 #include <algorithm>
 #include <utility>
+#include <math.h>
 using namespace std;
 namespace Controllers {
 
-MiscData kgpkubs(Pose initialPose, Pose finalPose, int &vl, int &vr, double prevSpeed, double finalSpeed)
+MiscData kgpkubs(Pose initialPose, Pose finalPose, int &vl, int &vr, double prevSpeed, double prevOmega, double finalSpeed)
 {
     Q_UNUSED(prevSpeed);
     int clearance = CLEARANCE_PATH_PLANNER;
@@ -62,7 +63,7 @@ MiscData kgpkubs(Pose initialPose, Pose finalPose, int &vl, int &vr, double prev
     return MiscData();
 }
 
-MiscData CMU(Pose s, Pose e, int &vl, int &vr, double prevSpeed, double finalSpeed)
+MiscData CMU(Pose s, Pose e, int &vl, int &vr, double prevSpeed, double prevOmega, double finalSpeed)
 {
     Q_UNUSED(prevSpeed);
     int maxDis = 2*sqrt(HALF_FIELD_MAXX*HALF_FIELD_MAXX+HALF_FIELD_MAXY*HALF_FIELD_MAXY);
@@ -84,7 +85,139 @@ MiscData CMU(Pose s, Pose e, int &vl, int &vr, double prevSpeed, double finalSpe
     return MiscData();
 }
 
-MiscData PController(Pose s, Pose e, int &vl, int &vr, double prevSpeed, double finalSpeed)
+
+MiscData DynamicWindow(Pose s, Pose e, int &vl, int &vr, double prevSpeed, double prevOmega, double finalSpeed)
+{
+//    qDebug()<<"prevSpeed = "<<prevSpeed<<" prevOmega = "<<prevOmega;
+//    qDebug()<<"Inside function Dynamic Window";
+//    sprintf(buf, "in function Dynamic Window");
+    const int del_v_max = 10; //ticks
+    const float step = 1; //ticks
+    const float max_vel = 100; //ticks
+    const float a_r_max = 380; //cm/s^2
+//    const float PI= 3.14159;
+    const float t=0.016;
+    const float k=0   ;
+    int count=0;
+    double arr[100000][3];
+    //float prevSpeed, prevOmega,alpha,acc,theta,x,y,reqtheta,dtheta;
+
+    //int i,j;                                                           //i=vr,,j=vl
+
+    for(float del_vr=-del_v_max;del_vr<=del_v_max;del_vr+=step)
+        {
+            for(float del_vl=-del_v_max;del_vl<=del_v_max;del_vl+=step)
+            {
+
+                float newSpeed= prevSpeed + Constants::ticksToCmS*(del_vr+del_vl)/2; // cm/s
+                float newOmega= prevOmega + Constants::ticksToCmS*(del_vr-del_vl)/Constants::d;  // cm/s                //D Is the constant breadth of the bot
+//                qDebug()<<"Trying newSpeed = "<<newSpeed<<" newOmega = "<<newOmega;
+                if(abs(newSpeed/Constants::ticksToCmS) >max_vel || abs(newOmega/Constants::ticksToCmS) >(2*max_vel)/Constants::d)
+                    continue;
+                if((newSpeed*newOmega)>=a_r_max*sqrt(1-pow((del_vr + del_vl)/(2*del_v_max),2)))
+                    continue;                   // constraint from the equation of ellipse.
+                //if(count>400) break;                                 //we would take only a fixed number of points under consideration
+//                qDebug()<<"Trying newSpeed = "<<newSpeed<<" newOmega = "<<newOmega;
+                // float alpha=(newOmega-prevOmega)/t; // rad/cm^2
+                float theta= s.theta() + (newOmega*t); //rad
+                //float acc_x=(newSpeed*cos(theta)-prevSpeed*cos(s.theta()))/t; //cm/s^2
+                //float acc_y=(newSpeed*sin(theta)-prevSpeed*sin(s.theta()))/t; //cm/s^2
+                theta = normalizeAngle(theta);
+                //float x= s.x() + (prevSpeed*cos(theta)*t) + (0.5*acc_x*t*t);
+                //float y= s.y() + (prevSpeed*sin(theta)*t) + (0.5*acc_y*t*t);
+
+                 float x= s.x() + (newSpeed*cos(theta)*t);
+                 float y= s.y() + (newSpeed*sin(theta)*t);
+//                qDebug()<<"x"<<s.x()<<" --> "<<x<<" y "<<s.y()<<" --> "<<y;
+
+                float reqtheta=atan2((e.y()-y),(e.x()-x));
+
+                float dtheta=abs(normalizeAngle(theta-reqtheta));
+                if(dtheta>PI){
+                    dtheta=2*PI-dtheta;
+                }
+
+                arr[count][0]= pow((x - e.x()),2) + pow((y - e.y()),2) + k*pow((dtheta),2) ;         // our objective function
+                arr[count][1]= newSpeed;
+                arr[count][2]= newOmega;
+                count++;
+//                qDebug()<<"obj = "<<arr[count][0];
+            }
+        }
+    float min= arr[0][0];
+    float best_v=arr[0][1];
+    float best_w=arr[0][2];
+    for(int i=0;i<count;i++)
+    {
+        if(arr[i][0]<min)
+        {
+            min=arr[i][0];
+            best_v= arr[i][1];
+            best_w = arr[i][2];
+        }
+    }
+
+
+    vr=(best_v)+(Constants::d *best_w)/2 ;                    // update velocity
+    vl=(2*best_v) - vr;                       // update omega
+    vr/=Constants::ticksToCmS;
+    vl/=Constants::ticksToCmS;
+
+    return MiscData();
+}
+
+//MiscData DynamicWindow(Pose s, Pose e, int &vl, int &vr, double prevSpeed, double prevOmega, double finalSpeed)
+//{
+//    const int del_v = 10;
+//    const float step = 1;
+//    int count=0;
+//    double arr[1000][3];
+//    //float oldvel, oldome,alpha,acc,theta,x,y,reqtheta,dtheta;
+//    float t=0.016;
+//    //int i,j;                                                           //i=vr,,j=vl
+//    int k=5;
+//    for(float del_vr=-del_v;i<=del_v;i+=step)
+//        {
+//            for(float j=-del_v;j<=del_v;j+=step)
+//            {
+//                //oldvel=prevSpeed;
+//                //oldome=prevOmega;
+//                newSpeed= prevSpeed + Constants::ticksToCmS*(i+j)/2;
+//                newOmega= prevOmega + Constants::ticksToCmS*(i-j)/Constants::d;                  //D Is the constant breadth of the bot
+//                if(abs(prevSpeed/Constants::ticksToCmS) >100 || abs(prevOmega/Constants::ticksToCmS) >200/Constants::d) continue;
+//                if((prevSpeed*prevOmega)>=380*sqrt(0.99)) continue;                   // constraint from the equation of ellipse.
+//                //if(count>400) break;                                 //we would take only a fixed number of points under consideration
+//                count++;
+//                alpha=(prevOmega-oldome)/t;
+//                acc=(prevSpeed-oldvel)/t;
+//                theta= s.theta() + (oldome*t) + (0.5*alpha*t*t);
+//                if(theta>2*3.14){theta=theta - 2*3.14*static_cast<int>(theta/(2*3.14));}
+//                x= s.x() + (oldvel*cos(theta)*t) + (0.5*acc*cos(theta)*t*t);
+//                y= s.y() + (oldvel*sin(theta)*t) + (0.5*acc*sin(theta)*t*t);
+//                reqtheta=tanh((e.y()-y)/(e.x()-x));
+//                dtheta=abs(theta-reqtheta);
+//                if(dtheta>2*3.14){dtheta=dtheta-2*3.14*static_cast<int>(theta/(2*3.14));}
+//                if(dtheta>3.14)
+//                      {dtheta=3.14*2-dtheta;}
+//        arr[count][0]= pow((x - e.x()),2) + pow((y - e.y()),2) + k*pow((dtheta),2) ;         // our objective function
+//        arr[count][1]= prevSpeed;
+//        arr[count][2]= prevOmega;
+//            }
+//        }
+//    float min= arr[0][0];
+//    for(i=1;i<count;i++)
+//    {
+//        if(arr[i][0]<min) { min=arr[i][0]; j=i; }
+//    }
+//    vr=(arr[j][1])+(Constants::d * arr[j][2])/2 ;                    // update velocity
+//    vl=(2*arr[j][1]) - vr;                       // update omega
+//    vr/=Constants::ticksToCmS;
+//    vl/=Constants::ticksToCmS;
+
+//    return MiscData();
+//}
+
+MiscData PController(Pose s, Pose e, int &vl, int &vr, double prevSpeed, double prevOmega, double finalSpeed)
 {
     Q_UNUSED(prevSpeed);
     Vector2D<int> initial(s.x(), s.y());
@@ -118,7 +251,7 @@ MiscData PController(Pose s, Pose e, int &vl, int &vr, double prevSpeed, double 
 unicycle-like vehicles via Lyapunov techniques. IEEE Robotics & Automation
 Magazine 2(1):27–35
 */
-MiscData PolarBased(Pose s, Pose e, int &vl, int &vr, double prevSpeed, double finalSpeed)
+MiscData PolarBased(Pose s, Pose e, int &vl, int &vr, double prevSpeed, double prevOmega, double finalSpeed)
 {
     // NOTE: its preferable to call x(), y(), and theta() of each object exactly once since they may return different
     // values on each call (when simulating, gaussian errors non-zero).
@@ -148,12 +281,12 @@ MiscData PolarBased(Pose s, Pose e, int &vl, int &vr, double prevSpeed, double f
     double beta = 0.7;
     double v_curve = MAX_BOT_SPEED/(1+beta*pow(fabs(k),lambda));
     if (v_curve < MIN_BOT_SPEED)
-        v_curve = MIN_BOT_SPEED;    
+        v_curve = MIN_BOT_SPEED;
     v *= Constants::ticksToCmS;
     vl = v - Constants::d*w/2;
     vr = v + Constants::d*w/2;
     double timeMs = 0.250*rho + 14.0 * sqrt(rho) + 100.0 * fabs(gamma);
-    double speed = timeMs/timeLCMs<(prevSpeed/MAX_BOT_LINEAR_VEL_CHANGE)?prevSpeed-MAX_BOT_LINEAR_VEL_CHANGE:prevSpeed+MAX_BOT_LINEAR_VEL_CHANGE;    
+    double speed = timeMs/timeLCMs<(prevSpeed/MAX_BOT_LINEAR_VEL_CHANGE)?prevSpeed-MAX_BOT_LINEAR_VEL_CHANGE:prevSpeed+MAX_BOT_LINEAR_VEL_CHANGE;
     // use vcurve as the velocity
     // NOTE: adding vcurve and finalVel code
     // critical condition: if bot close to final point, v_curve = MAX_BOT_SPEED
@@ -187,7 +320,7 @@ MiscData PolarBased(Pose s, Pose e, int &vl, int &vr, double prevSpeed, double f
     }
     return MiscData(k, v_curve, finalSpeed, rangeMin, rangeMax);
 }
-MiscData PolarBidirectional(Pose s, Pose e, int &vl, int &vr, double prevSpeed, double finalSpeed)
+MiscData PolarBidirectional(Pose s, Pose e, int &vl, int &vr, double prevSpeed, double prevOmega, double finalSpeed)
 {
     MiscData m;
     static bool wasInverted = false; // keeps track of whether in the previous call, the bot was inverted or not.

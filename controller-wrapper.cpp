@@ -6,8 +6,10 @@ MiscData ControllerWrapper::genControls_(Pose s, Pose e, int &vl, int &vr, doubl
     for(deque<pair<int,int> >::iterator it = uq.begin(); it != uq.end(); it++) {
         x.updateNoDelay(it->first, it->second, timeLC);
     }
-    int prevSpeed = max(fabs(prevVl), fabs(prevVr));
-    MiscData m = (*fun)(x, e, vl, vr, prevSpeed, finalVel);
+//    int prevSpeed = max(fabs(prevVl), fabs(prevVr));
+    double prevSpeed = (prevVl+prevVr)/2;
+    double prevOmega = (prevVr- prevVr)/(Constants::d);
+    MiscData m = (*fun)(x, e, vl, vr, prevSpeed,prevOmega, finalVel);
     prevVl = vl; prevVr = vr;
     uq.push_back(make_pair<int,int>((int)vl, (int)vr));
     uq.pop_front();
