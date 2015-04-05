@@ -16,7 +16,7 @@ class VisionWorker : public QObject
     Q_OBJECT
 public:
     explicit VisionWorker(QObject *parent = 0);
-    void setup(QThread *cThread, BeliefState *bs, QMutex *bsMutex_);
+    void setup(QThread *cThread, BeliefState *bs, QMutex *bsMutex_, bool isTeamYellow = false);
 signals:
     void newData();
 public slots:
@@ -28,6 +28,7 @@ private:
     QThread *myThread;
     BeliefState *bs;
     QMutex *bsMutex;
+    bool isTeamYellow;
     // for velocity calc, just seeing last packet might give poor results
     // instead, look at old pose (and time) k packets ago
     std::queue<pair<BeliefState, double> > bsQ;

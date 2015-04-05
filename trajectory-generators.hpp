@@ -16,12 +16,10 @@ Trajectory circleGenerator(double x, double y, double r, double startTheta, doub
     };
     return Trajectory(xfunc, yfunc);
 }
-Trajectory simpleSplineGenerator(Pose start, Pose end, int startVel, int endVel) {
-    // can't handle start/end curvature (ie vl,vr) yet
 
-}
 Trajectory quinticBezierSplineGenerator(Pose start, Pose end, double vls, double vrs, double vle, double vre) {
     double d = dist(start, end);
+    double d_2 = d*10.;
 //    d = 1;
     // ts = tangent at start = (dx/du(0), dy/du(0)) = (d*cos(starttheta), d*sin(starttheta))
     Point2D<double> ts;
@@ -38,8 +36,10 @@ Trajectory quinticBezierSplineGenerator(Pose start, Pose end, double vls, double
     // as = second derivaives at start (d2x/du2(0), d2y/du2(0))
     // solved using:
     // ks = a*ydd - b*xdd   (a,b are functions of xd(0) = ts_x and yd(0) = ts_y)
-    // 1 = a*ydd + b*xdd
+    // d_2^2 = ydd^2 + xdd^2
+    // relies on ts_x = d*cos(theta), ts_y = d*sin(theta)
     // ks is starting curvature, found as ks = omega/v
+    // the solution is: xdd = cos(t)*d_2, ydd = sin(t)*d_2, t = asin(d*d*ks/d_2)+theta
     Point2D<double> as;
     {
         double ks;
@@ -47,14 +47,14 @@ Trajectory quinticBezierSplineGenerator(Pose start, Pose end, double vls, double
             ks = (vrs-vls)/(double)(vrs+vls)*2./Constants::d;
         else
             ks = 0;
-        double denom = pow(ts.x*ts.x+ts.y*ts.y, 1.5);
-        double a = ts.x/denom;
-        double b = ts.y/denom;
-        qDebug() << "a, b (start) = " << a << b;
-        as.x = (1-ks)/(2*b);
-        as.y = (ks+1)/(2*a);
+        // convert ks to strategy coordinates
+        ks /= Constants::fieldXConvert;
+        qDebug() << "d*ks = " << d*ks << ", radius = " << 1/ks;
+        double t = asin(d*d*ks/d_2)+start.theta();
+        as.x = cos(t)*d_2;
+        as.y = sin(t)*d_2;
         // debugging,setting 0
-        as = Point2D<double>(0,0);
+//        as = Point2D<double>(0,0);
         qDebug() << "ks = " << ks << ", as = " << as.x << as.y;
     }
     // similarly find ae_x, ae_y
@@ -65,14 +65,14 @@ Trajectory quinticBezierSplineGenerator(Pose start, Pose end, double vls, double
             ke = (vre-vle)/(double)(vre+vle)*2./Constants::d;
         else
             ke = 0;
-        double denom = pow(te.x*te.x+te.y*te.y, 1.5);
-        double a = te.x/denom;
-        double b = te.y/denom;
-        qDebug() << "a, b (end) = " << a << b;
-        ae.x = (1-ke)/(2*b);
-        ae.y = (ke+1)/(2*a);
+        // convert ke to strategy coordinaetes
+        ke /= Constants::fieldXConvert;
+        qDebug() << "d*ke = " << d*ke << ", radius = " << 1/ke;
+        double t = asin(d*d*ke/d_2)+end.theta();
+        ae.x = d_2*cos(t);
+        ae.y = d_2*sin(t);
         // debugging, setting 0
-        ae = Point2D<double>(0,0);
+//        ae = Point2D<double>(0,0);
         qDebug() << "ke = " << ke << ", ae = " << ae.x << ae.y;
     }
     // P0 = start
@@ -133,7 +133,43 @@ Trajectory quinticBezierSplineGenerator(Pose start, Pose end, double vls, double
     };
     return Trajectory(xfunc, yfunc);
 
+}
 
+Trajectory ellipseGen(double x, double y, double a, double b, double startTheta, double f) {
+    function<double(double)> xfunc = [=](double t)->double {
+        return a*sin(2*PI*f*t + startTheta)+x;
+    };
+    function<double(double)> yfunc = [=](double t)->double {
+        return b*cos(2*PI*f*t + startTheta)+y;
+    };
+    return Trajectory(xfunc, yfunc);
+}
+Trajectory cubic(Pose start, Pose end) {
+    double k = 1 / 4.8;
+    double d = sqrt((start.x() - end.x())*(start.x() - end.x()) + (start.y() - end.y())*(start.y() - end.y()));
+    double x1 = start.x();
+    double x2 = end.x();
+    double y1 = start.y();
+    double y2 = end.y();
+    double th1 = start.theta();
+    double th2 = end.theta();
+    function<double(double)> xfunc = [=](double t)->double {
+        double u = k*t;
+        double a1 = d * cos(th2) + d * cos(th1) - 2 * (x2 - x1);
+        double a2 = 3 * (x2 - x1) - d * cos(th2) - 2 * d * cos(th1);
+        double a3 = d * cos(th1);
+        double a4 = x1;
+        return a1 * u * u * u + a2 * u * u + a3 * u + a4;
+    };
+    function<double(double)> yfunc = [=](double t)->double {
+        double u = k*t;
+        double b1 = d * sin(th2) + d * sin(th1) - 2 * (y2 - y1);
+        double b2 = 3 * (y2 - y1) - d * sin(th2) - 2 * d * sin(th1);
+        double b3 = d * sin(th1);
+        double b4 = y1;
+        return b1 * u * u * u + b2 * u * u + b3 * u + b4;
+    };
+    return Trajectory(xfunc, yfunc);
 }
 }
 #endif // TRAJECTORYGENERATORS_HPP

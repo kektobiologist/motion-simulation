@@ -23,9 +23,9 @@
 using namespace std;
 // NOTE(arpit): PREDICTION_PACKET_DELAY is NOT used in simulation. It is used to predict bot position in actual run,
 // as well as the algoController delay
-static const int PREDICTION_PACKET_DELAY = 0;
+static const int PREDICTION_PACKET_DELAY = 4;
 // bot used for testing (non-sim)
-static const int BOT_ID_TESTING = 2;
+static const int BOT_ID_TESTING = 0;
 
 Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
@@ -57,7 +57,7 @@ Dialog::Dialog(QWidget *parent) :
     bsMutex = new QMutex;
     visionThread = new QThread;
     vw = new VisionWorker;
-    vw->setup(visionThread, beliefStateSh, bsMutex);
+    vw->setup(visionThread, beliefStateSh, bsMutex, true);
     vw->moveToThread(visionThread);
     visionThread->start();
     ui->firaRenderArea->beliefStateSh = beliefStateSh;
@@ -168,7 +168,7 @@ void Dialog::onAlgoTimeout()
     char buf[12];
     for (int i = 0; i < 12; i++)
         buf[i] = 0;
-    buf[0] = 126; // doesnt matter
+    buf[0] = 127; // doesnt matter
     // NOTE: testing, remove these 2 lines pls
 //    vl = 80;
 //    vr = 80;
@@ -220,7 +220,9 @@ void Dialog::on_batchButton_clicked()
 void Dialog::on_startSending_clicked()
 {
     FType fun = functions[ui->simCombo->currentIndex()].second;
-    algoController = new ControllerWrapper(fun, 0, 0, PREDICTION_PACKET_DELAY);
+    // NOTE: using the trajectory controller for actual bot!
+    algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
+//    algoController = new ControllerWrapper(fun, 0, 0, PREDICTION_PACKET_DELAY);
     while(!predictedPoseQ.empty())
         predictedPoseQ.pop();
     bsMutex->lock();
@@ -236,7 +238,7 @@ void Dialog::on_stopSending_clicked()
 {
     algoTimer->stop();
     char buf[12];
-    buf[0] = 126; // doesnt matter;
+    buf[0] = 127; // doesnt matter;
     for (int i = 1; i < 11; i++)
         buf[i] = 0;
     buf[11] = (++counter)%100; // timestamp
@@ -367,20 +369,21 @@ void Dialog::on_trajButton_clicked()
     if (!ui->trajCheckbox->isEnabled()) {
         ui->trajCheckbox->setEnabled(true);
         ui->trajCheckbox->setChecked(true);
-    }
+    }    
 }
 
 void Dialog::on_traj2Button_clicked()
 {
-    bsMutex->lock();
-    BeliefState bs = *beliefStateSh;
-    bsMutex->unlock();
-    Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
-    Pose end = ui->firaRenderArea->getEndPose();
-    FType fun = functions[ui->simCombo->currentIndex()].second;
-    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(fun, start, 0, 0, end, FINAL_VEL,
-                                                                       FINAL_VEL, 4000, timeLCMs));
-    ui->firaRenderArea->toggleTrajectory(true);
+    // not using this right now!
+//    bsMutex->lock();
+//    BeliefState bs = *beliefStateSh;
+//    bsMutex->unlock();
+//    Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
+//    Pose end = ui->firaRenderArea->getEndPose();
+//    FType fun = functions[ui->simCombo->currentIndex()].second;
+//    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(fun, start, 0, 0, end, FINAL_VEL,
+//                                                                       FINAL_VEL, 4000, timeLCMs));
+//    ui->firaRenderArea->toggleTrajectory(true);
 }
 
 void Dialog::on_circleTrajButton_clicked()
@@ -394,7 +397,8 @@ void Dialog::on_circleTrajButton_clicked()
     Pose start = ui->renderArea->getStartPose();
     Pose end = ui->renderArea->getEndPose();
 //    traj = circleGenerator(x,y,r,startTheta,f);
-    traj = quinticBezierSplineGenerator(start, end, 30, 40, 0, 60);
+    traj = quinticBezierSplineGenerator(start, end, 30, 40, 80, 70);
+//    traj = cubic(ui->renderArea->getStartPose(), ui->renderArea->getEndPose());
     ui->renderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)
         ui->trajSimButton->setEnabled(true);
@@ -403,6 +407,9 @@ void Dialog::on_circleTrajButton_clicked()
         ui->trajCheckbox->setChecked(true);
     }
     ui->renderArea->toggleTrajectory(true);
+
+    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(traj, 4000, timeLCMs));
+    ui->firaRenderArea->toggleTrajectory(true);
 }
 
 void Dialog::on_trajSimButton_clicked()
