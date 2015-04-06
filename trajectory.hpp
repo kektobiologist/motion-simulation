@@ -1,0 +1,5 @@
+#ifndef TRAJECTORY_HPP
+#define TRAJECTORY_HPP
+
+#endif // TRAJECTORY_HPP
+

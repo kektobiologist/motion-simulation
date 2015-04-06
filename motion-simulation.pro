@@ -38,7 +38,8 @@ SOURCES += main.cpp\
     trajectory-drawing.cpp \
     tracking.cpp \
     controller-wrapper.cpp \
-    simulation.cpp
+    simulation.cpp \
+    trajectory.cpp
 
 HEADERS  += dialog.h \
     pose.h \
@@ -60,7 +61,8 @@ HEADERS  += dialog.h \
     tracking.hpp \
     trajectory-generators.hpp \
     controller-wrapper.hpp \
-    simulation.hpp
+    simulation.hpp \
+    trajectory.hpp
 
 LIBS += -lgsl -lgslcblas -lprotobuf
 FORMS    += dialog.ui
