@@ -41,10 +41,10 @@ Trajectory *quinticBezierSplineGenerator(Pose start, Pose end, double vls, doubl
 Trajectory *ellipseGen(double x, double y, double a, double b, double startTheta, double f) {
 
     function<double(double)> xfunc = [=](double t)->double {
-        return a*sin(2*PI*f*t + startTheta)+x;
+        return (a*sin(2*PI*f*t + startTheta)+x)/fieldXConvert;
     };
     function<double(double)> yfunc = [=](double t)->double {
-        return b*cos(2*PI*f*t + startTheta)+y;
+        return (b*cos(2*PI*f*t + startTheta)+y)/fieldXConvert;
     };
     return new Trajectory(xfunc, yfunc);
 }

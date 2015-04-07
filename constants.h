@@ -75,9 +75,9 @@ static const double thetaUncertainty = 0;//3;
 // NOTE(arpit): numPacketDelay and update() specified here is only used in simulation.
 static const int numPacketDelay = 0; // num of packets to delay in update
 
-static const double vwmax      = 380; // cm/s^2
-static const double vsat       = ticksToCmS*120.; // cm/s
-static const double atmax      = 312*ticksToCmS; // cm/s^2, need to measure this, need to take inertia into account
+static const double vwmax      = 300; // cm/s^2
+static const double vsat       = ticksToCmS*70.; // cm/s
+static const double atmax      = 200*ticksToCmS; // cm/s^2, need to measure this, need to take inertia into account
 static const double awmax      = 1000; // 1/s^2, no idea how to measure this, need to take inertia into account
 }
 

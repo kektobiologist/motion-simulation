@@ -70,7 +70,7 @@ Dialog::Dialog(QWidget *parent) :
     connect(algoTimer, SIGNAL(timeout()), this, SLOT(onAlgoTimeout()));
     QTimer *printTimer = new QTimer();
     printTimer->setSingleShot(false);
-    printTimer->start(500);
+//    printTimer->start(500);
     connect(printTimer, SIGNAL(timeout()), this, SLOT(onNewData()));
     if(!comm.Open("/dev/ttyUSB0", 38400)) {
         qDebug() << "Could not open comm port!";
@@ -173,7 +173,7 @@ void Dialog::onAlgoTimeout()
     char buf[12];
     for (int i = 0; i < 12; i++)
         buf[i] = 0;
-    buf[0] = 127; // doesnt matter
+    buf[0] = 126; // doesnt matter
     // NOTE: testing, remove these 2 lines pls
 //    vl = 80;
 //    vr = 80;
@@ -233,8 +233,8 @@ void Dialog::on_startSending_clicked()
 {
     FType fun = functions[ui->simCombo->currentIndex()].second;
     // NOTE: using the trajectory controller for actual bot!
-//    algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
-    algoController = new ControllerWrapper(fun, 0, 0, PREDICTION_PACKET_DELAY);
+    algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
+//    algoController = new ControllerWrapper(fun, 0, 0, PREDICTION_PACKET_DELAY);
     while(!predictedPoseQ.empty())
         predictedPoseQ.pop();
     bsMutex->lock();
@@ -250,7 +250,7 @@ void Dialog::on_stopSending_clicked()
 {
     algoTimer->stop();
     char buf[12];
-    buf[0] = 127; // doesnt matter;
+    buf[0] = 126; // doesnt matter;
     for (int i = 1; i < 11; i++)
         buf[i] = 0;
     buf[11] = (++counter)%100; // timestamp
@@ -401,9 +401,10 @@ void Dialog::on_traj2Button_clicked()
     bsMutex->unlock();
     using namespace TrajectoryGenerators;
     Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
+    Pose end = ui->firaRenderArea->getEndPose();
     if (traj)
         delete traj;
-    traj = cubic(start, ui->firaRenderArea->getEndPose());
+    traj = quinticBezierSplineGenerator(start, end, 0, 0, 0, 0);
     ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)
         ui->trajSimButton->setEnabled(true);
@@ -432,7 +433,8 @@ void Dialog::on_circleTrajButton_clicked()
 //    traj = circleGenerator(x,y,r,startTheta,f);
     if (traj)
         delete traj;
-    traj = quinticBezierSplineGenerator(start, end, 0, 0, 40, 70);
+    traj = ellipseGen(x,y,r1,r2,startTheta,f);
+//    traj = quinticBezierSplineGenerator(start, end, 0, 0, 0, 0);
 //    traj = cubic(ui->renderArea->getStartPose(), ui->renderArea->getEndPose());
     ui->renderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)
