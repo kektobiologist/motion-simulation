@@ -49,6 +49,7 @@ Dialog::Dialog(QWidget *parent) :
     functions.push_back(make_pair("kgpkubs", &Controllers::kgpkubs));
     functions.push_back(make_pair("CMU", &Controllers::CMU));
     functions.push_back(make_pair("PController", &Controllers::PController));
+    functions.push_back(make_pair("DynamicWindow", &Controllers::DynamicWindow));
     for(unsigned int i = 0; i < functions.size(); i++) {
         ui->simCombo->addItem(functions[i].first);
     }
@@ -222,8 +223,8 @@ void Dialog::on_startSending_clicked()
 {
     FType fun = functions[ui->simCombo->currentIndex()].second;
     // NOTE: using the trajectory controller for actual bot!
-    algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
-//    algoController = new ControllerWrapper(fun, 0, 0, PREDICTION_PACKET_DELAY);
+//    algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
+    algoController = new ControllerWrapper(fun, 0, 0, PREDICTION_PACKET_DELAY);
     while(!predictedPoseQ.empty())
         predictedPoseQ.pop();
     bsMutex->lock();
