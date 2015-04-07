@@ -32,16 +32,18 @@ MiscData Tracker::genControls(Pose s, int &vl, int &vr, int prevVl, int prevVr, 
     double v2 = -sgn(ur1)*k2*err.e2 -k3*err.e3;
     double v = ur1*cos(err.e3) - v1;
     double w = ur2-v2;
-    vl = (v - Constants::d*w/2)/Constants::ticksToCmS;
-    vr = (v + Constants::d*w/2)/Constants::ticksToCmS;
+    v/=Constants::ticksToCmS;
+    vl = (v - Constants::d*w/2);
+    vr = (v + Constants::d*w/2);
     // vl, vr transform now
-    if (vl > 120)
-        vl = 120;
-    else if (vl < -120)
-        vl = -120;
-    if (vr > 120)
-        vr = 120;
-    else if (vr < -120)
-        vr = -120;
+    double vsat_ticks = Constants::vsat/Constants::ticksToCmS;
+    if (vl > vsat_ticks)
+        vl = vsat_ticks;
+    else if (vl < -vsat_ticks)
+        vl = -vsat_ticks;
+    if (vr > vsat_ticks)
+        vr = vsat_ticks;
+    else if (vr < -vsat_ticks)
+        vr = -vsat_ticks;
     return MiscData(ur1, ur2, v1, v2, t, v);
 }

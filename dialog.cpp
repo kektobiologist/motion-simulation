@@ -23,7 +23,7 @@
 using namespace std;
 // NOTE(arpit): PREDICTION_PACKET_DELAY is NOT used in simulation. It is used to predict bot position in actual run,
 // as well as the algoController delay
-static const int PREDICTION_PACKET_DELAY = 4;
+static const int PREDICTION_PACKET_DELAY = 2;
 // bot used for testing (non-sim)
 static const int BOT_ID_TESTING = 0;
 
