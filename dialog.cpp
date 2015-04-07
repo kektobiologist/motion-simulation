@@ -23,7 +23,7 @@
 using namespace std;
 // NOTE(arpit): PREDICTION_PACKET_DELAY is NOT used in simulation. It is used to predict bot position in actual run,
 // as well as the algoController delay
-static const int PREDICTION_PACKET_DELAY = 2;
+static const int PREDICTION_PACKET_DELAY = 4;
 // bot used for testing (non-sim)
 static const int BOT_ID_TESTING = 0;
 
@@ -433,8 +433,8 @@ void Dialog::on_circleTrajButton_clicked()
 //    traj = circleGenerator(x,y,r,startTheta,f);
     if (traj)
         delete traj;
-    traj = ellipseGen(x,y,r1,r2,startTheta,f);
-//    traj = quinticBezierSplineGenerator(start, end, 0, 0, 0, 0);
+//    traj = ellipseGen(x,y,r1,r2,startTheta,f);
+    traj = quinticBezierSplineGenerator(start, end, 0, 0, 0, 0);
 //    traj = cubic(ui->renderArea->getStartPose(), ui->renderArea->getEndPose());
     ui->renderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)

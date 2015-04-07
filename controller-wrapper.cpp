@@ -29,10 +29,12 @@ MiscData ControllerWrapper::genControls_(Pose s, int &vl, int &vr, double time, 
     if (!useTime) {
         struct timeval nowTime;
         gettimeofday(&nowTime, NULL);
-        elapsedS = (nowTime.tv_sec-startTime.tv_sec)+(nowTime.tv_usec-startTime.tv_usec)/1000000.0;
+        elapsedS = (nowTime.tv_sec-startTime.tv_sec)+(nowTime.tv_usec-startTime.tv_usec)/1000000.0;        
     } else {
         elapsedS = time;
     }
+    // should offset elapsedS by the number of packet delay!!!
+    elapsedS += k*timeLCMs/1000.;
     MiscData m = tracker.genControls(x, vl, vr, prevVl, prevVr, elapsedS);
     prevVl = vl; prevVr = vr;
     uq.push_back(make_pair<int,int>((int)vl, (int)vr));
