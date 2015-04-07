@@ -31,6 +31,7 @@ Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::Dialog)
 {
+    traj = NULL;
     std::function<void (void)> func = []() {qDebug() << "hello world";};
     algoController = NULL;
     srand(time(NULL));
@@ -47,6 +48,7 @@ Dialog::Dialog(QWidget *parent) :
     functions.push_back(make_pair("kgpkubs", &Controllers::kgpkubs));
     functions.push_back(make_pair("CMU", &Controllers::CMU));
     functions.push_back(make_pair("PController", &Controllers::PController));
+    functions.push_back(make_pair("DynamicWindow", &Controllers::DynamicWindow));
     for(unsigned int i = 0; i < functions.size(); i++) {
         ui->simCombo->addItem(functions[i].first);
     }
@@ -231,8 +233,8 @@ void Dialog::on_startSending_clicked()
 {
     FType fun = functions[ui->simCombo->currentIndex()].second;
     // NOTE: using the trajectory controller for actual bot!
-    algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
-//    algoController = new ControllerWrapper(fun, 0, 0, PREDICTION_PACKET_DELAY);
+//    algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
+    algoController = new ControllerWrapper(fun, 0, 0, PREDICTION_PACKET_DELAY);
     while(!predictedPoseQ.empty())
         predictedPoseQ.pop();
     bsMutex->lock();
@@ -399,8 +401,10 @@ void Dialog::on_traj2Button_clicked()
     bsMutex->unlock();
     using namespace TrajectoryGenerators;
     Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
+    if (traj)
+        delete traj;
     traj = cubic(start, ui->firaRenderArea->getEndPose());
-    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(traj, 4000, timeLCMs));
+    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)
         ui->trajSimButton->setEnabled(true);
     if (!ui->trajCheckbox->isEnabled()) {
@@ -409,7 +413,7 @@ void Dialog::on_traj2Button_clicked()
     }
     ui->renderArea->toggleTrajectory(true);
 
-    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(traj, 4000, timeLCMs));
+    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     ui->firaRenderArea->toggleTrajectory(true);
 }
 
@@ -423,8 +427,14 @@ void Dialog::on_circleTrajButton_clicked()
     double r1 = ui->rCircle1->text().toDouble();
     double r2 = ui->rCircle2->text().toDouble();
     double f = ui->fCircle->text().toDouble();
-    traj = cubic(ui->renderArea->getStartPose(), ui->renderArea->getEndPose());
-    ui->renderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(traj, 4000, timeLCMs));
+    Pose start = ui->renderArea->getStartPose();
+    Pose end = ui->renderArea->getEndPose();
+//    traj = circleGenerator(x,y,r,startTheta,f);
+    if (traj)
+        delete traj;
+    traj = quinticBezierSplineGenerator(start, end, 0, 0, 40, 70);
+//    traj = cubic(ui->renderArea->getStartPose(), ui->renderArea->getEndPose());
+    ui->renderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)
         ui->trajSimButton->setEnabled(true);
     if (!ui->trajCheckbox->isEnabled()) {
@@ -433,12 +443,12 @@ void Dialog::on_circleTrajButton_clicked()
     }
     ui->renderArea->toggleTrajectory(true);
 
-    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(traj, 4000, timeLCMs));
+    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     ui->firaRenderArea->toggleTrajectory(true);
 }
 
 void Dialog::on_trajSimButton_clicked()
-{
+{    
     Pose start = ui->renderArea->getStartPose();
     sim.simulate(start, traj, 0, 0, false);
     onCurIdxChanged(0);

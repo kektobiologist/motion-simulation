@@ -6,8 +6,10 @@ MiscData ControllerWrapper::genControls_(Pose s, Pose e, int &vl, int &vr, doubl
     for(deque<pair<int,int> >::iterator it = uq.begin(); it != uq.end(); it++) {
         x.updateNoDelay(it->first, it->second, timeLC);
     }
-    int prevSpeed = max(fabs(prevVl), fabs(prevVr));
-    MiscData m = (*fun)(x, e, vl, vr, prevSpeed, finalVel);
+//    int prevSpeed = max(fabs(prevVl), fabs(prevVr));
+    double prevSpeed = (prevVl+prevVr)/2;
+    double prevOmega = (prevVr- prevVr)/(Constants::d);
+    MiscData m = (*fun)(x, e, vl, vr, prevSpeed,prevOmega, finalVel);
     prevVl = vl; prevVr = vr;
     uq.push_back(make_pair<int,int>((int)vl, (int)vr));
     uq.pop_front();
@@ -44,7 +46,7 @@ ControllerWrapper::ControllerWrapper(FType fun, int start_vl, int start_vr, int 
         uq.push_back(make_pair<int,int>((int)start_vl,(int)start_vr));
     prevVl = prevVr = 0;
 }
-ControllerWrapper::ControllerWrapper(Trajectory traj, int start_vl, int start_vr,  int k):k(k), ctrlType(TRACKCTRL), tracker(traj),
+ControllerWrapper::ControllerWrapper(Trajectory *traj, int start_vl, int start_vr,  int k):k(k), ctrlType(TRACKCTRL), tracker(traj),
                                                                        startTime(), isFirstCall(true){
     for(int i = 0; i < k; i++)
         uq.push_back(make_pair<int,int>((int)start_vl,(int)start_vr));
@@ -53,7 +55,7 @@ ControllerWrapper::ControllerWrapper(Trajectory traj, int start_vl, int start_vr
 void ControllerWrapper::reset() {
     isFirstCall = true;
 }
-void ControllerWrapper::setTraj(Trajectory traj) {
+void ControllerWrapper::setTraj(Trajectory* traj) {
     tracker.setTraj(traj);
     reset();
 }

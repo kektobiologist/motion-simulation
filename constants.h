@@ -65,8 +65,8 @@ const int OUR_GOAL_Y = 500;
 
 const int OPP_GOAL_Y = 0;
 static const double d          = 6.5; //distance between wheels in cm
-static const double ticksToCmS = 1.107; //still only approximate...
-static const double fieldXConvert = 23.79;
+static const double ticksToCmS = 1.107; //still only approximate... v = v_ticks * ticksToCmS
+static const double fieldXConvert = 23.79; // now im always using xconvert as standard conversion from strategy -> cm and vice versa.
 static const double fieldYConvert = 22.02;
 // NOTE(arpit): Uncertainties should be non-zero when simulating. Currently 0 since bot data is fetched from vision.
 static const double xUncertainty = 0;//0.5; // Uncertainty is in %age of max value. eg. 1% where fabs(x) <= 1000 means fabs(error) <= 10
@@ -74,6 +74,11 @@ static const double yUncertainty = 0;//0.5;
 static const double thetaUncertainty = 0;//3;
 // NOTE(arpit): numPacketDelay and update() specified here is only used in simulation.
 static const int numPacketDelay = 0; // num of packets to delay in update
+
+static const double vwmax      = 380; // cm/s^2
+static const double vsat       = ticksToCmS*120.; // cm/s
+static const double atmax      = 312*ticksToCmS; // cm/s^2, need to measure this, need to take inertia into account
+static const double awmax      = 1000; // 1/s^2, no idea how to measure this, need to take inertia into account
 }
 
 

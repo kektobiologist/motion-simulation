@@ -26,7 +26,7 @@ double Simulator::simulate(Pose startPose, Pose endPose, FType func, int start_v
     return timeMs;
 }
 
-double Simulator::simulate(Pose startPose, Trajectory traj, int start_vl, int start_vr, bool isBatch)
+double Simulator::simulate(Pose startPose, Trajectory *traj, int start_vl, int start_vr, bool isBatch)
 {
     Q_UNUSED(isBatch)
     poses[0] = startPose;

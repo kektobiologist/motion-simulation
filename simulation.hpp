@@ -31,7 +31,7 @@ public:
                                                    // vls_calc[i] ~ vls[i] etc.
                                                    // implements delay control logic, for any given controller.
                                                    // (I removed the old simulate function that did not use wrapper)
-    double simulate(Pose startPose, Trajectory traj, int start_vl, int start_vr, bool isBatch = false);
+    double simulate(Pose startPose, Trajectory* traj, int start_vl, int start_vr, bool isBatch = false);
     QString batchSimulation(FType fun);
     void regression(vector<RegData> func);
     int getVls(int idx) const{ return vls[idx];}

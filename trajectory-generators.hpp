@@ -4,45 +4,52 @@
 #include <functional>
 #include "geometry.h"
 #include <QDebug>
+
+#include "pose.h"
+#include "velocity-profile.hpp"
+#include "trajectory.hpp"
 using namespace std;
+
 namespace TrajectoryGenerators {
-Trajectory circleGenerator(double x, double y, double r, double startTheta, double f) {
+Trajectory* circleGenerator(double x, double y, double r, double startTheta, double f) {
     function<double(double)> xfunc = [=](double t)->double {
-        return r*sin(2*PI*f*t + startTheta)+x;
+        return (r*sin(2*PI*f*t + startTheta)+x)/fieldXConvert;
     };
     function<double(double)> yfunc = [=](double t)->double {
-        return r*cos(2*PI*f*t + startTheta)+y;
+        return (r*cos(2*PI*f*t + startTheta)+y)/fieldXConvert;
     };
-    return Trajectory(xfunc, yfunc);
+    return new Trajectory(xfunc, yfunc);
 }
-/*
-Trajectory myGen(Pose start, Pose end) {
-    function<double(double)> xfunc = [=](double t)->double {
-        return 200*t;
-    };
-    function<double(double)> yfunc = [=](double t)->double {
-        return 500*t;
-    };
-    return Trajectory(xfunc, yfunc);
+
+
+Trajectory *quinticBezierSplineGenerator(Pose start, Pose end, double vls, double vrs, double vle, double vre) {
+
+    QuinticBezierSpline *p = new QuinticBezierSpline(start, end, vls, vrs, vle, vre);
+    SplineTrajectory *st = new SplineTrajectory(*p, vls, vrs, vle, vre);
+    return st;
+////    double k = 1/3.;
+//    function<double(double)> xfunc = [=](double t)->double {
+//        return st->x(t);
+//    };
+//    function<double(double)> yfunc = [=](double t)->double {
+//        return st->y(t);
+//    };
+//    return new Trajectory(xfunc, yfunc);
+
 }
-Trajectory ellipseGenerator(double r1, double r2, double startTheta, double f) {
-    double x = 0, y = 0;
-    function<double(double)> xfunc = [=](double t)->double {
-        return r1*sin(2*PI*f*t + startTheta)+x;
-    };
-    function<double(double)> yfunc = [=](double t)->double {
-        return r2*cos(2*PI*f*t + startTheta)+y;
-*/
-Trajectory ellipseGen(double x, double y, double a, double b, double startTheta, double f) {
+
+Trajectory *ellipseGen(double x, double y, double a, double b, double startTheta, double f) {
+
     function<double(double)> xfunc = [=](double t)->double {
         return a*sin(2*PI*f*t + startTheta)+x;
     };
     function<double(double)> yfunc = [=](double t)->double {
         return b*cos(2*PI*f*t + startTheta)+y;
     };
-    return Trajectory(xfunc, yfunc);
+    return new Trajectory(xfunc, yfunc);
 }
-Trajectory cubic(Pose start, Pose end) {
+
+Trajectory *cubic(Pose start, Pose end) {
     double d = sqrt((start.x() - end.x())*(start.x() - end.x()) + (start.y() - end.y())*(start.y() - end.y()));
     double k = 1500. / d;
     double x1 = start.x();
@@ -85,7 +92,7 @@ Trajectory cubic(Pose start, Pose end) {
     i+=0.2;
     }
     qDebug() << maxvw << " " << maxvl << " " << maxvr << endl;
-    return traj;
+    return new Trajectory(traj);
 }
 }
 #endif // TRAJECTORYGENERATORS_HPP
