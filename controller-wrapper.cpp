@@ -44,7 +44,7 @@ ControllerWrapper::ControllerWrapper(FType fun, int start_vl, int start_vr, int 
         uq.push_back(make_pair<int,int>((int)start_vl,(int)start_vr));
     prevVl = prevVr = 0;
 }
-ControllerWrapper::ControllerWrapper(Trajectory traj, int start_vl, int start_vr,  int k):k(k), ctrlType(TRACKCTRL), tracker(traj),
+ControllerWrapper::ControllerWrapper(Trajectory *traj, int start_vl, int start_vr,  int k):k(k), ctrlType(TRACKCTRL), tracker(traj),
                                                                        startTime(), isFirstCall(true){
     for(int i = 0; i < k; i++)
         uq.push_back(make_pair<int,int>((int)start_vl,(int)start_vr));
@@ -53,7 +53,7 @@ ControllerWrapper::ControllerWrapper(Trajectory traj, int start_vl, int start_vr
 void ControllerWrapper::reset() {
     isFirstCall = true;
 }
-void ControllerWrapper::setTraj(Trajectory traj) {
+void ControllerWrapper::setTraj(Trajectory* traj) {
     tracker.setTraj(traj);
     reset();
 }

@@ -105,7 +105,7 @@ private:
     Logging::Log log;
     void readDataAndAppendToLog();
 
-    Trajectory traj;
+    Trajectory* traj;
 };
 
 #endif // DIALOG_H

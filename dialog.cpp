@@ -31,6 +31,7 @@ Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::Dialog)
 {
+    traj = NULL;
     std::function<void (void)> func = []() {qDebug() << "hello world";};
     algoController = NULL;
     srand(time(NULL));
@@ -397,9 +398,11 @@ void Dialog::on_circleTrajButton_clicked()
     Pose start = ui->renderArea->getStartPose();
     Pose end = ui->renderArea->getEndPose();
 //    traj = circleGenerator(x,y,r,startTheta,f);
-    traj = quinticBezierSplineGenerator(start, end, 30, 40, 80, 70);
+    if (traj)
+        delete traj;
+    traj = quinticBezierSplineGenerator(start, end, 0, 0, 40, 70);
 //    traj = cubic(ui->renderArea->getStartPose(), ui->renderArea->getEndPose());
-    ui->renderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(traj, 4000, timeLCMs));
+    ui->renderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)
         ui->trajSimButton->setEnabled(true);
     if (!ui->trajCheckbox->isEnabled()) {
@@ -408,7 +411,7 @@ void Dialog::on_circleTrajButton_clicked()
     }
     ui->renderArea->toggleTrajectory(true);
 
-    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(traj, 4000, timeLCMs));
+    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     ui->firaRenderArea->toggleTrajectory(true);
 }
 

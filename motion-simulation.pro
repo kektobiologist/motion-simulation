@@ -39,7 +39,9 @@ SOURCES += main.cpp\
     tracking.cpp \
     controller-wrapper.cpp \
     simulation.cpp \
-    trajectory.cpp
+    trajectory.cpp \
+    velocity-profile.cpp \
+    arclength-param.cpp
 
 HEADERS  += dialog.h \
     pose.h \
@@ -62,7 +64,9 @@ HEADERS  += dialog.h \
     trajectory-generators.hpp \
     controller-wrapper.hpp \
     simulation.hpp \
-    trajectory.hpp
+    trajectory.hpp \
+    velocity-profile.hpp \
+    arclength-param.hpp
 
 LIBS += -lgsl -lgslcblas -lprotobuf
 FORMS    += dialog.ui
