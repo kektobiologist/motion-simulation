@@ -86,6 +86,7 @@ Trajectory *ellipseGen(double x, double y, double a, double b, double startTheta
 
 Trajectory *cubic(Pose start, Pose end, double vls, double vrs, double vle, double vre) {
     CubicSpline *p = new CubicSpline(start, end);
+    p->maxk();
     SplineTrajectory *st = new SplineTrajectory(p, vls, vrs, vle, vre);
     return st;
 }

@@ -248,7 +248,7 @@ double CubicSpline::maxk(double *u) const
             b[j] = tbly[i][j+2];
         }
         qDebug() << "coeff (x), (y) =  " << a[3] << a[2] << a[1] << a[0] <<
-                    b[3] << b[2] << b[1] << b[0] << ", u(low,high) = " << u_low << u_high;
+                    b[3] << b[2] << b[1] << b[0] << "ulow, uhigh=" << u_low << u_high;
         // get k value at beginning
         if (fabs(this->k(u_low)) > maxk) {
             maxk = fabs(this->k(u_low));
