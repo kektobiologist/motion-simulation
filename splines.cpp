@@ -237,6 +237,7 @@ double CubicSpline::maxk(double *u) const
     double maxk = 0;
     double maxk_u = 0;
     // iterate through each segment, find the maxk
+    qDebug() << "new call:";
     for (int i = 0; i < nx-1; i++) {
         double u_low = tblx[i][0], u_high = tblx[i][1];
         assert(tbly[i][0] == u_low && tbly[i][1] == u_high);
@@ -246,6 +247,8 @@ double CubicSpline::maxk(double *u) const
             a[j] = tblx[i][j+2];
             b[j] = tbly[i][j+2];
         }
+        qDebug() << "coeff (x), (y) =  " << a[3] << a[2] << a[1] << a[0] <<
+                    b[3] << b[2] << b[1] << b[0] << ", u(low,high) = " << u_low << u_high;
         // get k value at beginning
         if (fabs(this->k(u_low)) > maxk) {
             maxk = fabs(this->k(u_low));
