@@ -4,7 +4,7 @@
 #include <functional>
 #include "geometry.h"
 #include <QDebug>
-
+#include <math.h>
 #include "pose.h"
 #include "velocity-profile.hpp"
 #include "trajectory.hpp"
@@ -38,6 +38,38 @@ Trajectory *quinticBezierSplineGenerator(Pose start, Pose end, double vls, doubl
 
 }
 
+Vector2D<int> predictBallPose(Vector2D<int> ballPos, Vector2D<int> ballVel, double timeOfPrediction){
+    Vector2D<int> finalBallPos;
+    finalBallPos.x = ballPos.x + timeOfPrediction*ballVel.x;
+    finalBallPos.y = ballPos.y + timeOfPrediction*ballVel.y;
+    return finalBallPos;
+}
+
+Trajectory ballInterception(Pose botPosStart, Vector2D<int> ballPos, Vector2D<int> ballVel){
+    Pose botPosEnd;
+    Vector2D<int> predictedBallPos;
+    double error = 0.1;
+    double T2 = 6.0;
+    double T1 = 0.0;
+    double d = 0.0;
+    Vector2D<int> goalCentre(HALF_FIELD_MAXX, 0);
+    while (1) {
+        predictedBallPos = predictBallPose(ballPos, ballVel, (T1 + T2) / 2);
+        d = sqrt((botPosStart.x() - predictedBallPos.x)*(botPosStart.x() - predictedBallPos.x) + (botPosStart.y() - predictedBallPos.y)*(botPosStart.y() - predictedBallPos.y));
+        if (d / 1300 > (T1 + T2) / 2) {
+            T1 = (T1 + T2) / 2;
+        } else if (d / 1300 < (T1 + T2) / 2) {
+            T2 = (T1 + T2) / 2;
+        } else if (abs(d / 1300 - (T1 + T2) / 2) < error) {
+            break;
+        }
+    }
+    botPosEnd.x_ = predictedBallPos.x;
+    botPosEnd.y_ = predictedBallPos.y;
+    double theta = Vector2D<int>::angle(goalCentre, predictedBallPos);
+    botPosEnd.theta_ = theta;
+}
+
 Trajectory *ellipseGen(double x, double y, double a, double b, double startTheta, double f) {
 
     function<double(double)> xfunc = [=](double t)->double {
@@ -49,9 +81,10 @@ Trajectory *ellipseGen(double x, double y, double a, double b, double startTheta
     return new Trajectory(xfunc, yfunc);
 }
 
+
 Trajectory *cubic(Pose start, Pose end) {
     double d = sqrt((start.x() - end.x())*(start.x() - end.x()) + (start.y() - end.y())*(start.y() - end.y()));
-    double k = 1500. / d;
+    double k = 1300. / d;
     double x1 = start.x();
     double x2 = end.x();
     double y1 = start.y();
