@@ -68,6 +68,7 @@ void RenderArea::paintEvent(QPaintEvent *)
     drawPose(painter, 0);
     drawPose(painter, 1);
     drawTrajectory(painter);
+    emit painting();
 }
 
 void RenderArea::drawField(QPainter &painter)

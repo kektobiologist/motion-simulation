@@ -37,7 +37,7 @@ protected:
     QPainterPath traj;
     bool drawTraj;
 signals:
-    
+    void painting();
 public slots:
     
 };

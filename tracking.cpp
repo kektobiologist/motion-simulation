@@ -43,5 +43,5 @@ MiscData Tracker::genControls(Pose s, int &vl, int &vr, int prevVl, int prevVr, 
 //        vr = 120;
 //    else if (vr < -120)
 //        vr = -120;
-    return MiscData(ur1, ur2, v1, v2, t, v);
+    return MiscData(ur1, ur2, v1, v2, t, v, w, vl, vr);
 }

@@ -26,7 +26,6 @@ using namespace std;
 static const int PREDICTION_PACKET_DELAY = 4;
 // bot used for testing (non-sim)
 static const int BOT_ID_TESTING = 0;
-
 Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::Dialog)
@@ -118,7 +117,8 @@ void Dialog::onCurIdxChanged(int idx)
 //    Pose s = sim.getPoses(idx);
     qDebug() << idx << ". " << "vl, vr = " << sim.getVls(idx) << ", " << sim.getVrs(idx) << ", vl_calc, vr_calc = " <<
                 sim.getVls_calc(idx) << ", " << sim.getVrs_calc(idx) << "v_ref, omega_ref = " << m.v_ref << ", " << m.omega_ref << ", "
-             << "v1, v2 = " << m.v1 << ", " << m.v2 << "time = " << m.t;
+             << "v1, v2 = " << m.v1 << ", " << m.v2 << "time = " << m.t << "v, w = " << m.v << m.w
+             << "vl, vr (in miscdata) = " << m.vl << m.vr;
 //    Pose e = ui->renderArea->getEndPose();
     // some debug prints:
 //    Vector2D<int> initial(s.x()-e.x(), s.y()-e.y());
@@ -401,8 +401,9 @@ void Dialog::on_circleTrajButton_clicked()
 //    traj = circleGenerator(x,y,r,startTheta,f);
     if (traj)
         delete traj;
-    traj = quinticBezierSplineGenerator(start, end, 0, 0, 40, 70);
-//    traj = cubic(ui->renderArea->getStartPose(), ui->renderArea->getEndPose());
+//    traj = quinticBezierSplineGenerator(start, end, 0, 0, 40, 70);
+//    traj = cubic(start, end, 0, 0, 40, 70);
+    traj = cubic2CP(start, end, 0, 0, 40, 70);
     ui->renderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)
         ui->trajSimButton->setEnabled(true);
