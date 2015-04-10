@@ -69,37 +69,28 @@ public:
     virtual double k(double u) const;
 };
 
-// currently only able to handle starting and ending point
-// need to extend so that it handles more points
-class QuinticBezierSpline: public Spline {
-protected:
-  ParamPoly p;
-public:
-  QuinticBezierSpline(Pose start, Pose end, double vls, double vrs, double vle, double vre);
-  virtual double x(double u) const;
-  virtual double y(double u) const;
-  virtual double xd(double u) const;
-  virtual double yd(double u) const;
-  virtual double xdd(double u) const;
-  virtual double ydd(double u) const;
-};
+
 
 // NOTE: x(t) and y(t) MUST be in cm!!!!
+// NOTE: always create SplineTrajectory object with a dynamically allocated Spline.
+// This class takes ownership of the passed Spline and is responsible for its destruction.
 class SplineTrajectory: public Trajectory {
 protected:
-    Spline &p;
+    Spline *p;
     vector<VelocityProfiling::ProfileDatapoint> profile;
     mutable double tPrev;  // so that multiple calculations are not done when x(t), y(t), theta(t) etc. called with same t.
     mutable double x_, y_, theta_, thetad_, v_; // these are returned, but calculated only in calculateAll(t);
     double full;
     void calculateAll(double t) const;
 public:
-    SplineTrajectory(Spline &p, double vls, double vrs, double vle, double vre);
+    ~SplineTrajectory();
+    SplineTrajectory(Spline *p, double vls, double vrs, double vle, double vre);
     virtual double x(double t) const;
     virtual double y(double t) const;
     virtual double theta(double t) const;
     virtual double thetad(double t) const;
     virtual double v(double t) const;
+    virtual double totalTime() const;
 };
 
 #endif // TRAJECTORY_HPP

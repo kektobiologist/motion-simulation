@@ -36,14 +36,19 @@ MiscData Tracker::genControls(Pose s, int &vl, int &vr, int prevVl, int prevVr, 
     vl = (v - Constants::d*w/2);
     vr = (v + Constants::d*w/2);
     // vl, vr transform now
-    double vsat_ticks = Constants::vsat/Constants::ticksToCmS;
-    if (vl > vsat_ticks)
-        vl = vsat_ticks;
-    else if (vl < -vsat_ticks)
-        vl = -vsat_ticks;
-    if (vr > vsat_ticks)
-        vr = vsat_ticks;
-    else if (vr < -vsat_ticks)
-        vr = -vsat_ticks;
-    return MiscData(ur1, ur2, v1, v2, t, v);
+//    double vsat_ticks = Constants::vsat/Constants::ticksToCmS;
+//    if (vl > vsat_ticks)
+//        vl = vsat_ticks;
+//    else if (vl < -vsat_ticks)
+//        vl = -vsat_ticks;
+//    if (vr > vsat_ticks)
+//        vr = vsat_ticks;
+//    else if (vr < -vsat_ticks)
+//        vr = -vsat_ticks;
+
+
+    // jsut for testing, calculate reference vl and vr also
+    double vl_ref = (ur1/Constants::ticksToCmS - Constants::d*ur2/2);
+    double vr_ref = (ur1/Constants::ticksToCmS + Constants::d*ur2/2);
+    return MiscData(ur1, ur2, v1, v2, t, v, w, vl, vr, vl_ref, vr_ref);
 }

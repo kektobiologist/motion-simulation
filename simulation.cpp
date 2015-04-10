@@ -38,7 +38,7 @@ double Simulator::simulate(Pose startPose, Trajectory *traj, int start_vl, int s
         poses[i] = poses[i-1];
         int vl, vr;
         // NOTE: setting final velocity hardcoded here.
-        miscData[i] = dc.genControlsTrajSim(poses[i], vl, vr, i*timeLCMs/1000.0);
+        miscData[i-1] = dc.genControlsTrajSim(poses[i], vl, vr, i*timeLCMs/1000.0);
         vls[i-1] = vl;
         vrs[i-1] = vr;
         poses[i].update(vl, vr, timeLC);

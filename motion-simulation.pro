@@ -41,7 +41,23 @@ SOURCES += main.cpp\
     simulation.cpp \
     trajectory.cpp \
     velocity-profile.cpp \
-    arclength-param.cpp
+    arclength-param.cpp \
+    splines.cpp \
+    alglib/alglibinternal.cpp \
+    alglib/alglibmisc.cpp \
+    alglib/ap.cpp \
+    alglib/dataanalysis.cpp \
+    alglib/diffequations.cpp \
+    alglib/fasttransforms.cpp \
+    alglib/integration.cpp \
+    alglib/interpolation.cpp \
+    alglib/linalg.cpp \
+    alglib/optimization.cpp \
+    alglib/solvers.cpp \
+    alglib/specialfunctions.cpp \
+    alglib/statistics.cpp \
+    controlpoint-optimization.cpp \
+    drawable.cpp
 
 HEADERS  += dialog.h \
     pose.h \
@@ -66,7 +82,24 @@ HEADERS  += dialog.h \
     simulation.hpp \
     trajectory.hpp \
     velocity-profile.hpp \
-    arclength-param.hpp
+    arclength-param.hpp \
+    splines.hpp \
+    alglib/alglibinternal.h \
+    alglib/alglibmisc.h \
+    alglib/ap.h \
+    alglib/dataanalysis.h \
+    alglib/diffequations.h \
+    alglib/fasttransforms.h \
+    alglib/integration.h \
+    alglib/interpolation.h \
+    alglib/linalg.h \
+    alglib/optimization.h \
+    alglib/solvers.h \
+    alglib/specialfunctions.h \
+    alglib/statistics.h \
+    alglib/stdafx.h \
+    controlpoint-optimization.hpp \
+    drawable.h
 
 LIBS += -lgsl -lgslcblas -lprotobuf
 FORMS    += dialog.ui

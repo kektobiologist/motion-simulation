@@ -18,11 +18,15 @@ struct MiscData {
     double finalSpeed, rangeMin, rangeMax;
     // misc data for tracker debugging
     double v_ref, omega_ref, v1, v2;
-    double t, v;
+    double t, v, w;
+    double vl, vr;
+    double vl_ref, vr_ref;
     MiscData(): k(-1), v_curve(0), finalSpeed(0), rangeMin(0), rangeMax(0), v_ref(0), omega_ref(0), v1(0), v2(0) {}
     MiscData(double k, double v_curve, double finalSpeed, double rangeMin, double rangeMax): k(k), v_curve(v_curve), finalSpeed(finalSpeed), rangeMin(rangeMin), rangeMax(rangeMax) {}
-    MiscData(double v_ref, double omega_ref, double v1, double v2, double t, double v): k(0), v_curve(0), finalSpeed(0),
-        rangeMin(0), rangeMax(0), v_ref(v_ref), omega_ref(omega_ref), v1(v1), v2(v2), t(t), v(v) {}
+    MiscData(double v_ref, double omega_ref, double v1, double v2, double t, double v, double w
+             , double vl, double vr, double vl_ref, double vr_ref): k(0), v_curve(0), finalSpeed(0),
+        rangeMin(0), rangeMax(0), v_ref(v_ref), omega_ref(omega_ref), v1(v1), v2(v2), t(t), v(v), w(w), vl(vl), vr(vr),
+        vl_ref(vl_ref), vr_ref(vr_ref) {}
 };
 
 using namespace Constants;
@@ -49,6 +53,8 @@ public:
     void update(int vl, int vr, double dt);               // takes vl, vr in ticks. Implicitly converts to cm/s!! updates pose.
     void updateNoDelay(int vl, int vr, double dt);        // updates without any delay mechanics.
     void setTheta(double newtheta) {theta_ = newtheta;}   // will add setX and setY if/when needed    
+    void setX(double x) {x_ = x / fieldXConvert;}
+    void setY(double y) {y_ = y / fieldYConvert;}
     Pose operator-(const Pose &p) {
         return Pose(queryX()-p.queryX(), queryY()-p.queryY(), queryTheta()- p.queryTheta());
     }

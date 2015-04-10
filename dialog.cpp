@@ -27,6 +27,7 @@ static const int PREDICTION_PACKET_DELAY = 4;
 // bot used for testing (non-sim)
 static const int BOT_ID_TESTING = 0;
 
+RenderArea *gRenderArea = NULL;
 Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::Dialog)
@@ -37,6 +38,7 @@ Dialog::Dialog(QWidget *parent) :
     srand(time(NULL));
     ui->setupUi(this);
     timer = new QTimer();
+    gRenderArea = ui->renderArea;
     Pose start = ui->renderArea->getStartPose();
     Pose end = ui->renderArea->getEndPose();
     sim.simulate(start, end, &Controllers::kgpkubs, 0, 0);
@@ -121,7 +123,8 @@ void Dialog::onCurIdxChanged(int idx)
 //    Pose s = sim.getPoses(idx);
     qDebug() << idx << ". " << "vl, vr = " << sim.getVls(idx) << ", " << sim.getVrs(idx) << ", vl_calc, vr_calc = " <<
                 sim.getVls_calc(idx) << ", " << sim.getVrs_calc(idx) << "v_ref, omega_ref = " << m.v_ref << ", " << m.omega_ref << ", "
-             << "v1, v2 = " << m.v1 << ", " << m.v2 << "time = " << m.t;
+             << "v1, v2 = " << m.v1 << ", " << m.v2 << "time = " << m.t << "v, w = " << m.v << m.w
+             << "vl, vr (in miscdata) = " << m.vl << m.vr << "vl_ref, vr_ref = " << m.vl_ref << m.vr_ref;
 //    Pose e = ui->renderArea->getEndPose();
     // some debug prints:
 //    Vector2D<int> initial(s.x()-e.x(), s.y()-e.y());
@@ -430,12 +433,13 @@ void Dialog::on_circleTrajButton_clicked()
     double f = ui->fCircle->text().toDouble();
     Pose start = ui->renderArea->getStartPose();
     Pose end = ui->renderArea->getEndPose();
-//    traj = circleGenerator(x,y,r,startTheta,f);
     if (traj)
         delete traj;
-//    traj = ellipseGen(x,y,r1,r2,startTheta,f);
-    traj = quinticBezierSplineGenerator(start, end, 0, 0, 0, 0);
-//    traj = cubic(ui->renderArea->getStartPose(), ui->renderArea->getEndPose());
+
+    //    traj = circleGenerator(x,y,r,startTheta,f);
+//    traj = quinticBezierSplineGenerator(start, end, 0, 0, 40, 70);
+//    traj = cubic(start, end, 0, 0, 40, 70);
+    traj = cubic2CP(start, end, 0, 0, 40, 70);
     ui->renderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)
         ui->trajSimButton->setEnabled(true);

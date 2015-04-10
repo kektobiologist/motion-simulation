@@ -31,14 +31,27 @@ typedef pair<double, double> Interval;
 // translational acceleration constraint
 // atmax: max translational acceleration, +ve, cm/s^2
 // dels: distance between this and old point, cm
-Interval trans_acc_limits(double vold, double atmax, double dels) {
+Interval trans_acc_limits(double vwold, double vwmax, double vold, double atmax, double dels) {
   double vmin, vmax;
+  // use curvature to find maximum allowed acceleration
+  // using the relation:
+  // (dv/dt)^2/(atmax)^2+(vwold)^2/(vwmax)^2 < 1
+  // hence dv/dt < sqrt(1-(vwold/vwmax)^2)*atmax
+  // and at = sqrt(1-(vwold/vwmax)^2)*atmax
+  // make sure units are all correct!
+  if (fabs(vwold/vwmax) > 1) {
+      vwold = vwmax;
+  }
+  assert(fabs(vwold/vwmax) <= 1.);
+  double at = sqrt(1-(vwold/vwmax)*(vwold/vwmax))*atmax;
+  // qDebug() << "in trans acc, vwold and vwmax = " << vwold << vwmax << ", at = " << at;
   if (vold*vold > 2*atmax*dels)
-    vmin = sqrt(vold*vold - 2*atmax*dels);
+    vmin = sqrt(vold*vold - 2*at*dels);
   else
     vmin = 0;
-  vmax = sqrt(vold*vold + 2*atmax*dels);
-//  qDebug() << "vold = " << vold << ", (min,max)= " << vmin << vmax;
+  vmax = sqrt(vold*vold + 2*at*dels);
+
+//  // qDebug() << "vold = " << vold << ", (min,max)= " << vmin << vmax;
   return Interval(vmin, vmax);
 }
 
@@ -152,21 +165,23 @@ vector<ProfileDatapoint> generateVelocityProfile(Spline &p, int numPoints, doubl
     // forward consistency
     v[0].v = vs;
     for (int i = 1; i < numPoints; i++) {
-        v[i].v = min(v[i].v, trans_acc_limits(v[i-1].v, Constants::atmax, dels).second);
+        double vwold = v[i-1].v*v[i-1].v*p.k(v[i-1].u);
+        v[i].v = min(v[i].v, trans_acc_limits(vwold, Constants::vwmax, v[i-1].v, Constants::atmax, dels).second);
     }
     // backward consistency
     v[numPoints-1].v = ve;
     for (int i = numPoints-2; i >= 0; i--) {
-        v[i].v = min(v[i].v, trans_acc_limits(v[i+1].v, Constants::atmax, dels).second);
+        double vwold = v[i+1].v*v[i+1].v*p.k(v[i+1].u);
+        v[i].v = min(v[i].v, trans_acc_limits(vwold, Constants::vwmax, v[i+1].v, Constants::atmax, dels).second);
     }
     // set time to reach for each datapoint
     v[0].t = 0;
     for (int i = 1; i < numPoints; i++) {
         v[i].t = v[i-1].t + 2*dels/(v[i].v+v[i-1].v);
     }
-    qDebug() << "profile:" ;
+    // qDebug() << "profile:" ;
     for (int i = 0; i< numPoints; i++) {
-        qDebug() << v[i].u << v[i].t << v[i].s << v[i].v;
+        // qDebug() << v[i].u << v[i].t << v[i].s << v[i].v;
     }
     return v;
 }

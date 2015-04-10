@@ -37,9 +37,9 @@ protected:
     QPainterPath traj;
     bool drawTraj;
 signals:
-    
+    void painting();
 public slots:
-    
+    void drawPoint(QPointF pt);
 };
 
 #endif // RENDERAREA_H

@@ -68,6 +68,7 @@ void RenderArea::paintEvent(QPaintEvent *)
     drawPose(painter, 0);
     drawPose(painter, 1);
     drawTrajectory(painter);
+    emit painting();
 }
 
 void RenderArea::drawField(QPainter &painter)
@@ -143,6 +144,7 @@ void RenderArea::drawTrajectory(QPainter &painter)
     painter.setPen(pen);
     painter.drawPath(traj);
     painter.restore();
+    emit painting();
 }
 
 void RenderArea::mousePressEvent(QMouseEvent *event)
@@ -175,4 +177,20 @@ void RenderArea::mouseMoveEvent(QMouseEvent *event)
         theta[idx] = atan2(event->y()-y[idx], event->x()-x[idx]);
         update();
     }
+}
+
+void RenderArea::drawPoint(QPointF p)
+{
+    QPointF pt;
+    pt.setX((p.x() + HALF_FIELD_MAXX) * this->width() / (2.0 * HALF_FIELD_MAXX));
+    pt.setY((-p.y() + HALF_FIELD_MAXY) * this->height() / (2.0 * HALF_FIELD_MAXY));
+    QPainter painter(this);
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+    QPen pen;
+    pen.setColor(Qt::black);
+    pen.setWidth(2);
+    painter.setPen(pen);
+    painter.drawEllipse(pt, 10, 10);
+    painter.restore();
 }
