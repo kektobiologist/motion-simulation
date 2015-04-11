@@ -91,7 +91,7 @@ MiscData DynamicWindow(Pose s, Pose e, int &vl, int &vr, double prevSpeed, doubl
 //    qDebug()<<"prevSpeed = "<<prevSpeed<<" prevOmega = "<<prevOmega;
 //    qDebug()<<"Inside function Dynamic Window";
 //    sprintf(buf, "in function Dynamic Window");
-    const int del_v_max = 10; //ticks
+    const int del_v_max = 15; //ticks
     const float step = 1; //ticks
     const float max_vel = 100; //ticks
     const float a_r_max = 380; //cm/s^2

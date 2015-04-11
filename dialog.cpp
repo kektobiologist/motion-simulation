@@ -236,8 +236,8 @@ void Dialog::on_startSending_clicked()
 {
     FType fun = functions[ui->simCombo->currentIndex()].second;
     // NOTE: using the trajectory controller for actual bot!
-    algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
-//    algoController = new ControllerWrapper(fun, 0, 0, PREDICTION_PACKET_DELAY);
+//    algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
+    algoController = new ControllerWrapper(fun, 0, 0, PREDICTION_PACKET_DELAY);
     while(!predictedPoseQ.empty())
         predictedPoseQ.pop();
     bsMutex->lock();
@@ -407,7 +407,8 @@ void Dialog::on_traj2Button_clicked()
     Pose end = ui->firaRenderArea->getEndPose();
     if (traj)
         delete traj;
-    traj = quinticBezierSplineGenerator(start, end, 0, 0, 0, 0);
+//    traj = quinticBezierSplineGenerator(start, end, 0, 0, 0, 0);
+    traj = cubic(start, end, 0, 0, 0, 0);
     ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)
         ui->trajSimButton->setEnabled(true);
