@@ -1,5 +1,9 @@
 #include "splines.hpp"
 #include "alglib/interpolation.h"
+#include "gsl/gsl_min.h"
+#include <gsl/gsl_errno.h>
+#include <gsl/gsl_math.h>
+
 QuinticBezierSpline::QuinticBezierSpline(Pose start, Pose end, double vls, double vrs, double vle, double vre)
 {
     double d = dist(start, end);
@@ -226,7 +230,13 @@ double CubicSpline::ydd(double u) const
     return d2s;
 }
 
-double CubicSpline::maxk(double *u) const
+double fn1 (double u, void * params)
+{
+  CubicSpline *s = static_cast<CubicSpline*>(params);
+  return -s->k(u);
+}
+
+double CubicSpline::maxk(double *u_low) const
 {
     using namespace alglib;
     real_2d_array tblx, tbly;
@@ -259,24 +269,77 @@ double CubicSpline::maxk(double *u) const
             maxk = fabs(this->k(u_high));
             maxk_u = u_high;
         }
-        // get u value for which xd*ydd-yd*xdd is extremum
-        // this doesn't actually find extrema of k, but i think it should be good enough
-        // solution is:
-        // u = (b1*a3-a1*b3)/(2*(a2*b3-b2*a3))
-        if (a[2]*b[3]-b[2]*a[3] != 0) {
-            // the spline in alglib takes input t = u-u_low
-            double t_ext = (b[1]*a[3]-a[1]*b[3])/2./(a[2]*b[3]-b[2]*a[3]);
-            if (t_ext >= 0 && t_ext <= u_high-u_low) {
-                double u_ext = t_ext + u_low;
-                if (fabs(this->k(u_ext)) > maxk) {
-                    maxk = fabs(this->k(u_ext));
-                    maxk_u = u_ext;
-                }
-            }
+//        // get u value for which xd*ydd-yd*xdd is extremum
+//        // this doesn't actually find extrema of k, but i think it should be good enough
+//        // solution is:
+//        // u = (b1*a3-a1*b3)/(2*(a2*b3-b2*a3))
+//        if (a[2]*b[3]-b[2]*a[3] != 0) {
+//            // the spline in alglib takes input t = u-u_low
+//            double t_ext = (b[1]*a[3]-a[1]*b[3])/2./(a[2]*b[3]-b[2]*a[3]);
+//            if (t_ext >= 0 && t_ext <= u_high-u_low) {
+//                double u_ext = t_ext + u_low;
+//                if (fabs(this->k(u_ext)) > maxk) {
+//                    maxk = fabs(this->k(u_ext));
+//                    maxk_u = u_ext;
+//                }
+//            }
+//        }
+        // above code doesn't seem to work, trying minimization.
+        {
+              int status;
+              int iter = 0, max_iter = 100;
+              const gsl_min_fminimizer_type *T;
+              gsl_min_fminimizer *s;
+              gsl_function F;
+
+              F.function = fn1;
+              F.params = const_cast<CubicSpline*>(this);
+
+              T = gsl_min_fminimizer_brent;
+              s = gsl_min_fminimizer_alloc (T);
+              double a = u_low, b = u_high;
+              double m = k(a) > k(b)? a:b;
+              if (gsl_min_fminimizer_set (s, &F, m, a, b) != GSL_FAILURE) {
+                  printf ("using %s method\n",
+                          gsl_min_fminimizer_name (s));
+
+
+
+                  do
+                    {
+                      iter++;
+                      status = gsl_min_fminimizer_iterate (s);
+
+                      m = gsl_min_fminimizer_x_minimum (s);
+                      a = gsl_min_fminimizer_x_lower (s);
+                      b = gsl_min_fminimizer_x_upper (s);
+
+                      status
+                        = gsl_min_test_interval (a, b, 0.001, 0.0);
+
+                      if (status == GSL_SUCCESS)
+                        printf ("Converged:\n");
+
+                      printf ("%5d [%.7f, %.7f] "
+                              "%.7f %+.7f %.7f\n",
+                              iter, a, b,
+                              m, m, b - a);
+                    }
+                  while (status == GSL_CONTINUE && iter < max_iter);
+
+                  gsl_min_fminimizer_free (s);
+                  if (status == GSL_SUCCESS) {
+                      if (fabs(this->k(m)) > maxk) {
+                          maxk = fabs(this->k(m));
+                          maxk_u = m;
+                      }
+                  }
+              }
         }
+
     }
 //    qDebug() << "maxk_u = " << maxk_u << ", maxk = " << maxk;
-    if (u)
-        *u = maxk_u;
+    if (u_low)
+        *u_low = maxk_u;
     return maxk;
 }
