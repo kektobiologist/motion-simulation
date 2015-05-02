@@ -70,6 +70,8 @@ private slots:
 
     void on_trajSimButton_clicked();
 
+    void on_interceptionButton_clicked();
+
 public slots:
     void onCurIdxChanged(int idx); // idx is index of pose array, not botID (there's only 1 bot :/ )
     void onTimeout();

@@ -48,8 +48,6 @@ Vector2D<double> predictBallPose(Vector2D<double> ballPos, Vector2D<double> ball
     return finalBallPos;
 }
 
-
-
 Trajectory *ellipseGen(double x, double y, double a, double b, double startTheta, double f) {
 
     function<double(double)> xfunc = [=](double t)->double {
@@ -61,8 +59,8 @@ Trajectory *ellipseGen(double x, double y, double a, double b, double startTheta
     return new Trajectory(xfunc, yfunc);
 }
 
-SplineTrajectory *cubic(Pose start, Pose end, double vls, double vrs, double vle, double vre) {
-    CubicSpline *p = new CubicSpline(start, end);
+SplineTrajectory *cubic(Pose start, Pose end, double vls, double vrs, double vle, double vre, vector<Pose> midPoints = vector<Pose>()) {
+    CubicSpline *p = new CubicSpline(start, end, midPoints);
 //    p->maxk();
     SplineTrajectory *st = new SplineTrajectory(p, vls, vrs, vle, vre);
     return st;
@@ -90,13 +88,12 @@ Trajectory *cubic2CP(Pose start, Pose end, double vls, double vrs, double vle, d
 // ballPos: strategy coordinates
 // ballVel: strategy coordinates per second
 SplineTrajectory* ballInterception(Pose botPosStart, Vector2D<double> ballPos, Vector2D<double> ballVel){
-    Pose botPosEnd;
     Vector2D<double> predictedBallPos;
     double error = 0.1;
     double T2 = 6.0;
     double T1 = 0.0;
     double d = 0.0;
-    Vector2D<double> goalCentre(HALF_FIELD_MAXX, 0);
+    Vector2D<double> goalCentre(-HALF_FIELD_MAXX, 0);
     SplineTrajectory *st = NULL;
     while (1) {
         // predictedBallPos: strategy coordinates
@@ -106,8 +103,13 @@ SplineTrajectory* ballInterception(Pose botPosStart, Vector2D<double> ballPos, V
         Pose endPose(predictedBallPos.x, predictedBallPos.y, endTheta);
         if (st)
             delete st;
-        st = cubic(botPosStart, endPose, 0, 0, 50, 50);
+        // add a cp behind the ball pos, distance of 500
+        Pose cp1(predictedBallPos.x+500*cos(endTheta+M_PI), predictedBallPos.y+500*sin(endTheta+M_PI), 0);
+        vector<Pose> midPoints;
+        midPoints.push_back(cp1);
+        st = cubic(botPosStart, endPose, 0, 0, 50, 50, midPoints);
         double t = st->totalTime();
+        qDebug() << "mid = " << mid << ", t = " << t;
         if (fabs(t-mid) < error)
             break;
         if (t > mid) {

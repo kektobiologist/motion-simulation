@@ -316,6 +316,13 @@
              </widget>
             </item>
             <item>
+             <widget class="QPushButton" name="interceptionButton">
+              <property name="text">
+               <string>Interception</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QPushButton" name="traj2Button">
               <property name="text">
                <string>Set Trajectory</string>
