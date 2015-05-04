@@ -270,8 +270,8 @@ void Dialog::on_startSending_clicked()
 {
     FType fun = functions[ui->simCombo->currentIndex()].second;
     // NOTE: using the trajectory controller for actual bot!
-    algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
-    //algoController = new ControllerWrapper(fun, 0, 0, PREDICTION_PACKET_DELAY);
+    //algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
+    algoController = new ControllerWrapper(fun, 0, 0, PREDICTION_PACKET_DELAY);
     while(!predictedPoseQ.empty())
         predictedPoseQ.pop();
     bsMutex->lock();
@@ -425,38 +425,38 @@ void Dialog::on_traj2Button_clicked()
 {
     USING_INTERCEPTION = false;
     // not using this right now!
-//    bsMutex->lock();
-//    BeliefState bs = *beliefStateSh;
-//    bsMutex->unlock();
-//    Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
-//    //qDebug() << start.x() << start.y() << start.theta() << "\n";
-//    Pose end = ui->firaRenderArea->getEndPose();
-//    FType fun = functions[ui->simCombo->currentIndex()].second;
-//    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(fun, start, 0, 0, end, FINAL_VEL,
-//                                                                       FINAL_VEL, 4000, timeLCMs));
-//    ui->firaRenderArea->toggleTrajectory(true);
-
     bsMutex->lock();
     BeliefState bs = *beliefStateSh;
     bsMutex->unlock();
-    using namespace TrajectoryGenerators;
     Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
+    //qDebug() << start.x() << start.y() << start.theta() << "\n";
     Pose end = ui->firaRenderArea->getEndPose();
-    if (traj)
-        delete traj;
-//    traj = quinticBezierSplineGenerator(start, end, 0, 0, 0, 0);
-    traj = cubic(start, end, 0, 0, 0, 0);
-    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
-    if (ui->trajSimButton->isEnabled() == false)
-        ui->trajSimButton->setEnabled(true);
-    if (!ui->trajCheckbox->isEnabled()) {
-        ui->trajCheckbox->setEnabled(true);
-        ui->trajCheckbox->setChecked(true);
-    }
-    ui->renderArea->toggleTrajectory(true);
-
-    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
+    FType fun = functions[ui->simCombo->currentIndex()].second;
+    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(fun, start, 0, 0, end, FINAL_VEL,
+                                                                       FINAL_VEL, 4000, timeLCMs));
     ui->firaRenderArea->toggleTrajectory(true);
+
+//    bsMutex->lock();
+//    BeliefState bs = *beliefStateSh;
+//    bsMutex->unlock();
+//    using namespace TrajectoryGenerators;
+//    Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
+//    Pose end = ui->firaRenderArea->getEndPose();
+//    if (traj)
+//        delete traj;
+////    traj = quinticBezierSplineGenerator(start, end, 0, 0, 0, 0);
+//    traj = cubic(start, end, 0, 0, 0, 0);
+//    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
+//    if (ui->trajSimButton->isEnabled() == false)
+//        ui->trajSimButton->setEnabled(true);
+//    if (!ui->trajCheckbox->isEnabled()) {
+//        ui->trajCheckbox->setEnabled(true);
+//        ui->trajCheckbox->setChecked(true);
+//    }
+//    ui->renderArea->toggleTrajectory(true);
+
+//    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
+//    ui->firaRenderArea->toggleTrajectory(true);
 }
 
 

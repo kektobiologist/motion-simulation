@@ -91,7 +91,7 @@ double integrate(Integrand& i, double s, double e) {
 const gsl_root_fdfsolver_type *T;
 gsl_root_fdfsolver *sf;
 
-double optimise_u(Spline& p, double s, double e){
+double optimise_u(Spline& p, double s, double e, bool is_newton=true){
 
     int status;
       int iter = 0, max_iter = 100;
@@ -107,7 +107,8 @@ double optimise_u(Spline& p, double s, double e){
     func_params fp = {s,p};
     F.params = &fp;
 
-    T = gsl_root_fdfsolver_newton;
+    if(is_newton)T = gsl_root_fdfsolver_newton;
+    else T = gsl_root_fdfsolver_steffenson;
       sf = gsl_root_fdfsolver_alloc (T);
       gsl_root_fdfsolver_set (sf, &F, x);
 
@@ -135,32 +136,37 @@ double optimise_u(Spline& p, double s, double e){
 double getArcLengthParam(Spline& p, double s, double full) {
     // newton's method to find u for which arlength(p(0) to p(u)) = s;
 
-  unsigned long long int t1 = rdtsc();
-  unsigned long long int t2 = rdtsc();
-
   if (full < 0) {
     full = integrate(p, 0, 1);
   }
 
+  unsigned long long int t0 = rdtsc();
+
   //Using newton-rhapson technique in gsl
-  double u = optimise_u(p,s,full);
-//  assert(s >= 0);
-//  //double u = s/full;  // initial guess;
-//  double error = 1000;
+  double u_new = optimise_u(p,s,full,true);  //true for newton
+  unsigned long long int t1 = rdtsc();
+  double u_stef = optimise_u(p,s,full,false); // false for steffenson
+  unsigned long long int t2 = rdtsc();
+
+  assert(s >= 0);
+  double u = s/full;  // initial guess;
+  double error = 1000;
   int iter = 0;
-//  while (fabs(error) > 1e-3 && iter < 60) {
-////      if (iter > 20)
+  while (fabs(error) > 1e-3 && iter < 60) {
+//      if (iter > 20)
 ////          qDebug() << "iter" << iter;
-//    iter++;
-//    error = integrate(p,0,u)-s;
-//    u = u - error/p(u);
-//  }
+    iter++;
+    error = integrate(p,0,u)-s;
+    u = u - error/p(u);
+  }
   // printf("iter = %d\n", iter);
   unsigned long long int t3 = rdtsc();
-  unsigned long long int my_code_time = (t3-t2) - (t2-t1);
+  unsigned long long int my_newton = (t3-t2);
+  unsigned long long int gsl_steffenson = (t2-t1);
+  unsigned long long int gsl_newton = (t1-t0);
 
-  if(iter>20 || my_code_time > 50000)
-  qDebug() << "Time for optimisation, Iterations - " << my_code_time ;//<< " " << iter;
+  //if(iter>20 || my_code_time > 50000)
+  //qDebug() << "Time for optimisation, Iterations - " << my_code_time ;//<< " " << iter;
 
   return u;
 }
