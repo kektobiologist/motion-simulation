@@ -68,6 +68,16 @@ Pose ControllerWrapper::getPredictedPose(Pose s) {
     }
     return x;
 }
+
+double ControllerWrapper::getCurrentTimeS() const
+{
+    if (isFirstCall)
+        return 0;
+    struct timeval nowTime;
+    gettimeofday(&nowTime, NULL);
+    double elapsedS = (nowTime.tv_sec-startTime.tv_sec)+(nowTime.tv_usec-startTime.tv_usec)/1000000.0;
+    return elapsedS;
+}
 MiscData ControllerWrapper::genControls(Pose s, Pose e, int &vl, int &vr, double finalVel) {
     if (ctrlType == POINTCTRL) {
         return genControls_(s, e, vl, vr, finalVel);

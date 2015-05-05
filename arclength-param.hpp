@@ -12,4 +12,3 @@ double integrate(Integrand& i, double s, double e);
 double getArcLengthParam(Spline &p, double s, double full = -1);
 }
 #endif // ARCLENGTHPARAM_HPP
-

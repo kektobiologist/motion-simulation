@@ -22,6 +22,7 @@ public:
     void reset();
     void setTraj(Trajectory *traj);
     Pose getPredictedPose(Pose s);
+    double getCurrentTimeS() const; // when tracking, get the current time the tracker is working on.
     MiscData genControls(Pose s, Pose e, int &vl, int &vr, double finalVel = 0);
     MiscData genControlsTrajSim(Pose s, int &vl, int &vr, double t);
 
