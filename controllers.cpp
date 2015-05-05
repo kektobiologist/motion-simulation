@@ -91,13 +91,13 @@ MiscData DynamicWindow(Pose s, Pose e, int &vl, int &vr, double prevSpeed, doubl
 //    qDebug()<<"prevSpeed = "<<prevSpeed<<" prevOmega = "<<prevOmega;
 //    qDebug()<<"Inside function Dynamic Window";
 //    sprintf(buf, "in function Dynamic Window");
-    const int del_v_max = 18; //ticks
+    const int del_v_max = 12; //ticks
     const float step = 1; //ticks
     const float max_vel = 100; //ticks
     const float a_r_max = 380; //cm/s^2
 //    const float PI= 3.14159;
     const float t=0.016;
-    const float k=0   ;
+    const float k=5;
     int count=0;
     double arr[100000][3];
     //float prevSpeed, prevOmega,alpha,acc,theta,x,y,reqtheta,dtheta;
@@ -132,12 +132,9 @@ MiscData DynamicWindow(Pose s, Pose e, int &vl, int &vr, double prevSpeed, doubl
 
                 float reqtheta=atan2((e.y()-y),(e.x()-x));
 
-                float dtheta=abs(normalizeAngle(theta-reqtheta));
-                if(dtheta>PI){
-                    dtheta=2*PI-dtheta;
-                }
+                float dtheta=firaNormalizeAngle(theta-reqtheta);
 
-                arr[count][0]= pow((x - e.x()),2) + pow((y - e.y()),2) + k*pow((dtheta),2) ;         // our objective function
+                arr[count][0]= sqrt(pow((x - e.x()),2) + pow((y - e.y()),2)) + k*pow((dtheta),2) ;         // our objective function
                 arr[count][1]= newSpeed;
                 arr[count][2]= newOmega;
                 count++;

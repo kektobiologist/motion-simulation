@@ -143,8 +143,11 @@ vector<Interval> rot_acc_limits(double vold, double kold, double k, double dels,
   }
 }
 
+
+
 vector<ProfileDatapoint> generateVelocityProfile(Spline &p, int numPoints, double vls, double vrs, double vle, double vre)
 {
+
     // all calculations are done AFTER converting strategy coordinates to cm!
     assert(numPoints >= 2);
     double full = Integration::integrate(p, 0, 1);
@@ -153,6 +156,8 @@ vector<ProfileDatapoint> generateVelocityProfile(Spline &p, int numPoints, doubl
     assert(vs >= 0 && ve >= 0);
     vector<ProfileDatapoint> v(numPoints, ProfileDatapoint());
     double dels = full/(numPoints-1);
+
+    Integration::computeBezierMatrices(p);
     for (int i = 0; i < numPoints; i++) {
         double s = full/(numPoints-1)*(double)i;
         double u = Integration::getArcLengthParam(p, s, full);
@@ -162,6 +167,7 @@ vector<ProfileDatapoint> generateVelocityProfile(Spline &p, int numPoints, doubl
         v[i].u = u;
         v[i].s = s;
     }
+    Integration::refreshMatrix();
     // forward consistency
     v[0].v = vs;
     for (int i = 1; i < numPoints; i++) {
