@@ -271,10 +271,10 @@ vector<double> getInflectionPoints(Spline &p, double start_u, double end_u){
     }
     if(*it >1 || *it <0)arr.erase(it);
 
-//    printf("\n||||   number of points = %d", arr.size());
-//    for(vector<double>::iterator it = arr.begin(); it!=arr.end(); ++it){
-//        printf("\t %f ",*it);
-//    }
+    printf("\n||||   number of points = %d", arr.size());
+    for(vector<double>::iterator it = arr.begin(); it!=arr.end(); ++it){
+        printf("\t %f ",*it);
+    }
 
     printf("\n");
     //Original s''(t) values
@@ -295,9 +295,14 @@ double s_formula(Spline &p, double b){
 
 void get_bezier(Spline &p, gsl_matrix_view *BVx, gsl_matrix_view *BVy, double start_u, double end_u){
 
-    double s_1by3 = Integration::s_formula(p,start_u + (1/3)*(end_u - start_u)) - Integration::s_formula(p,start_u);
-    double s_2by3 = Integration::s_formula(p,start_u + (2/3)*(end_u - start_u)) - Integration::s_formula(p,start_u);
-    double s_1 = Integration::s_formula(p,end_u) - Integration::s_formula(p,start_u);
+    //double s_1by3 = Integration::s_formula(p,start_u + (1/3)*(end_u - start_u)) - Integration::s_formula(p,start_u);
+    //double s_2by3 = Integration::s_formula(p,start_u + (2/3)*(end_u - start_u)) - Integration::s_formula(p,start_u);
+    //double s_1 = Integration::s_formula(p,end_u) - Integration::s_formula(p,start_u);
+
+
+    double s_1by3 = integrate(p, 0,start_u + (1/3)*(end_u - start_u)) - integrate(p, 0,start_u);
+    double s_2by3 = integrate(p, 0,start_u + (2/3)*(end_u - start_u)) - integrate(p, 0,start_u);
+    double s_1 = integrate(p, 0,end_u) - integrate(p, 0,start_u);
     double sm_1by3 = s_1by3/s_1;
     double sm_2by3 = s_2by3/s_1;
 
@@ -404,7 +409,7 @@ double getArcLengthParam(Spline& p, double s, double full) {
   unsigned long long int gsl_newton = (t1-t0);
 
   //if(iter>20 || my_code_time > 50000)
-  qDebug() << "Time for optimisation, Iterations - " << my_code_time ;//<< " " << iter;
+  //qDebug() << "Time for optimisation, Iterations - " << my_code_time ;//<< " " << iter;
 
   return u;
 }

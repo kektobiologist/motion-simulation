@@ -274,8 +274,8 @@ void Dialog::on_startSending_clicked()
 {
     FType fun = functions[ui->simCombo->currentIndex()].second;
     // NOTE: using the trajectory controller for actual bot!
-    //algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
-    algoController = new ControllerWrapper(fun, 0, 0, PREDICTION_PACKET_DELAY);
+    algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
+    //algoController = new ControllerWrapper(fun, 0, 0, PREDICTION_PACKET_DELAY);
     while(!predictedPoseQ.empty())
         predictedPoseQ.pop();
     bsMutex->lock();
