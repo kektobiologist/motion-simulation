@@ -313,6 +313,21 @@ void get_bezier(Spline &p, gsl_matrix_view *BVx, gsl_matrix_view *BVy, double st
     double vx[] = {0,start_u + (1/3)*(end_u - start_u), start_u + (2/3)*(end_u - start_u), end_u};
     double vy[] = {0, v1y, v2y, 1};
 
+    /*
+    double b2[] = {1, -10, 45, -120, 210, -252, 210, -120, 45, -10, 1,
+                   -10, 90, -360, 840, -1260, 1260, -840, 360, -90, 10, 0,
+                   45, -360, 1260, -2520, 3150, -2520, 1260, -360, 45, 0, 0,
+                   -120, 840, -2520, 4200, -4200, 2520, -840, 120, 0, 0, 0,
+                   210, -1260, 3150, -4200, 3150, -1260, 210, 0, 0, 0, 0,
+                   -252, 1260, -2520, 2520, -1260, 252, 0, 0, 0, 0, 0,
+                   210, -840, 1260, -840, 210, 0, 0, 0, 0, 0, 0,
+                   -120, 360, -360, 120, 0, 0, 0, 0, 0, 0, 0,
+                   45, -90, 45, 0, 0, 0, 0, 0, 0, 0, 0,
+                   -10, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                   1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                  };
+    */
+
     gsl_matrix_view B = gsl_matrix_view_array(b, 4,4);
     gsl_matrix_view Vx = gsl_matrix_view_array(vx, 4,1);
     gsl_matrix_view Vy = gsl_matrix_view_array(vy, 4,1);
@@ -334,16 +349,18 @@ double bvx_2[] = {0.0, 0.0, 0.0, 0.0};
 double bvy_2[] = {0.0, 0.0, 0.0, 0.0};
 gsl_matrix_view BVx_2 = gsl_matrix_view_array(bvx_2, 4,1);
 gsl_matrix_view BVy_2 = gsl_matrix_view_array(bvy_2, 4,1);
+vector<double> infpts;
 
 void refreshMatrix(){
     for(int i=0;i<4;i++){
         bvx[i]=bvy[i]=bvx_2[i]=bvy_2[i]=0;
     }
+    infpts.clear();
 }
 
 void computeBezierMatrices(Spline &p)
 {
-    vector<double> infpts = Integration::getInflectionPoints(p,0,1);
+    infpts = Integration::getInflectionPoints(p,0,1);
     printf("SIze of recieved inflection_points - %d", infpts.size());
 
 
@@ -352,14 +369,15 @@ void computeBezierMatrices(Spline &p)
         span = 1;
     }
     else{
-        span = 2;
         if(infpts.size() == 2){
+            span =2;
             double umid = (infpts[0]+infpts[1])/2;
             get_bezier(p,&BVx,&BVy,0,umid);
             get_bezier(p,&BVx_2,&BVy_2,umid,1);
 
         }
         else{
+            span = 3;
             double umid = infpts[1];
             get_bezier(p,&BVx,&BVy,0,umid);
             get_bezier(p,&BVx_2,&BVy_2,umid,1);
@@ -367,12 +385,30 @@ void computeBezierMatrices(Spline &p)
     }
 }
 
+void computeInverseBezierMatrices(Spline &p){
+
+}
+
 double getArcLength(double u){
-    if(u > bvy[3]){
-        return bvy_2[1]*u*u + bvy_2[2]*u;
+
+    if(span ==2){
+        if(u > (infpts[0] + infpts[1])/2){
+            return bvy_2[0]*u*u*u + bvy_2[1]*u*u + bvy_2[2]*u;
+        }
+        else{
+            return bvy[0]*u*u*u + bvy[1]*u*u + bvy[2]*u;
+        }
+    }
+    else if(span ==3){
+        if(u > infpts[1]){
+            return bvy_2[0]*u*u*u + bvy_2[1]*u*u + bvy_2[2]*u;
+        }
+        else{
+            return bvy[0]*u*u*u + bvy[1]*u*u + bvy[2]*u;
+        }
     }
     else{
-        return bvy[1]*u*u + bvy[2]*u;
+        return bvy[0]*u*u*u + bvy[1]*u*u + bvy[2]*u;
     }
 }
 
@@ -399,7 +435,7 @@ double getArcLengthParam(Spline& p, double s, double full) {
 //      if (iter > 20)
 ////          qDebug() << "iter" << iter;
     iter++;
-    error = getArcLength(u)-s;
+    error = getArcLength(u)-s;//integrate(p,0,u)-s;
     u = u - error/p(u);
   }
   // printf("iter = %d\n", iter);

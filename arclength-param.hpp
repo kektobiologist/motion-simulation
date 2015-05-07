@@ -14,5 +14,6 @@ vector<double> getInflectionPoints(Spline &p, double start_u, double end_u);
 double s_formula(Spline &p, double b);
 void computeBezierMatrices(Spline &p);
 void refreshMatrix();
+void computeInverseBezierMatrices(Spline &p);
 }
 #endif // ARCLENGTHPARAM_HPP
