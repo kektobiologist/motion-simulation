@@ -101,7 +101,8 @@ HEADERS  += dialog.h \
     alglib/stdafx.h \
     controlpoint-optimization.hpp \
     drawable.h \
-    ballinterception.h
+    ballinterception.h \
+    defender.hpp
 
 LIBS += -lgsl -lgslcblas -lprotobuf
 FORMS    += dialog.ui
