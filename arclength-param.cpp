@@ -372,7 +372,7 @@ void computeBezierMatrices(Spline &p)
 }
 
 /* function to compute u(s)
-    v1y = 2b - fb - e + ec
+    v1y = (ce+2b-e-bf)/(bd-ae);
     v2y = (d-2a-cd+fa)/(bd-ae);
 
     for equations as -
@@ -403,12 +403,12 @@ void computeInverseBezierMatrices(Spline &p){
     double e = 9*(pow(sm_2by3,2) - pow(sm_2by3,3));
     double f = 3*pow(sm_2by3,3);
 
-    double v1y = 2*b - f*b - e + e*c;
-    double v2y = (d-2*a-c*d+f*a)/(b*d-a*e);
+    double v1y = ((c*e)+(2*b)-e-(b*f))/((b*d)-(a*e));
+    double v2y = (d-(2*a)-(c*d)+(f*a))/((b*d)-(a*e));
 
     double bm[] = {-1,3,-3,1,3,-6,3,0,-3,3,0,0,1,0,0,0};
     //double vx[] = {0,start_u + (1/3)*(end_u - start_u), start_u + (2/3)*(end_u - start_u), end_u};
-    double vx[] = {0, sm_1by3, sm_2by3, s_1};
+    double vx[] = {0, sm_1by3, sm_2by3, 1};
     double vy[] = {0, v1y, v2y, 1};
 
     gsl_matrix_view B = gsl_matrix_view_array(bm, 4,4);
@@ -467,9 +467,9 @@ double getArcLengthParam(Spline& p, double s, double full) {
   unsigned long long int t2 = rdtsc();
 
   assert(s >= 0);
-  //double u = s/full;  // initial guess;
-  double u = get_ufroms(s/full);
-  printf("\n Value of u is %d ", u);
+  double u = s/full;  // initial guess;
+  //double u = get_ufroms(s/full);
+  printf("\n Value of u is %f ", get_ufroms(s/full));
   //return u;
 
   double error = 1000;
