@@ -278,12 +278,13 @@ void get_bezier(Spline &p, gsl_matrix_view *BVx, gsl_matrix_view *BVy, double st
     //double s_1 = Integration::s_formula(p,end_u) - Integration::s_formula(p,start_u);
 
 
-    double s_1by3 = integrate(p, 0,start_u + (1/3)*(end_u - start_u)) - integrate(p, 0,start_u);
-    double s_2by3 = integrate(p, 0,start_u + (2/3)*(end_u - start_u)) - integrate(p, 0,start_u);
+    double s_1by3 = integrate(p, 0,start_u + (1.0/3)*(end_u - start_u)) - integrate(p, 0,start_u);
+    double s_2by3 = integrate(p, 0,start_u + (2.0/3)*(end_u - start_u)) - integrate(p, 0,start_u);
     double s_1 = integrate(p, 0,end_u) - integrate(p, 0,start_u);
     double sm_1by3 = s_1by3/s_1;
     double sm_2by3 = s_2by3/s_1;
 
+    qDebug() << "Value of s and s1 " << s_1by3 << " " << s_2by3 << "" << s_1;
     double v1y = (18*sm_1by3 - 9*sm_2by3 + 2)/6;
     double v2y = (-9*sm_1by3 + 18*sm_2by3 -5)/6;
 
@@ -374,11 +375,9 @@ void computeBezierMatrices(Spline &p)
 /* function to compute u(s)
     v1y = (ce+2b-e-bf)/(bd-ae);
     v2y = (d-2a-cd+fa)/(bd-ae);
-
     for equations as -
     a*v1y + b*v2y + c = 1
     d*v1y + e*v2y + f = 2
-
     where,
     a = 9*(s(1/3) + s(1/3)^3 - 2*s(1/3)^2)
     b = 9*(s(1/3)^2 - s(1/3)^3)
@@ -386,16 +385,40 @@ void computeBezierMatrices(Spline &p)
     d = 9*(s(2/3) + s(2/3)^3 - 2*s(2/3)^2)
     e = 9*(s(2/3)^2 - s(2/3)^3)
     f = 3*(s(2/3)^3)
-*/
 
+    Simplified:
+    v1y:
+        Nr - 3*s*s*s1*s1*(s-s1) + 2*s*s(1-s) - s1*s1*(1-s1)
+        Dr - 9*s*s1*(1-s1)(1-s)(s-s1)
+
+    v2y:
+        Nr - s1*(1-s1)*(1-s1) -2s - 2s*s*s +4*s*s -
+            3*s*s1*(s+ 3*s*s1*s1 -2*s*s1 -(s*s1)^2 -s1*s1)
+        Dr - 9*s*s1*(1-s1)(1-s)(s-s1)
+
+    v1x = (ce+b-e-bf)/(bd-ae);
+    v2x = (d-a-cd+fa)/(bd-ae);
+    for equations as -
+    a*v1x + b*v2x + c = 1
+    d*v1x + e*v2x + f = 1
+    where,
+    a = 3 + 3*s(1/3)^2 - 6*s(1/3)
+    b = 3*(s(1/3) - s(1/3)^2)
+    c = (s(1/3)^2)
+    d = 3 + 3*s(2/3)^2 - 6*s(2/3)
+    e = 3*(s(2/3) - s(2/3)^2)
+    f = (s(2/3)^2)
+
+*/
 void computeInverseBezierMatrices(Spline &p){
 
-    double s_1by3 = integrate(p, 0, 1/3);
-    double s_2by3 = integrate(p, 0, 2/3);
+    double s_1by3 = integrate(p, 0, 1.0/3);
+    double s_2by3 = integrate(p, 0, 2.0/3);
     double s_1 = integrate(p, 0, 1);
     double sm_1by3 = s_1by3/s_1;
     double sm_2by3 = s_2by3/s_1;
 
+    //qDebug() << "Value of s and s1 " << s_1by3 << " " << s_2by3 << "" << s_1;
     double a = 9*(sm_1by3 + pow(sm_1by3,3) - 2*pow(sm_1by3,2));
     double b = 9*(pow(sm_1by3,2) - pow(sm_1by3,3));
     double c = 3*pow(sm_1by3,3);
@@ -406,9 +429,9 @@ void computeInverseBezierMatrices(Spline &p){
     double v1y = ((c*e)+(2*b)-e-(b*f))/((b*d)-(a*e));
     double v2y = (d-(2*a)-(c*d)+(f*a))/((b*d)-(a*e));
 
+    //qDebug() << v1y << " " << v2y << " " << b*d - a*e;
     double bm[] = {-1,3,-3,1,3,-6,3,0,-3,3,0,0,1,0,0,0};
-    //double vx[] = {0,start_u + (1/3)*(end_u - start_u), start_u + (2/3)*(end_u - start_u), end_u};
-    double vx[] = {0, sm_1by3, sm_2by3, 1};
+    double vx[] = {0, sm_1by3, sm_2by3, 1}; //to be changed, but doesn't matter as of now
     double vy[] = {0, v1y, v2y, 1};
 
     gsl_matrix_view B = gsl_matrix_view_array(bm, 4,4);
@@ -421,6 +444,7 @@ void computeInverseBezierMatrices(Spline &p){
 }
 
 double get_ufroms(double s){
+
     return invbvy[0]*s*s*s + invbvy[1]*s*s + invbvy[2]*s + invbvy[3];
 }
 
@@ -467,10 +491,10 @@ double getArcLengthParam(Spline& p, double s, double full) {
   unsigned long long int t2 = rdtsc();
 
   assert(s >= 0);
-  double u = s/full;  // initial guess;
-  //double u = get_ufroms(s/full);
-  printf("\n Value of u is %f ", get_ufroms(s/full));
-  //return u;
+  //double u = s/full;  // initial guess;
+  double u = get_ufroms(s/full);
+  //printf("\n Value of u is %f and ini is %f", get_ufroms(s/full), s/full);
+  return u;
 
   double error = 1000;
   int iter = 0;
@@ -489,6 +513,7 @@ double getArcLengthParam(Spline& p, double s, double full) {
 
   //if(iter>20 || my_code_time > 50000)
   //qDebug() << "Time for optimisation, Iterations - " << my_code_time ;//<< " " << iter;
+  printf("\n Value intial is %f,after NR is %f, bezApp is %f", s/full,u,get_ufroms(s/full));
 
   return u;
 }
