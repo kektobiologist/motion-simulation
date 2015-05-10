@@ -14,14 +14,14 @@ double Optimization::f_cubic2CP(const gsl_vector *x, void *params_)
     midPoints.push_back(cp1);
     midPoints.push_back(cp2);
     CubicSpline *p = new CubicSpline(params->start, params->end, midPoints);
-//    SplineTrajectory *st = new SplineTrajectory(p, params->vls, params->vrs, params->vle, params->vre);
-//    double time = st->totalTime();
+    SplineTrajectory *st = new SplineTrajectory(p, params->vls, params->vrs, params->vle, params->vre);
+    double time = st->totalTime();
     // use maxk also as a cost.
     // try using ONLY maxk as cost function?
-    double maxk = p->maxk();
-//    delete st;
-//    return time;
-    return maxk;
+//    double maxk = p->maxk();
+    delete st;
+    return time;
+//    return maxk;
 }
 
 
@@ -104,9 +104,9 @@ Trajectory *Optimization::cubicSpline2CPOptimization(Pose start, Pose end, doubl
         midPoints.push_back(cp2);
         CubicSpline *p = new CubicSpline(start, end, midPoints);
         st = new SplineTrajectory(p, vls, vrs, vle, vre);
-        double maxk_u, maxk;
-        maxk = p->maxk(&maxk_u);
-        qDebug() << "maxk = " << maxk << ", maxk_u = " << maxk_u;
+//        double maxk_u, maxk;
+//        maxk = p->maxk(&maxk_u);
+//        qDebug() << "maxk = " << maxk << ", maxk_u = " << maxk_u;
     }
     gsl_vector_free(x);
     gsl_vector_free(ss);

@@ -102,7 +102,8 @@ HEADERS  += dialog.h \
     controlpoint-optimization.hpp \
     drawable.h \
     ballinterception.h \
-    defender.hpp
+    defender.hpp \
+    tests.hpp
 
 LIBS += -lgsl -lgslcblas -lprotobuf
 FORMS    += dialog.ui
