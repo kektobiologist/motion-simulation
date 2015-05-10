@@ -232,6 +232,36 @@ double CubicSpline::ydd(double u) const
     return d2s;
 }
 
+double CubicSpline::xddd(double u) const {
+    using namespace alglib;
+    real_2d_array tblx;
+    int nx;
+    double ret = 0.;
+    alglib::spline1dunpack(splineX, nx, tblx);
+    for (int i = 0; i < nx; i++) {
+        double u_low = tblx[i][0], u_high = tblx[i][1];
+        if (u >= u_low && u <= u_high) {
+             ret = 6 * tblx[i][5];
+        }
+    }
+    return ret;
+}
+
+double CubicSpline::yddd(double u) const {
+    using namespace alglib;
+    real_2d_array tbly;
+    int ny;
+    double ret = 0.;
+    alglib::spline1dunpack(splineY, ny, tbly);
+    for (int i = 0; i < ny; i++) {
+        double u_low = tbly[i][0], u_high = tbly[i][1];
+        if (u >= u_low && u <= u_high) {
+             ret = 6 * tbly[i][5];
+        }
+    }
+    return ret;
+}
+
 double fn1 (double u, void * params)
 {
   CubicSpline *s = static_cast<CubicSpline*>(params);
