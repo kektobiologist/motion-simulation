@@ -471,7 +471,7 @@ double getArcLength(double u){
     }
 }
 
-double getArcLengthParam(Spline& p, double s, double full) {
+double getArcLengthParam(Spline& p, double s, double full, int *itr) {
     // newton's method to find u for which arlength(p(0) to p(u)) = s;
 
   if (full < 0) {
@@ -499,13 +499,12 @@ double getArcLengthParam(Spline& p, double s, double full) {
   double error = 1000;
   int iter = 0;
   while (fabs(error) > 1e-3 && iter < 60) {
-//      if (iter > 20)
-////          qDebug() << "iter" << iter;
     iter++;
-    error = integrate(p,0,u)-s;//getArcLength(u)-s;
+    error = integrate(p,0,u)-s;
     u = u - error/p(u);
   }
-  // printf("iter = %d\n", iter);
+  if (itr)
+      *itr = iter;
   unsigned long long int t3 = rdtsc();
   unsigned long long int my_code_time = (t3-t2);
   unsigned long long int gsl_steffenson = (t2-t1);
