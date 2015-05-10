@@ -39,7 +39,7 @@ void arclengthParam_test(int nTests) {
     int maxIter = 0;
     for (int i = 0; i < nTests; i++) {
         int iter;
-        double s = (rand()/(double)RAND_MAX)*full;
+        double s = (full*i)/nTests;
         double u = Integration::getArcLengthParam(p, s, full, &iter);
         if (iter > maxIter)
             maxIter = iter;
