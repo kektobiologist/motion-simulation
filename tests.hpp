@@ -37,14 +37,16 @@ void arclengthParam_test(int nTests) {
     // call arclengthParam on some u values
     double full = Integration::integrate(p, 0, 1);
     int maxIter = 0;
+    double avgIter = 0;
     for (int i = 0; i < nTests; i++) {
         int iter;
         double s = (full*i)/nTests;
         double u = Integration::getArcLengthParam(p, s, full, &iter);
         if (iter > maxIter)
             maxIter = iter;
+        avgIter += iter;
     }
-    qDebug() << "maxIter = " << maxIter;
+    qDebug() << "maxIter = " << maxIter << ", avg = " << avgIter/nTests;
 }
 }
 #endif // TESTS_HPP
