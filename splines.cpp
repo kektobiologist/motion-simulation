@@ -270,9 +270,8 @@ double fn1 (double u, void * params)
 
 double kd_f(double u, void *params) {
     CubicSpline *s = static_cast<CubicSpline*>(params);
-    double h = 0.0001;
-    double yddd = (s->ydd(u + h) - s->ydd(u - h)) / (2 * h);
-    double xddd = (s->xdd(u + h) - s->xdd(u - h)) / (2 * h);
+    double yddd = s->yddd(u);
+    double xddd = s->xddd(u);
     double xd = s->xd(u);
     double xdd = s->xdd(u);
     double yd = s->yd(u);
@@ -281,9 +280,8 @@ double kd_f(double u, void *params) {
 }
 double kd_f_neg(double u, void *params) {
     CubicSpline *s = static_cast<CubicSpline*>(params);
-    double h = 0.0001;
-    double yddd = (s->ydd(u + h) - s->ydd(u - h)) / (2 * h);
-    double xddd = (s->xdd(u + h) - s->xdd(u - h)) / (2 * h);
+    double yddd = s->yddd(u);
+    double xddd = s->xddd(u);
     double xd = s->xd(u);
     double xdd = s->xdd(u);
     double yd = s->yd(u);
@@ -293,10 +291,10 @@ double kd_f_neg(double u, void *params) {
 double kd_df(double u, void *params) {
     CubicSpline *s = static_cast<CubicSpline*>(params);
     double h = 0.0001;
-    double xdddd = (s->xdd(u + h) - 2 * s->xdd(u) + s->xdd(u - h)) / (h * h);
-    double ydddd = (s->ydd(u + h) - 2 * s->ydd(u) + s->ydd(u - h)) / (h * h);
-    double yddd = (s->ydd(u + h) - s->ydd(u - h)) / (2 * h);
-    double xddd = (s->xdd(u + h) - s->xdd(u - h)) / (2 * h);
+    double xdddd = 0.;
+    double ydddd = 0.;
+    double yddd = s->yddd(u);
+    double xddd = s->xddd(u);
     double xd = s->xd(u);
     double xdd = s->xdd(u);
     double yd = s->yd(u);
@@ -308,11 +306,10 @@ double kd_df(double u, void *params) {
 }
 double kd_df_neg(double u, void *params) {
     CubicSpline *s = static_cast<CubicSpline*>(params);
-    double h = 0.0001;
-    double xdddd = (s->xdd(u + h) - 2 * s->xdd(u) + s->xdd(u - h)) / (h * h);
-    double ydddd = (s->ydd(u + h) - 2 * s->ydd(u) + s->ydd(u - h)) / (h * h);
-    double yddd = (s->ydd(u + h) - s->ydd(u - h)) / (2 * h);
-    double xddd = (s->xdd(u + h) - s->xdd(u - h)) / (2 * h);
+    double xdddd = 0.;
+    double ydddd = 0.;
+    double yddd = s->yddd(u);
+    double xddd = s->xddd(u);
     double xd = s->xd(u);
     double xdd = s->xdd(u);
     double yd = s->yd(u);
@@ -325,11 +322,10 @@ double kd_df_neg(double u, void *params) {
 void kd_fdf(double u, void *params, double *y, double *dy) {
 
     CubicSpline *s = static_cast<CubicSpline*>(params);
-    double h = 0.0001;
-    double xdddd = (s->xdd(u + h) - 2 * s->xdd(u) + s->xdd(u - h)) / (h * h);
-    double ydddd = (s->ydd(u + h) - 2 * s->ydd(u) + s->ydd(u - h)) / (h * h);
-    double yddd = (s->ydd(u + h) - s->ydd(u - h)) / (2 * h);
-    double xddd = (s->xdd(u + h) - s->xdd(u - h)) / (2 * h);
+    double xdddd = 0.;
+    double ydddd = 0.;
+    double yddd = s->yddd(u);
+    double xddd = s->xddd(u);
     double xd = s->xd(u);
     double xdd = s->xdd(u);
     double yd = s->yd(u);
@@ -344,11 +340,10 @@ void kd_fdf(double u, void *params, double *y, double *dy) {
 void kd_fdf_neg(double u, void *params, double *y, double *dy) {
 
     CubicSpline *s = static_cast<CubicSpline*>(params);
-    double h = 0.0001;
-    double xdddd = (s->xdd(u + h) - 2 * s->xdd(u) + s->xdd(u - h)) / (h * h);
-    double ydddd = (s->ydd(u + h) - 2 * s->ydd(u) + s->ydd(u - h)) / (h * h);
-    double yddd = (s->ydd(u + h) - s->ydd(u - h)) / (2 * h);
-    double xddd = (s->xdd(u + h) - s->xdd(u - h)) / (2 * h);
+    double xdddd = 0.;
+    double ydddd = 0.;
+    double yddd = s->yddd(u);
+    double xddd = s->xddd(u);
     double xd = s->xd(u);
     double xdd = s->xdd(u);
     double yd = s->yd(u);
