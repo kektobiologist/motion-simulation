@@ -238,7 +238,8 @@ double fn1 (double u, void * params)
   return -s->k(u);
 }
 
-double kd_f(double u, void *params) {
+double kd(double u, void *params)
+{
     CubicSpline *s = static_cast<CubicSpline*>(params);
     double h = 0.0001;
     double yddd = (s->ydd(u + h) - s->ydd(u - h)) / (2 * h);
@@ -250,7 +251,8 @@ double kd_f(double u, void *params) {
     return ((yddd * xd - xddd * yd) / pow((xd * xd + yd * yd), 1.5)) - ((3 * (xd * ydd - xdd * yd) * (xd * xdd + yd * ydd)) / pow((xd * xd + yd * yd), 2.5));
 }
 
-double kd_df(double u, void *params) {
+double kd_df(double u, void *params)
+{
     CubicSpline *s = static_cast<CubicSpline*>(params);
     double h = 0.0001;
     double xdddd = (s->xdd(u + h) - 2 * s->xdd(u) + s->xdd(u - h)) / (h * h);
@@ -262,11 +264,12 @@ double kd_df(double u, void *params) {
     double yd = s->yd(u);
     double ydd = s->ydd(u);
     double p1 = - (6 * (yddd * xd - xddd * yd) * (xd * xdd + yd * ydd)) / (pow((xd * xd + yd * yd), 2.5));
-    double p2 = (xd * ydd - yd * xdd) * ((15 * pow((xd * xdd + yd * ydd), 2) / pow((xd * xd + yd * yd), 3.5)) - 3 * (xdd * xdd + xddd * yd + ydd * ydd + yddd * yd) / pow((xd * xd + yd * yd), 2.5));
-    double p3 = (-xdddd * yd - xddd * ydd + yddd * xdd + ydddd * xd) / pow((xd * xd + yd * yd), 1.5);
+    double p2 = (xd * ydd - yd * xdd) * ((15 * pow((xd * xdd + yd * ydd), 2) / pow((xd * xd + yd * yd), 3.5)) - 3 * (xdd * xdd + xddd * xd + ydd * ydd + yddd * yd) / pow((xd * xd + yd * yd), 2.5));
+    double p3 = (-0*xdddd * yd - xddd * ydd + yddd * xdd + 0*ydddd * xd) / pow((xd * xd + yd * yd), 1.5);
     return (p1 + p2 + p3);
 }
-void kd_fdf(double u, void *params, double *y, double *dy) {
+void kd_fdf(double u, void *params, double *y, double *dy)
+{
 
     CubicSpline *s = static_cast<CubicSpline*>(params);
     double h = 0.0001;
@@ -285,6 +288,7 @@ void kd_fdf(double u, void *params, double *y, double *dy) {
     double p3 = (-xdddd * yd - xddd * ydd + yddd * xdd + ydddd * xd) / pow((xd * xd + yd * yd), 1.5);
     *dy = (p1 + p2 + p3);
 }
+
 
 double CubicSpline::maxk(double *u_low) const
 {
@@ -400,7 +404,7 @@ double CubicSpline::maxk(double *u_low) const
 
 
     gsl_function_fdf F;
-    F.f = &kd_f;
+    F.f = &kd;
     F.df = &kd_df;
     F.fdf = &kd_fdf;
 
