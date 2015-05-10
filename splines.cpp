@@ -279,7 +279,17 @@ double kd_f(double u, void *params) {
     double ydd = s->ydd(u);
     return ((yddd * xd - xddd * yd) / pow((xd * xd + yd * yd), 1.5)) - ((3 * (xd * ydd - xdd * yd) * (xd * xdd + yd * ydd)) / pow((xd * xd + yd * yd), 2.5));
 }
-
+double kd_f_neg(double u, void *params) {
+    CubicSpline *s = static_cast<CubicSpline*>(params);
+    double h = 0.0001;
+    double yddd = (s->ydd(u + h) - s->ydd(u - h)) / (2 * h);
+    double xddd = (s->xdd(u + h) - s->xdd(u - h)) / (2 * h);
+    double xd = s->xd(u);
+    double xdd = s->xdd(u);
+    double yd = s->yd(u);
+    double ydd = s->ydd(u);
+    return -((yddd * xd - xddd * yd) / pow((xd * xd + yd * yd), 1.5)) + ((3 * (xd * ydd - xdd * yd) * (xd * xdd + yd * ydd)) / pow((xd * xd + yd * yd), 2.5));
+}
 double kd_df(double u, void *params) {
     CubicSpline *s = static_cast<CubicSpline*>(params);
     double h = 0.0001;
@@ -295,6 +305,22 @@ double kd_df(double u, void *params) {
     double p2 = (xd * ydd - yd * xdd) * ((15 * pow((xd * xdd + yd * ydd), 2) / pow((xd * xd + yd * yd), 3.5)) - 3 * (xdd * xdd + xddd * yd + ydd * ydd + yddd * yd) / pow((xd * xd + yd * yd), 2.5));
     double p3 = (-xdddd * yd - xddd * ydd + yddd * xdd + ydddd * xd) / pow((xd * xd + yd * yd), 1.5);
     return (p1 + p2 + p3);
+}
+double kd_df_neg(double u, void *params) {
+    CubicSpline *s = static_cast<CubicSpline*>(params);
+    double h = 0.0001;
+    double xdddd = (s->xdd(u + h) - 2 * s->xdd(u) + s->xdd(u - h)) / (h * h);
+    double ydddd = (s->ydd(u + h) - 2 * s->ydd(u) + s->ydd(u - h)) / (h * h);
+    double yddd = (s->ydd(u + h) - s->ydd(u - h)) / (2 * h);
+    double xddd = (s->xdd(u + h) - s->xdd(u - h)) / (2 * h);
+    double xd = s->xd(u);
+    double xdd = s->xdd(u);
+    double yd = s->yd(u);
+    double ydd = s->ydd(u);
+    double p1 = - (6 * (yddd * xd - xddd * yd) * (xd * xdd + yd * ydd)) / (pow((xd * xd + yd * yd), 2.5));
+    double p2 = (xd * ydd - yd * xdd) * ((15 * pow((xd * xdd + yd * ydd), 2) / pow((xd * xd + yd * yd), 3.5)) - 3 * (xdd * xdd + xddd * yd + ydd * ydd + yddd * yd) / pow((xd * xd + yd * yd), 2.5));
+    double p3 = (-xdddd * yd - xddd * ydd + yddd * xdd + ydddd * xd) / pow((xd * xd + yd * yd), 1.5);
+    return -(p1 + p2 + p3);
 }
 void kd_fdf(double u, void *params, double *y, double *dy) {
 
@@ -315,7 +341,25 @@ void kd_fdf(double u, void *params, double *y, double *dy) {
     double p3 = (-xdddd * yd - xddd * ydd + yddd * xdd + ydddd * xd) / pow((xd * xd + yd * yd), 1.5);
     *dy = (p1 + p2 + p3);
 }
+void kd_fdf_neg(double u, void *params, double *y, double *dy) {
 
+    CubicSpline *s = static_cast<CubicSpline*>(params);
+    double h = 0.0001;
+    double xdddd = (s->xdd(u + h) - 2 * s->xdd(u) + s->xdd(u - h)) / (h * h);
+    double ydddd = (s->ydd(u + h) - 2 * s->ydd(u) + s->ydd(u - h)) / (h * h);
+    double yddd = (s->ydd(u + h) - s->ydd(u - h)) / (2 * h);
+    double xddd = (s->xdd(u + h) - s->xdd(u - h)) / (2 * h);
+    double xd = s->xd(u);
+    double xdd = s->xdd(u);
+    double yd = s->yd(u);
+    double ydd = s->ydd(u);
+    *y = -((yddd * xd - xddd * yd) / pow((xd * xd + yd * yd), 1.5)) + ((3 * (xd * ydd - xdd * yd) * (xd * xdd + yd * ydd)) / pow((xd * xd + yd * yd), 2.5));
+
+    double p1 = - (6 * (yddd * xd - xddd * yd) * (xd * xdd + yd * ydd)) / (pow((xd * xd + yd * yd), 2.5));
+    double p2 = (xd * ydd - yd * xdd) * ((15 * pow((xd * xdd + yd * ydd), 2) / pow((xd * xd + yd * yd), 3.5)) - 3 * (xdd * xdd + xddd * yd + ydd * ydd + yddd * yd) / pow((xd * xd + yd * yd), 2.5));
+    double p3 = (-xdddd * yd - xddd * ydd + yddd * xdd + ydddd * xd) / pow((xd * xd + yd * yd), 1.5);
+    *dy = -(p1 + p2 + p3);
+}
 double CubicSpline::maxk(double *u_low) const
 {
     using namespace alglib;
