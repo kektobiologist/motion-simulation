@@ -20,6 +20,7 @@
 #include "trajectory-generators.hpp"
 #include <fstream>
 #include <functional>
+#include "tests.hpp"
 
 using namespace std;
 // NOTE(arpit): PREDICTION_PACKET_DELAY is NOT used in simulation. It is used to predict bot position in actual run,
@@ -467,6 +468,8 @@ void Dialog::on_traj2Button_clicked()
 
 void Dialog::on_circleTrajButton_clicked()
 {
+    // adding test code here
+    Tests::arclengthParam_test(100);
     using namespace TrajectoryGenerators;
     double x = ui->xCircle->text().toDouble();
     double y = ui->yCircle->text().toDouble();
@@ -481,8 +484,8 @@ void Dialog::on_circleTrajButton_clicked()
 
     //    traj = circleGenerator(x,y,r,startTheta,f);
 //    traj = quinticBezierSplineGenerator(start, end, 0, 0, 40, 70);
-//    traj = cubic(start, end, 0, 0, 40, 70);
-    traj = cubic2CP(start, end, 0, 0, 40, 70);
+    traj = cubic(start, end, 0, 0, 40, 70);
+//    traj = cubic2CP(start, end, 0, 0, 40, 70);
     ui->renderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)
         ui->trajSimButton->setEnabled(true);

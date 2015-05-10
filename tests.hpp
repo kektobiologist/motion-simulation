@@ -19,7 +19,7 @@ Pose randomPose() {
     return Pose(x, y, theta);
 }
 
-Spline randomCubicSpline(int nCP) {
+CubicSpline randomCubicSpline(int nCP) {
     // create random start/ end pose
     Pose start = randomPose(), end = randomPose();
     // add nCP random midPoints;
@@ -30,10 +30,21 @@ Spline randomCubicSpline(int nCP) {
     return CubicSpline(start, end, midPoints);
 }
 
-void arclengthParam_test() {
+void arclengthParam_test(int nTests) {
     // create a random spline
-    Spline p = randomCubicSpline(4);
+    CubicSpline p = randomCubicSpline(2);
     Integration::computeInverseBezierMatrices(p);
+    // call arclengthParam on some u values
+    double full = Integration::integrate(p, 0, 1);
+    int maxIter = 0;
+    for (int i = 0; i < nTests; i++) {
+        int iter;
+        double s = (rand()/(double)RAND_MAX)*full;
+        double u = Integration::getArcLengthParam(p, s, full, &iter);
+        if (iter > maxIter)
+            maxIter = iter;
+    }
+    qDebug() << "maxIter = " << maxIter;
 }
 }
 #endif // TESTS_HPP

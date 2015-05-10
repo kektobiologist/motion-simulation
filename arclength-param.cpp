@@ -493,10 +493,9 @@ double getArcLengthParam(Spline& p, double s, double full, int *itr) {
   unsigned long long int t2 = rdtsc();
 
   assert(s >= 0);
-  //double u = s/full;  // initial guess;
+//  double u = s/full;  // initial guess;
   double u = get_ufroms(s/full);
   //printf("\n Value of u is %f and ini is %f", get_ufroms(s/full), s/full);
-  return u;
 
   double error = 1000;
   int iter = 0;
@@ -514,7 +513,7 @@ double getArcLengthParam(Spline& p, double s, double full, int *itr) {
 
   //if(iter>20 || my_code_time > 50000)
   //qDebug() << "Time for optimisation, Iterations - " << my_code_time ;//<< " " << iter;
-  printf("\n Value intial is %f,after NR is %f, bezApp is %f", s/full,u,get_ufroms(s/full));
+//  printf("\n Value intial is %f,after NR is %f, bezApp is %f", s/full,u,get_ufroms(s/full));
 
   return u;
 }
