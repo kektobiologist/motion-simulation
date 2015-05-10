@@ -84,6 +84,8 @@ double optimise_u(Spline& p, double s, double e, bool is_newton=true){
     F.df = &func_df;
     F.fdf = &func_fdf;
 
+
+
     func_params fp = {s,p};
     F.params = &fp;
 

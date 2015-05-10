@@ -4,6 +4,11 @@
 #include <algorithm>
 #include <utility>
 #include <math.h>
+#include <QtCore/QString>
+#include <QtCore/QFile>
+#include <QtCore/QDebug>
+#include <QtCore/QTextStream>
+
 using namespace std;
 namespace Controllers {
 
@@ -86,11 +91,29 @@ MiscData CMU(Pose s, Pose e, int &vl, int &vr, double prevSpeed, double prevOmeg
 }
 
 
+QString outputFilename = "/home/robocup/Output.txt";
+QFile outputFile(outputFilename);
+
+
+int va=-1;
 MiscData DynamicWindow(Pose s, Pose e, int &vl, int &vr, double prevSpeed, double prevOmega, double finalSpeed)
 {
 //    qDebug()<<"prevSpeed = "<<prevSpeed<<" prevOmega = "<<prevOmega;
 //    qDebug()<<"Inside function Dynamic Window";
 //    sprintf(buf, "in function Dynamic Window");
+
+
+    QTextStream outStream(&outputFile);
+    if(va==-1)
+    {
+         outputFile.open(QIODevice::Append);
+        outStream<<"\n\n\n\n \t\t\t\t The Print of QT Code\n";
+        outStream<<"old_x \t old_y \t prevSpeed \t prevOmega \t newSpeed \t newOmega \t new_x \t new_y \n";
+        va=0;
+    }
+    va=0;
+     outputFile.open(QIODevice::Append);
+     outStream<< s.x() << '\t'<< s.y() <<'\t'<< prevSpeed <<'\t'<< prevOmega<< '\t';
     const int del_v_max = 12; //ticks
     const float step = 1; //ticks
     const float max_vel = 100; //ticks
@@ -153,7 +176,12 @@ MiscData DynamicWindow(Pose s, Pose e, int &vl, int &vr, double prevSpeed, doubl
             best_w = arr[i][2];
         }
     }
+    float theta= s.theta() + (best_w*t); //rad
+    theta = normalizeAngle(theta);
+    float x= s.x() + (best_v*cos(theta)*t);
+    float y= s.y() + (best_v*sin(theta)*t);
 
+    outStream<<best_v<< '\t'<< best_w <<'\t'<< x <<'\t'<< y<<endl;
 
     vr=(best_v)+(Constants::d *best_w)/2 ;                    // update velocity
     vl=(2*best_v) - vr;                       // update omega
