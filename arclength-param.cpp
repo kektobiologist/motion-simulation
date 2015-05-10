@@ -15,12 +15,6 @@ double f(double u, void *integrand) {
   return (*in)(u);
 }
 
-//void func(double x, double xminusa, double bminusx, double &y, void *ptr)
-//{
-//    Integrand *in = (Integrand*)ptr;
-//    y = (*in)(x);
-//}
-
 unsigned long long int rdtsc(void)
 {
    unsigned long long int x;
@@ -73,22 +67,6 @@ double integrate(Integrand& i, double s, double e) {
 
   return result;
 }
-
-//double integrate_alglib(Integrand& p, double a, double b){
-
-//    using namespace alglib;
-//    autogkstate s;
-//    autogkreport rep;
-//    double v;
-
-//    autogksmooth(a,b,s);
-//    alglib::autogkintegrate(s, func, &p);
-//    autogkresults(s,v,rep);
-
-//    return v;
-//    return 0;
-//}
-
 
 const gsl_root_fdfsolver_type *T;
 gsl_root_fdfsolver *sf;
@@ -245,7 +223,7 @@ vector<double> getInflectionPoints(Spline &p, double start_u, double end_u){
 
     vector<double> arr;
     for(float i=0;i<=1;i+=0.1){
-        arr.push_back(find_u(p,i)); //results are not as good as brute force
+        arr.push_back(find_u(p,i)); //results are not as good as brute force,but ok
 
        //qDebug() << "  " << arr[10*(int)i];
     }
@@ -300,18 +278,34 @@ void get_bezier(Spline &p, gsl_matrix_view *BVx, gsl_matrix_view *BVy, double st
     //double s_1 = Integration::s_formula(p,end_u) - Integration::s_formula(p,start_u);
 
 
-    double s_1by3 = integrate(p, 0,start_u + (1/3)*(end_u - start_u)) - integrate(p, 0,start_u);
-    double s_2by3 = integrate(p, 0,start_u + (2/3)*(end_u - start_u)) - integrate(p, 0,start_u);
+    double s_1by3 = integrate(p, 0,start_u + (1.0/3)*(end_u - start_u)) - integrate(p, 0,start_u);
+    double s_2by3 = integrate(p, 0,start_u + (2.0/3)*(end_u - start_u)) - integrate(p, 0,start_u);
     double s_1 = integrate(p, 0,end_u) - integrate(p, 0,start_u);
     double sm_1by3 = s_1by3/s_1;
     double sm_2by3 = s_2by3/s_1;
 
+    qDebug() << "Value of s and s1 " << s_1by3 << " " << s_2by3 << "" << s_1;
     double v1y = (18*sm_1by3 - 9*sm_2by3 + 2)/6;
     double v2y = (-9*sm_1by3 + 18*sm_2by3 -5)/6;
 
     double b[] = {-1,3,-3,1,3,-6,3,0,-3,3,0,0,1,0,0,0};
     double vx[] = {0,start_u + (1/3)*(end_u - start_u), start_u + (2/3)*(end_u - start_u), end_u};
     double vy[] = {0, v1y, v2y, 1};
+
+    /*
+    double b2[] = {1, -10, 45, -120, 210, -252, 210, -120, 45, -10, 1,
+                   -10, 90, -360, 840, -1260, 1260, -840, 360, -90, 10, 0,
+                   45, -360, 1260, -2520, 3150, -2520, 1260, -360, 45, 0, 0,
+                   -120, 840, -2520, 4200, -4200, 2520, -840, 120, 0, 0, 0,
+                   210, -1260, 3150, -4200, 3150, -1260, 210, 0, 0, 0, 0,
+                   -252, 1260, -2520, 2520, -1260, 252, 0, 0, 0, 0, 0,
+                   210, -840, 1260, -840, 210, 0, 0, 0, 0, 0, 0,
+                   -120, 360, -360, 120, 0, 0, 0, 0, 0, 0, 0,
+                   45, -90, 45, 0, 0, 0, 0, 0, 0, 0, 0,
+                   -10, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                   1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                  };
+    */
 
     gsl_matrix_view B = gsl_matrix_view_array(b, 4,4);
     gsl_matrix_view Vx = gsl_matrix_view_array(vx, 4,1);
@@ -334,16 +328,26 @@ double bvx_2[] = {0.0, 0.0, 0.0, 0.0};
 double bvy_2[] = {0.0, 0.0, 0.0, 0.0};
 gsl_matrix_view BVx_2 = gsl_matrix_view_array(bvx_2, 4,1);
 gsl_matrix_view BVy_2 = gsl_matrix_view_array(bvy_2, 4,1);
+vector<double> infpts;
+
+int invspan;
+double invbvx[] = {0.0, 0.0, 0.0, 0.0};
+double invbvy[] = {0.0, 0.0, 0.0, 0.0};
+gsl_matrix_view IBVx = gsl_matrix_view_array(invbvx, 4,1);
+gsl_matrix_view IBVy = gsl_matrix_view_array(invbvy, 4,1);
+vector<double> invinfpts;
 
 void refreshMatrix(){
     for(int i=0;i<4;i++){
         bvx[i]=bvy[i]=bvx_2[i]=bvy_2[i]=0;
+        invbvx[i]=invbvy[i]=0;
     }
+    infpts.clear();
 }
 
 void computeBezierMatrices(Spline &p)
 {
-    vector<double> infpts = Integration::getInflectionPoints(p,0,1);
+    infpts = Integration::getInflectionPoints(p,0,1);
     printf("SIze of recieved inflection_points - %d", infpts.size());
 
 
@@ -352,14 +356,15 @@ void computeBezierMatrices(Spline &p)
         span = 1;
     }
     else{
-        span = 2;
         if(infpts.size() == 2){
+            span =2;
             double umid = (infpts[0]+infpts[1])/2;
             get_bezier(p,&BVx,&BVy,0,umid);
             get_bezier(p,&BVx_2,&BVy_2,umid,1);
 
         }
         else{
+            span = 3;
             double umid = infpts[1];
             get_bezier(p,&BVx,&BVy,0,umid);
             get_bezier(p,&BVx_2,&BVy_2,umid,1);
@@ -367,12 +372,102 @@ void computeBezierMatrices(Spline &p)
     }
 }
 
+/* function to compute u(s)
+    v1y = (ce+2b-e-bf)/(bd-ae);
+    v2y = (d-2a-cd+fa)/(bd-ae);
+    for equations as -
+    a*v1y + b*v2y + c = 1
+    d*v1y + e*v2y + f = 2
+    where,
+    a = 9*(s(1/3) + s(1/3)^3 - 2*s(1/3)^2)
+    b = 9*(s(1/3)^2 - s(1/3)^3)
+    c = 3*(s(1/3)^3)
+    d = 9*(s(2/3) + s(2/3)^3 - 2*s(2/3)^2)
+    e = 9*(s(2/3)^2 - s(2/3)^3)
+    f = 3*(s(2/3)^3)
+
+    Simplified:
+    v1y:
+        Nr - 3*s*s*s1*s1*(s-s1) + 2*s*s(1-s) - s1*s1*(1-s1)
+        Dr - 9*s*s1*(1-s1)(1-s)(s-s1)
+
+    v2y:
+        Nr - s1*(1-s1)*(1-s1) -2s - 2s*s*s +4*s*s -
+            3*s*s1*(s+ 3*s*s1*s1 -2*s*s1 -(s*s1)^2 -s1*s1)
+        Dr - 9*s*s1*(1-s1)(1-s)(s-s1)
+
+    v1x = (ce+b-e-bf)/(bd-ae);
+    v2x = (d-a-cd+fa)/(bd-ae);
+    for equations as -
+    a*v1x + b*v2x + c = 1
+    d*v1x + e*v2x + f = 1
+    where,
+    a = 3 + 3*s(1/3)^2 - 6*s(1/3)
+    b = 3*(s(1/3) - s(1/3)^2)
+    c = (s(1/3)^2)
+    d = 3 + 3*s(2/3)^2 - 6*s(2/3)
+    e = 3*(s(2/3) - s(2/3)^2)
+    f = (s(2/3)^2)
+
+*/
+void computeInverseBezierMatrices(Spline &p){
+
+    double s_1by3 = integrate(p, 0, 1.0/3);
+    double s_2by3 = integrate(p, 0, 2.0/3);
+    double s_1 = integrate(p, 0, 1);
+    double sm_1by3 = s_1by3/s_1;
+    double sm_2by3 = s_2by3/s_1;
+
+    //qDebug() << "Value of s and s1 " << s_1by3 << " " << s_2by3 << "" << s_1;
+    double a = 9*(sm_1by3 + pow(sm_1by3,3) - 2*pow(sm_1by3,2));
+    double b = 9*(pow(sm_1by3,2) - pow(sm_1by3,3));
+    double c = 3*pow(sm_1by3,3);
+    double d = 9*(sm_2by3 + pow(sm_2by3,3) - 2*pow(sm_2by3,2));
+    double e = 9*(pow(sm_2by3,2) - pow(sm_2by3,3));
+    double f = 3*pow(sm_2by3,3);
+
+    double v1y = ((c*e)+(2*b)-e-(b*f))/((b*d)-(a*e));
+    double v2y = (d-(2*a)-(c*d)+(f*a))/((b*d)-(a*e));
+
+    //qDebug() << v1y << " " << v2y << " " << b*d - a*e;
+    double bm[] = {-1,3,-3,1,3,-6,3,0,-3,3,0,0,1,0,0,0};
+    double vx[] = {0, sm_1by3, sm_2by3, 1}; //to be changed, but doesn't matter as of now
+    double vy[] = {0, v1y, v2y, 1};
+
+    gsl_matrix_view B = gsl_matrix_view_array(bm, 4,4);
+    gsl_matrix_view Vx = gsl_matrix_view_array(vx, 4,1);
+    gsl_matrix_view Vy = gsl_matrix_view_array(vy, 4,1);
+
+
+    gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, &B.matrix, &Vx.matrix, 0,&IBVx.matrix);
+    gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, &B.matrix, &Vy.matrix, 0,&IBVy.matrix);
+}
+
+double get_ufroms(double s){
+
+    return invbvy[0]*s*s*s + invbvy[1]*s*s + invbvy[2]*s + invbvy[3];
+}
+
 double getArcLength(double u){
-    if(u > bvy[3]){
-        return bvy_2[1]*u*u + bvy_2[2]*u;
+
+    if(span ==2){
+        if(u > (infpts[0] + infpts[1])/2){
+            return bvy_2[0]*u*u*u + bvy_2[1]*u*u + bvy_2[2]*u;
+        }
+        else{
+            return bvy[0]*u*u*u + bvy[1]*u*u + bvy[2]*u;
+        }
+    }
+    else if(span ==3){
+        if(u > infpts[1]){
+            return bvy_2[0]*u*u*u + bvy_2[1]*u*u + bvy_2[2]*u;
+        }
+        else{
+            return bvy[0]*u*u*u + bvy[1]*u*u + bvy[2]*u;
+        }
     }
     else{
-        return bvy[1]*u*u + bvy[2]*u;
+        return bvy[0]*u*u*u + bvy[1]*u*u + bvy[2]*u;
     }
 }
 
@@ -383,6 +478,10 @@ double getArcLengthParam(Spline& p, double s, double full) {
     full = integrate(p, 0, 1);
   }
 
+//  for(double i=0;i<=1;i+=0.001){
+//      qDebug() << p.xdd(i) << " " << p.ydd(i);
+//  }
+//  exit(9);
   unsigned long long int t0 = rdtsc();
 
   //Using newton-rhapson technique in gsl
@@ -392,14 +491,18 @@ double getArcLengthParam(Spline& p, double s, double full) {
   unsigned long long int t2 = rdtsc();
 
   assert(s >= 0);
-  double u = s/full;  // initial guess;
+  //double u = s/full;  // initial guess;
+  double u = get_ufroms(s/full);
+  //printf("\n Value of u is %f and ini is %f", get_ufroms(s/full), s/full);
+  return u;
+
   double error = 1000;
   int iter = 0;
   while (fabs(error) > 1e-3 && iter < 60) {
 //      if (iter > 20)
 ////          qDebug() << "iter" << iter;
     iter++;
-    error = getArcLength(u)-s;
+    error = integrate(p,0,u)-s;//getArcLength(u)-s;
     u = u - error/p(u);
   }
   // printf("iter = %d\n", iter);
@@ -410,6 +513,7 @@ double getArcLengthParam(Spline& p, double s, double full) {
 
   //if(iter>20 || my_code_time > 50000)
   //qDebug() << "Time for optimisation, Iterations - " << my_code_time ;//<< " " << iter;
+  printf("\n Value intial is %f,after NR is %f, bezApp is %f", s/full,u,get_ufroms(s/full));
 
   return u;
 }
