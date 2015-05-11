@@ -280,7 +280,7 @@ double kd(double u, void *params){
     return ((yddd * xd - xddd * yd) / pow((xd * xd + yd * yd), 1.5)) - ((3 * (xd * ydd - xdd * yd) * (xd * xdd + yd * ydd)) / pow((xd * xd + yd * yd), 2.5));
 }
 
-double kd_f_neg(double u, void *params) {
+double kd_neg(double u, void *params) {
     CubicSpline *s = static_cast<CubicSpline*>(params);
     double yddd = s->yddd(u);
     double xddd = s->xddd(u);
@@ -309,7 +309,7 @@ double kd_df(double u, void *params) {
     return (p1 + p2 + p3);
 }
 
-double kd_df_neg(double u, void *params) {
+double kd_neg_df(double u, void *params) {
     CubicSpline *s = static_cast<CubicSpline*>(params);
     double xdddd = 0.;
     double ydddd = 0.;
@@ -343,7 +343,7 @@ void kd_fdf(double u, void *params, double *y, double *dy) {
     *dy = (p1 + p2 + p3);
 }
 
-void kd_fdf_neg(double u, void *params, double *y, double *dy) {
+void kd_neg_fdf(double u, void *params, double *y, double *dy) {
 
     CubicSpline *s = static_cast<CubicSpline*>(params);
     double xdddd = 0.;
@@ -501,9 +501,9 @@ double CubicSpline::maxk(double *u_low) const
             if(abs(x) > maxk)maxk = abs(x);
 
             gsl_function_fdf Fneg;
-            Fneg.f = &kd_eng;
-            Fneg.df = &kd_eng_df;
-            Fneg.fdf = &kd_eng_fdf;
+            Fneg.f = &kd_neg;
+            Fneg.df = &kd_neg_df;
+            Fneg.fdf = &kd_neg_fdf;
             Fneg.params = const_cast<CubicSpline*>(this);
             iter =0; x = this->k(0.5);
 
