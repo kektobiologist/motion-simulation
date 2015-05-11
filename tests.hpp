@@ -33,6 +33,7 @@ CubicSpline randomCubicSpline(int nCP) {
 void arclengthParam_test(int nTests) {
     // create a random spline
     CubicSpline p = randomCubicSpline(2);
+    Integration::refreshMatrix();
     Integration::computeInverseBezierMatrices(p);
     // call arclengthParam on some u values
     double full = Integration::integrate(p, 0, 1);

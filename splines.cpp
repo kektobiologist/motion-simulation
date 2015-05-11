@@ -501,9 +501,9 @@ double CubicSpline::maxk(double *u_low) const
             if(abs(x) > maxk)maxk = abs(x);
 
             gsl_function_fdf Fneg;
-            Fneg.f = &kd_eng;
-            Fneg.df = &kd_eng_df;
-            Fneg.fdf = &kd_eng_fdf;
+//            Fneg.f = &kd_eng;
+//            Fneg.df = &kd_eng_df;
+//            Fneg.fdf = &kd_eng_fdf;
             Fneg.params = const_cast<CubicSpline*>(this);
             iter =0; x = this->k(0.5);
 

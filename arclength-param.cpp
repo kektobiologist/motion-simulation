@@ -493,8 +493,8 @@ double getArcLengthParam(Spline& p, double s, double full, int *itr) {
   unsigned long long int t2 = rdtsc();
 
   assert(s >= 0);
-  double u = s/full;  // initial guess;
-//  double u = get_ufroms(s/full);
+//  double u = s/full;  // initial guess;
+  double u = get_ufroms(s/full);
   //printf("\n Value of u is %f and ini is %f", get_ufroms(s/full), s/full);
 
   double error = 1000;
