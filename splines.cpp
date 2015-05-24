@@ -238,7 +238,7 @@ double CubicSpline::xddd(double u) const {
     ae_int_t nx;
     double ret = 0.;
     alglib::spline1dunpack(splineX, nx, tblx);
-    for (int i = 0; i < nx; i++) {
+    for (int i = 0; i < nx - 1; i++) {
         double u_low = tblx[i][0], u_high = tblx[i][1];
         if (u >= u_low && u <= u_high) {
              ret = 6 * tblx[i][5];
@@ -250,10 +250,10 @@ double CubicSpline::xddd(double u) const {
 double CubicSpline::yddd(double u) const {
     using namespace alglib;
     real_2d_array tbly;
-    ae_int_t ny;
+    long int ny;
     double ret = 0.;
     alglib::spline1dunpack(splineY, ny, tbly);
-    for (int i = 0; i < ny; i++) {
+    for (int i = 0; i < ny - 1; i++) {
         double u_low = tbly[i][0], u_high = tbly[i][1];
         if (u >= u_low && u <= u_high) {
              ret = 6 * tbly[i][5];
@@ -464,41 +464,41 @@ double CubicSpline::maxk(double *u_low) const
 //        }
 
         //Newton-Rhapson Approach for finding out max curvature
-//        const gsl_root_fdfsolver_type *T;
-//        gsl_root_fdfsolver *sf;
-//        int status;
-//        int iter = 0, max_iter = 100;
+        const gsl_root_fdfsolver_type *T;
+        gsl_root_fdfsolver *sf;
+        int status;
+        int iter = 0, max_iter = 100;
 
-//        double x0, x = this->k(0.5);
+        double x0, x = this->k(0.5);
 
 
-//        gsl_function_fdf F;
-//        F.f = &kd;
-//        F.df = &kd_df;
-//        F.fdf = &kd_fdf;
-//        F.params = const_cast<CubicSpline*>(this);
+        gsl_function_fdf F;
+        F.f = &kd;
+        F.df = &kd_df;
+        F.fdf = &kd_fdf;
+        F.params = const_cast<CubicSpline*>(this);
 
-//        T = gsl_root_fdfsolver_newton;
-//          sf = gsl_root_fdfsolver_alloc (T);
-//          gsl_root_fdfsolver_set (sf, &F, x);
+        T = gsl_root_fdfsolver_newton;
+          sf = gsl_root_fdfsolver_alloc (T);
+          gsl_root_fdfsolver_set (sf, &F, x);
 
-//          //printf("Using %s method\n", gsl_root_fdfsolver_name(sf));
-//          //printf("%-5s %10s %10s %10s\n", "iter", "root", "error", "err(est)");
+          //printf("Using %s method\n", gsl_root_fdfsolver_name(sf));
+          //printf("%-5s %10s %10s %10s\n", "iter", "root", "error", "err(est)");
 
-//          do
-//             {
-//               iter++;
-//               status = gsl_root_fdfsolver_iterate (sf);
-//               x0 = x;
-//               x = gsl_root_fdfsolver_root (sf);
-//               status = gsl_root_test_delta (x, x0, 0, 1e-2);
+          do
+             {
+               iter++;
+               status = gsl_root_fdfsolver_iterate (sf);
+               x0 = x;
+               x = gsl_root_fdfsolver_root (sf);
+               status = gsl_root_test_delta (x, x0, 0, 1e-2);
 
-//               //if(status== GSL_SUCCESS)printf("Converged:\n");
-//               //printf("%5d %10.7f %+10,7f %10.7f\n", iter, x, x-r_expected, x- x0);
-//             }
-//            while (status == GSL_CONTINUE && iter < max_iter);
+               //if(status== GSL_SUCCESS)printf("Converged:\n");
+               //printf("%5d %10.7f %+10,7f %10.7f\n", iter, x, x-r_expected, x- x0);
+             }
+            while (status == GSL_CONTINUE && iter < max_iter);
 
-//            if(abs(x) > maxk)maxk = abs(x);
+            if(abs(x) > maxk)maxk = abs(x);
 
 //            gsl_function_fdf Fneg;
 //            Fneg.f = &kd_neg;
@@ -520,7 +520,7 @@ double CubicSpline::maxk(double *u_low) const
 //               }
 //              while (status == GSL_CONTINUE && iter < max_iter);
 
-//            gsl_root_fdfsolver_free (sf);
+            gsl_root_fdfsolver_free (sf);
 //            if(abs(x) > maxk)maxk = abs(x);
     }
 
