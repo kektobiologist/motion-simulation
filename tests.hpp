@@ -34,20 +34,33 @@ void arclengthParam_test(int nTests) {
     // create a random spline
     CubicSpline p = randomCubicSpline(2);
     Integration::refreshMatrix();
-    Integration::computeInverseBezierMatrices(p);
+    //Integration::computeInverseBezierMatrices(p);
+    Integration::computeSplineApprox(p);
     // call arclengthParam on some u values
     double full = Integration::integrate(p, 0, 1);
-    int maxIter = 0;
-    double avgIter = 0;
+    int maxIter, maxIterSP, maxIterB;
+    maxIter=maxIterSP=maxIterB=0;
+    double avgIter, avgIterSP, avgIterB = 0;
     for (int i = 0; i < nTests; i++) {
         int iter;
         double s = (full*i)/nTests;
-        double u = Integration::getArcLengthParam(p, s, full, &iter);
+        double u = Integration::getArcLengthParam(p, s, full, &iter,2);
         if (iter > maxIter)
             maxIter = iter;
         avgIter += iter;
+
+        u = Integration::getArcLengthParam(p, s, full, &iter,0);
+        if (iter > maxIterSP)
+            maxIterSP = iter;
+        avgIterSP += iter;
+
+        u = Integration::getArcLengthParam(p, s, full, &iter,1);
+        if (iter > maxIterB)
+            maxIterB = iter;
+        avgIterB += iter;
     }
-    qDebug() << "maxIter = " << maxIter << ", avg = " << avgIter/nTests;
+    qDebug() << "maxIter = " << maxIter << ", avg = " << avgIter/nTests << "maxIterSP = " << maxIterSP << ", avgSP = " << avgIterSP/nTests
+                << "maxIterB = " << maxIterB << ", avgB = " << avgIterB/nTests;
 }
 }
 #endif // TESTS_HPP

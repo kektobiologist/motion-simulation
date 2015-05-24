@@ -159,6 +159,7 @@ vector<ProfileDatapoint> generateVelocityProfile(Spline &p, int numPoints, doubl
 
     Integration::refreshMatrix();
     Integration::computeInverseBezierMatrices(p);
+    Integration::computeSplineApprox(p);
     //Integration::computeBezierMatrices(p);
     for (int i = 0; i < numPoints; i++) {
         double s = full/(numPoints-1)*(double)i;
