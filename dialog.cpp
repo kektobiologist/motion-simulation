@@ -469,7 +469,7 @@ void Dialog::on_traj2Button_clicked()
 void Dialog::on_circleTrajButton_clicked()
 {
     // adding test code here
-    Tests::arclengthParam_test(100);
+    //Tests::arclengthParam_test(100);
     //return;
     using namespace TrajectoryGenerators;
     double x = ui->xCircle->text().toDouble();
