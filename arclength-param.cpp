@@ -374,6 +374,33 @@ void computeBezierMatrices(Spline &p)
     }
 }
 
+alglib::spline1dinterpolant splineSU;
+void computeSplineApprox(Spline &p){
+
+    using namespace alglib;
+    double n = 10; // number of points to interpolate on
+    vector<double> s(n,0), u(n,0);
+
+    for(int i=0;i<n;i++){
+        u[i] = i*1.0/n;
+        s[i] = integrate(p,0,u[i]);
+        //qDebug() << "U and S are " << u[i] << s[i] << "\n\n";
+    }
+
+    //if(ut2 < ut1){double temp=ut2;ut2=ut1;ut1=temp;}
+    alglib::real_1d_array AU, AS;
+    AS.setcontent(s.size(), &(s[0]));
+    AU.setcontent(u.size(), &(u[0]));
+    //spline1dbuildcubic(AS, AU, u.size(), 1, ut2, 1, ut1, splineSU);
+    spline1dbuildcubic(AS, AU, splineSU);
+
+//    double ut,dut,d2ut;
+//    for(int st=0;st<n;st++){
+//        spline1ddiff(splineSU, 0.9*s[st], ut, dut, d2ut);
+//        qDebug() << "UT and ST are " << ut << 0.9*s[st] << "\n";
+//    }
+}
+
 /* function to compute u(s)
     v1y = (ce+2b-e-bf)/(bd-ae);
     v2y = (d-2a-cd+fa)/(bd-ae);
@@ -450,6 +477,14 @@ double get_ufroms(double s){
     return invbvy[0]*s*s*s + invbvy[1]*s*s + invbvy[2]*s + invbvy[3];
 }
 
+double get_ufroms_sp(double s){
+
+    double u,du,d2u;
+    alglib::spline1ddiff(splineSU, s, u, du, d2u);
+    if(u>0.999)return 1;
+    else return u;
+}
+
 double getArcLength(double u){
 
     if(span ==2){
@@ -473,7 +508,7 @@ double getArcLength(double u){
     }
 }
 
-double getArcLengthParam(Spline& p, double s, double full, int *itr) {
+double getArcLengthParam(Spline& p, double s, double full, int *itr, int method) {
     // newton's method to find u for which arlength(p(0) to p(u)) = s;
 
   if (full < 0) {
@@ -483,7 +518,7 @@ double getArcLengthParam(Spline& p, double s, double full, int *itr) {
 //  for(double i=0;i<=1;i+=0.001){
 //      qDebug() << p.xdd(i) << " " << p.ydd(i);
 //  }
-//  exit(9);
+
   unsigned long long int t0 = rdtsc();
 
   //Using newton-rhapson technique in gsl
@@ -493,9 +528,10 @@ double getArcLengthParam(Spline& p, double s, double full, int *itr) {
   unsigned long long int t2 = rdtsc();
 
   assert(s >= 0);
-  //double u = s/full;  // initial guess;
-  double u = get_ufroms(s/full);
-  return u;
+  double u = s/full;  // initial guess;
+  if(method==0)u = get_ufroms_sp(s);
+  else if(method==1)u = get_ufroms(s/full);
+  //return u;
   //printf("\n Value of u is %f and ini is %f", get_ufroms(s/full), s/full);
 
   double error = 1000;
@@ -514,7 +550,7 @@ double getArcLengthParam(Spline& p, double s, double full, int *itr) {
 
   //if(iter>20 || my_code_time > 50000)
   //qDebug() << "Time for optimisation, Iterations - " << my_code_time ;//<< " " << iter;
-//  printf("\n Value intial is %f,after NR is %f, bezApp is %f", s/full,u,get_ufroms(s/full));
+  //qDebug() << "\n Value intial is " << s/full << ",after NR is " << u<<" bezApp is " << get_ufroms(s/full) << "SplineApp is " << get_ufroms_sp(s);
 
   return u;
 }

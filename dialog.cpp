@@ -18,6 +18,7 @@
 #include "trajectory-drawing.hpp"
 #include "defender.hpp"
 #include "trajectory-generators.hpp"
+#include "ballinterception.hpp"
 #include <fstream>
 #include <functional>
 #include "tests.hpp"
@@ -164,9 +165,10 @@ void Dialog::onAlgoTimeout()
     bsMutex->unlock();
     Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
     Pose end = ui->firaRenderArea->getEndPose();
-   // Pose end(0, 0, 0);
-   //TDefend tdef;
-   //Pose end = tdef.execute(&bs, BOT_ID_TESTING);
+
+    //Pose end(0, 0, 0);
+    //TDefend tdef;
+    //Pose end = tdef.execute(&bs, BOT_ID_TESTING);
 
     int vl, vr;
     if (USING_INTERCEPTION) {
@@ -450,8 +452,8 @@ void Dialog::on_traj2Button_clicked()
 //    bsMutex->lock();
 //    BeliefState bs = *beliefStateSh;
 //    bsMutex->unlock();
-//    using namespace TrajectoryGenerators;
 //    Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
+//    //qDebug() << start.x() << start.y() << start.theta() << "\n";
 //    Pose end = ui->firaRenderArea->getEndPose();
 //    if (traj)
 //        delete traj;
@@ -468,14 +470,41 @@ void Dialog::on_traj2Button_clicked()
 //    ui->renderArea->toggleTrajectory(true);
 
 //    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
+//    FType fun = functions[ui->simCombo->currentIndex()].second;
+//    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(fun, start, 0, 0, end, FINAL_VEL,
+//                                                                       FINAL_VEL, 4000, timeLCMs));
+
 //    ui->firaRenderArea->toggleTrajectory(true);
+
+    bsMutex->lock();
+    BeliefState bs = *beliefStateSh;
+    bsMutex->unlock();
+    using namespace TrajectoryGenerators;
+    Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
+    Pose end = ui->firaRenderArea->getEndPose();
+    if (traj)
+        delete traj;
+//    traj = quinticBezierSplineGenerator(start, end, 0, 0, 0, 0);
+    traj = cubic(start, end, 0, 0, 0, 0);
+    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
+    if (ui->trajSimButton->isEnabled() == false)
+        ui->trajSimButton->setEnabled(true);
+    if (!ui->trajCheckbox->isEnabled()) {
+        ui->trajCheckbox->setEnabled(true);
+        ui->trajCheckbox->setChecked(true);
+    }
+    ui->renderArea->toggleTrajectory(true);
+
+    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
+    ui->firaRenderArea->toggleTrajectory(true);
 }
 
 
 void Dialog::on_circleTrajButton_clicked()
 {
     // adding test code here
-    Tests::arclengthParam_test(100);
+    //Tests::arclengthParam_test(100);
+    //return;
     using namespace TrajectoryGenerators;
     double x = ui->xCircle->text().toDouble();
     double y = ui->yCircle->text().toDouble();
@@ -489,10 +518,11 @@ void Dialog::on_circleTrajButton_clicked()
         delete traj;
 
     //    traj = circleGenerator(x,y,r,startTheta,f);
-//    traj = quinticBezierSplineGenerator(start, end, 0, 0, 40, 70);
-    //traj = cubic(start, end, 0, 0, 40, 70);
-    traj = circleGenerator(x, y, r1, startTheta, f);
-//    traj = cubic2CP(start, end, 0, 0, 40, 70);
+//    traj = quinticBezierSplineGenerator(start, end, 0, 0, 40, 70);aj = cubic2CP(start, end, 0, 0, 40, 70);
+
+//    traj = cubic(start, end, 0, 0, 40, 70);
+    traj = cubic2CP(start, end, 0, 0, 40, 70);
+
     ui->renderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)
         ui->trajSimButton->setEnabled(true);
@@ -526,7 +556,7 @@ void Dialog::on_interceptionButton_clicked()
         delete traj;
     Vector2D<double> ballPos(bs.ballX, bs.ballY);
     Vector2D<double> ballVel(bs.ballVx, bs.ballVy);
-    traj = ballInterception(start, ballPos, ballVel);
+    traj = BallInterception::getIntTraj(start, ballPos, ballVel);
     ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)
         ui->trajSimButton->setEnabled(true);
