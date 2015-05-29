@@ -226,9 +226,8 @@ class TDefend
              {
                    if(state->ballVx<50)
                    {
-                     qDebug()<<"3.a is called \n";
 
-                           //Working properly
+                       //Working properly
                      return Pose(ballPos.x,ballPos.y,0);
 
                    }

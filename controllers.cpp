@@ -91,7 +91,7 @@ MiscData CMU(Pose s, Pose e, int &vl, int &vr, double prevSpeed, double prevOmeg
 }
 
 
-QString outputFilename = "/home/robocup/Output_QT.txt";
+QString outputFilename = "/home/robocup/FileLog.txt STorage/FileLogQT6.txt";
 QFile outputFile(outputFilename);
 
 
@@ -107,14 +107,14 @@ MiscData DynamicWindow(Pose s, Pose e, int &vl, int &vr, double prevSpeed, doubl
     if(va==-1)
     {
          outputFile.open(QIODevice::WriteOnly);
-        outStream<<"\n\n\n\n \t\t\t\t The Print of QT Code\n";
-        outStream<<"old_x \t old_y \t prevSpeed \t prevOmega \t newSpeed \t newOmega \t new_x \t new_y \n";
+        outStream<<"\n\n\n\n \t\t\t\t The Log of QT Code\n";
         va=0;
     }
     va=0;
      outputFile.open(QIODevice::Append);
-     outStream<< s.x() << '\t'<< s.y() <<'\t'<< prevSpeed <<'\t'<< prevOmega<< '\t';
-    const int del_v_max = 12; //ticks
+     outStream<<" x = "<< s.x()<<" & y = "<< s.y();
+
+    const int del_v_max = 15; //ticks
     const float step = 1; //ticks
     const float max_vel = 100; //ticks
     const float a_r_max = 380; //cm/s^2
@@ -137,21 +137,18 @@ MiscData DynamicWindow(Pose s, Pose e, int &vl, int &vr, double prevSpeed, doubl
 //                qDebug()<<"Trying newSpeed = "<<newSpeed<<" newOmega = "<<newOmega;
                 if(abs(newSpeed/Constants::ticksToCmS) >max_vel || abs(newOmega/Constants::ticksToCmS) >(2*max_vel)/Constants::d)
                     continue;
+                if(abs((newSpeed+(Constants::d*newOmega)/2)) > max_vel ||  abs((newSpeed-(Constants::d *newOmega)/2)) > max_vel)
+                    continue;
                 if((newSpeed*newOmega)>=a_r_max*sqrt(1-pow((del_vr + del_vl)/(2*del_v_max),2)))
                     continue;                   // constraint from the equation of ellipse.
                 //if(count>400) break;                                 //we would take only a fixed number of points under consideration
 //                qDebug()<<"Trying newSpeed = "<<newSpeed<<" newOmega = "<<newOmega;
                 // float alpha=(newOmega-prevOmega)/t; // rad/cm^2
                 float theta= s.theta() + (newOmega*t); //rad
-                //float acc_x=(newSpeed*cos(theta)-prevSpeed*cos(s.theta()))/t; //cm/s^2
-                //float acc_y=(newSpeed*sin(theta)-prevSpeed*sin(s.theta()))/t; //cm/s^2
                 theta = normalizeAngle(theta);
-                //float x= s.x() + (prevSpeed*cos(theta)*t) + (0.5*acc_x*t*t);
-                //float y= s.y() + (prevSpeed*sin(theta)*t) + (0.5*acc_y*t*t);
 
                  float x= s.x() + (newSpeed*cos(theta)*t);
                  float y= s.y() + (newSpeed*sin(theta)*t);
-//                qDebug()<<"x"<<s.x()<<" --> "<<x<<" y "<<s.y()<<" --> "<<y;
 
                 float reqtheta=atan2((e.y()-y),(e.x()-x));
 
@@ -161,7 +158,6 @@ MiscData DynamicWindow(Pose s, Pose e, int &vl, int &vr, double prevSpeed, doubl
                 arr[count][1]= newSpeed;
                 arr[count][2]= newOmega;
                 count++;
-//                qDebug()<<"obj = "<<arr[count][0];
             }
         }
     float min= arr[0][0];
@@ -181,13 +177,13 @@ MiscData DynamicWindow(Pose s, Pose e, int &vl, int &vr, double prevSpeed, doubl
     float x= s.x() + (best_v*cos(theta)*t);
     float y= s.y() + (best_v*sin(theta)*t);
 
-    outStream<<best_v<< '\t'<< best_w <<'\t'<< x <<'\t'<< y<<endl;
+    //outStream<<best_v<< '\t'<< best_w <<'\t'<< x <<'\t'<< y<<endl;
 
     vr=(best_v)+(Constants::d *best_w)/2 ;                    // update velocity
     vl=(2*best_v) - vr;                       // update omega
     vr/=Constants::ticksToCmS;
     vl/=Constants::ticksToCmS;
-
+    outStream<<" vl = "<<vl<<" & vr = "<<vr<<'\n';
     return MiscData();
 }
 

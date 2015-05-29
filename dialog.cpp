@@ -163,10 +163,10 @@ void Dialog::onAlgoTimeout()
     BeliefState bs = *beliefStateSh;
     bsMutex->unlock();
     Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
-    //Pose end = ui->firaRenderArea->getEndPose();
-    Pose end(0, 0, 0);
-    //TDefend tdef;
-    //Pose end = tdef.execute(&bs, BOT_ID_TESTING);
+    Pose end = ui->firaRenderArea->getEndPose();
+   // Pose end(0, 0, 0);
+   //TDefend tdef;
+   //Pose end = tdef.execute(&bs, BOT_ID_TESTING);
 
     int vl, vr;
     if (USING_INTERCEPTION) {
@@ -441,7 +441,12 @@ void Dialog::on_traj2Button_clicked()
     ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(fun, start, 0, 0, end, FINAL_VEL,
                                                                        FINAL_VEL, 4000, timeLCMs));
     ui->firaRenderArea->toggleTrajectory(true);
-
+//    double x = ui->xCircle->text().toDouble();
+//    double y = ui->yCircle->text().toDouble();
+//    double startTheta = ui->thetaCircle->text().toDouble();
+//    double r1 = ui->rCircle1->text().toDouble();
+//    double r2 = ui->rCircle2->text().toDouble();
+//    double f = ui->fCircle->text().toDouble();
 //    bsMutex->lock();
 //    BeliefState bs = *beliefStateSh;
 //    bsMutex->unlock();
@@ -451,7 +456,8 @@ void Dialog::on_traj2Button_clicked()
 //    if (traj)
 //        delete traj;
 ////    traj = quinticBezierSplineGenerator(start, end, 0, 0, 0, 0);
-//    traj = cubic(start, end, 0, 0, 0, 0);
+//    //traj = cubic(start, end, 0, 0, 0, 0);
+//    traj = circleGenerator(x, y, r1, startTheta, f);
 //    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
 //    if (ui->trajSimButton->isEnabled() == false)
 //        ui->trajSimButton->setEnabled(true);
@@ -484,7 +490,8 @@ void Dialog::on_circleTrajButton_clicked()
 
     //    traj = circleGenerator(x,y,r,startTheta,f);
 //    traj = quinticBezierSplineGenerator(start, end, 0, 0, 40, 70);
-    traj = cubic(start, end, 0, 0, 40, 70);
+    //traj = cubic(start, end, 0, 0, 40, 70);
+    traj = circleGenerator(x, y, r1, startTheta, f);
 //    traj = cubic2CP(start, end, 0, 0, 40, 70);
     ui->renderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)
