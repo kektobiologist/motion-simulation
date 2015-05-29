@@ -18,6 +18,7 @@
 #include "trajectory-drawing.hpp"
 #include "defender.hpp"
 #include "trajectory-generators.hpp"
+#include "ballinterception.hpp"
 #include <fstream>
 #include <functional>
 #include "tests.hpp"
@@ -520,7 +521,7 @@ void Dialog::on_interceptionButton_clicked()
         delete traj;
     Vector2D<double> ballPos(bs.ballX, bs.ballY);
     Vector2D<double> ballVel(bs.ballVx, bs.ballVy);
-    traj = ballInterception(start, ballPos, ballVel);
+    traj = BallInterception::getIntTraj(start, ballPos, ballVel);
     ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)
         ui->trajSimButton->setEnabled(true);

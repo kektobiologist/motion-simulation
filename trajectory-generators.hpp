@@ -41,13 +41,14 @@ Trajectory *quinticBezierSplineGenerator(Pose start, Pose end, double vls, doubl
 
 }
 // doesn't care about units, returns the answer in the same units of the input.
+/*
 Vector2D<double> predictBallPose(Vector2D<double> ballPos, Vector2D<double> ballVel, double timeOfPrediction){
     Vector2D<double> finalBallPos;
     finalBallPos.x = ballPos.x + timeOfPrediction*ballVel.x;
     finalBallPos.y = ballPos.y + timeOfPrediction*ballVel.y;
     return finalBallPos;
 }
-
+*/
 Trajectory *ellipseGen(double x, double y, double a, double b, double startTheta, double f) {
 
     function<double(double)> xfunc = [=](double t)->double {
@@ -87,6 +88,7 @@ Trajectory *cubic2CP(Pose start, Pose end, double vls, double vrs, double vle, d
 }
 // ballPos: strategy coordinates
 // ballVel: strategy coordinates per second
+/*
 SplineTrajectory* ballInterception(Pose botPosStart, Vector2D<double> ballPos, Vector2D<double> ballVel){
     Vector2D<double> predictedBallPos;
     double error = 0.1;
@@ -124,5 +126,7 @@ SplineTrajectory* ballInterception(Pose botPosStart, Vector2D<double> ballPos, V
     }
     return st;
 }
+*/
 }
+
 #endif // TRAJECTORYGENERATORS_HPP
