@@ -18,6 +18,7 @@
 #include "trajectory-drawing.hpp"
 #include "defender.hpp"
 #include "trajectory-generators.hpp"
+#include "ballinterception.hpp"
 #include <fstream>
 #include <functional>
 #include "tests.hpp"
@@ -27,7 +28,7 @@ using namespace std;
 // as well as the algoController delay
 static const int PREDICTION_PACKET_DELAY = 4;
 // bot used for testing (non-sim)
-static const int BOT_ID_TESTING = 0;
+static const int BOT_ID_TESTING = 4;
 static bool USING_INTERCEPTION = false;
 RenderArea *gRenderArea = NULL;
 Dialog::Dialog(QWidget *parent) :
@@ -90,11 +91,6 @@ Dialog::~Dialog()
 {
     delete ui;
 }
-
-
-
-
-
 
 void Dialog::on_startButton_clicked()
 {
@@ -167,21 +163,23 @@ void Dialog::onAlgoTimeout()
     //Pose end(0, 0, 0);
     //TDefend tdef;
     //Pose end = tdef.execute(&bs, BOT_ID_TESTING);
-
     int vl, vr;
     if (USING_INTERCEPTION) {
 //        assert(0);
         // if bot is close to end point, then make a new trajectory that leads to goal!
+        Vector2D<double> ballPos(bs.ballX, bs.ballY);
         SplineTrajectory *st = dynamic_cast<SplineTrajectory*>(traj);
+        double dist = BallInterception::getBotBallDist(start, ballPos);
         double dt = st->totalTime() - algoController->getCurrentTimeS();
-        qDebug() << "dt = " << dt << "st->totalTime() = " << st->totalTime();
-        if (dt <= 0.21) {
+        //qDebug() << start.x() << " " << start.y() << endl;
+      //  qDebug() << "dt = " << dt << "st->totalTime() = " << st->totalTime();
+        if (dist <= 0) { //dt = 0.21
             USING_INTERCEPTION = false;
             // make a new trajectory
             if (traj)
                 delete traj;
             using namespace TrajectoryGenerators;
-            Vector2D<double> goalCentre(-HALF_FIELD_MAXX, 0);
+            Vector2D<double> goalCentre(HALF_FIELD_MAXX, 0);
             double endTheta = atan2(goalCentre.y - start.y(), goalCentre.x - start.x());
             Pose endPose(goalCentre.x, goalCentre.y, endTheta);
             Pose cp1(bs.ballX, bs.ballY, 0);
@@ -228,7 +226,10 @@ void Dialog::onAlgoTimeout()
     sendDataMutex->lock();
     comm.Write(buf, 12);
     sendDataMutex->unlock();
-
+//    if (counter > 60) {
+//        on_interceptionButton_clicked();
+//        counter = 0;
+//    }
     // store data in sysData
     sysData.push_back(Logging::populateSystemData(counter%100, vl, vr, bs, BOT_ID_TESTING));
 }
@@ -251,7 +252,6 @@ void Dialog::onNewData()
         ui->ballPosLabel->setText("Bot: -");
     }
 }
-
 
 void Dialog::on_simButton_clicked()
 {
@@ -276,8 +276,8 @@ void Dialog::on_startSending_clicked()
 {
     FType fun = functions[ui->simCombo->currentIndex()].second;
     // NOTE: using the trajectory controller for actual bot!
-    //algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
-    algoController = new ControllerWrapper(fun, 0, 0, PREDICTION_PACKET_DELAY);
+    algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
+    //algoController = new ControllerWrapper(fun, 0, 0, PREDICTION_PACKET_DELAY);
     while(!predictedPoseQ.empty())
         predictedPoseQ.pop();
     bsMutex->lock();
@@ -520,7 +520,8 @@ void Dialog::on_interceptionButton_clicked()
         delete traj;
     Vector2D<double> ballPos(bs.ballX, bs.ballY);
     Vector2D<double> ballVel(bs.ballVx, bs.ballVy);
-    traj = ballInterception(start, ballPos, ballVel);
+    qDebug() << start.x() << " " << start.y() << " " << endl;
+    traj = BallInterception::getIntTraj(start, ballPos, ballVel);
     ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)
         ui->trajSimButton->setEnabled(true);

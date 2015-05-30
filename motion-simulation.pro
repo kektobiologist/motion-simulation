@@ -57,8 +57,7 @@ SOURCES += main.cpp\
     alglib/specialfunctions.cpp \
     alglib/statistics.cpp \
     controlpoint-optimization.cpp \
-    drawable.cpp \
-    ballinterception.cpp
+    drawable.cpp
 
 HEADERS  += dialog.h \
     pose.h \
@@ -101,9 +100,9 @@ HEADERS  += dialog.h \
     alglib/stdafx.h \
     controlpoint-optimization.hpp \
     drawable.h \
-    ballinterception.h \
     defender.hpp \
-    tests.hpp
+    tests.hpp \
+    ballinterception.hpp
 
 LIBS += -lgsl -lgslcblas -lprotobuf
 FORMS    += dialog.ui
