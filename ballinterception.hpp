@@ -12,10 +12,26 @@
 namespace BallInterception {
 
 Vector2D<double> predictBallPose(Vector2D<double> ballPos, Vector2D<double> ballVel, double timeOfPrediction){
-    Vector2D<double> finalBallPos;
-    finalBallPos.x = ballPos.x + timeOfPrediction*ballVel.x;
-    finalBallPos.y = ballPos.y + timeOfPrediction*ballVel.y;
-    return finalBallPos;
+    Vector2D<double> bPos;
+    bPos.x = ballPos.x + timeOfPrediction*ballVel.x;
+    bPos.y = ballPos.y + timeOfPrediction*ballVel.y;
+
+    while (bPos.x > HALF_FIELD_MAXX || bPos.x < -HALF_FIELD_MAXX || bPos.y > HALF_FIELD_MAXY || bPos.y < -HALF_FIELD_MAXY) {
+        if (bPos.y > HALF_FIELD_MAXY) {
+            bPos.y = 2 * HALF_FIELD_MAXY - bPos.y;
+        }
+        if (bPos.y < -HALF_FIELD_MAXY) {
+            bPos.y = - (2 * HALF_FIELD_MAXY + bPos.y);
+        }
+        if (bPos.x > HALF_FIELD_MAXX) {
+            bPos.x = 2 * HALF_FIELD_MAXX - bPos.x;
+        }
+        if (bPos.x < -HALF_FIELD_MAXX) {
+            bPos.x = - (2 * HALF_FIELD_MAXX + bPos.x);
+        }
+    }
+
+    return bPos;
 }
 
 SplineTrajectory* getIntTraj(Pose botPosStart, Vector2D<double> ballPos, Vector2D<double> ballVel) {

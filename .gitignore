@@ -1,3 +1,13 @@
 *.pro.user
 *.pb.h
 *.pb.cc
+*.o
+Makefile
+moc_dialog.cpp
+moc_drawable.cpp
+moc_firarenderarea.cpp
+moc_renderarea.cpp
+moc_visionworker.cpp
+motion-simulation
+ui_dialog.h
+

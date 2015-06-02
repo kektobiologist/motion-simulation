@@ -234,7 +234,7 @@ double CubicSpline::ydd(double u) const
     */
     using namespace alglib;
     real_2d_array tbly;
-    int ny;
+    long int ny;
     double ret = 0.;
     alglib::spline1dunpack(splineY, ny, tbly);
     for (int i = 0; i < ny; i++) {
@@ -264,7 +264,7 @@ double CubicSpline::xddd(double u) const {
 double CubicSpline::yddd(double u) const {
     using namespace alglib;
     real_2d_array tbly;
-    int ny;
+    long int ny;
     double ret = 0.;
     alglib::spline1dunpack(splineY, ny, tbly);
     for (int i = 0; i < ny - 1; i++) {
