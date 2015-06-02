@@ -49,6 +49,7 @@ Vector2D<double> predictBallPose(Vector2D<double> ballPos, Vector2D<double> ball
     return finalBallPos;
 }
 */
+
 Trajectory *ellipseGen(double x, double y, double a, double b, double startTheta, double f) {
 
     function<double(double)> xfunc = [=](double t)->double {
