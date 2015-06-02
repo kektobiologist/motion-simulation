@@ -11,10 +11,17 @@
 
 namespace BallInterception {
 
-Vector2D<double> predictBallPose(Vector2D<double> ballPos, Vector2D<double> ballVel, double timeOfPrediction){
-    Vector2D<double> bPos;
-    bPos.x = ballPos.x + timeOfPrediction*ballVel.x;
-    bPos.y = ballPos.y + timeOfPrediction*ballVel.y;
+Vector2D<double> predictBallPose(queue<Vector2D<double> > ballPoses, queue<Vector2D<double> > ballVels, double timeOfPrediction){
+    Vector2D<double> bPos(0, 0);
+    Vector2D<double> tbPos;
+    for (int i = 0; i < 4; i++) {
+        tbPos = ballPoses.front();
+        bPos.x += tbPos.x + timeOfPrediction*tbPos.x;
+        bPos.y += tbPos.y + timeOfPrediction*tbPos.y;
+        ballPoses.pop();
+    }
+    bPos.x /= 4;
+    bPos.y /= 4;
 
     while (bPos.x > HALF_FIELD_MAXX || bPos.x < -HALF_FIELD_MAXX || bPos.y > HALF_FIELD_MAXY || bPos.y < -HALF_FIELD_MAXY) {
         if (bPos.y > HALF_FIELD_MAXY) {
@@ -34,26 +41,32 @@ Vector2D<double> predictBallPose(Vector2D<double> ballPos, Vector2D<double> ball
     return bPos;
 }
 
-SplineTrajectory* getIntTraj(Pose botPosStart, Vector2D<double> ballPos, Vector2D<double> ballVel) {
+double getBotBallDist(Pose botPos, Vector2D<double> ballPos) {
+    return sqrt((botPos.x() - ballPos.x)*(botPos.x() - ballPos.x) + (botPos.y() - ballPos.y)*(botPos.y() - ballPos.y));
+}
+
+SplineTrajectory* getIntTraj(Pose botPosStart, queue<Vector2D<double> > ballPoses, queue<Vector2D<double> > ballVels, Vector2D<double> botVel) {
     Vector2D<double> predictedBallPos;
     double error = 0.1;
     double T2 = 6.0;
     double T1 = 0.0;
     double S = 1.0;
-    double d = 0.0;
-    Vector2D<double> goalCentre(-HALF_FIELD_MAXX, 0);
+    Vector2D<double> goalCentre(HALF_FIELD_MAXX, 0);
     SplineTrajectory *st = NULL;
     double T = T1;
     while (1) {
         if (st)
             delete st;
-        predictedBallPos = predictBallPose(ballPos, ballVel, T);
+        predictedBallPos = predictBallPose(ballPoses, ballVels, T);
         double endTheta = atan2(goalCentre.y - predictedBallPos.y, goalCentre.x - predictedBallPos.x);
         Pose endPose(predictedBallPos.x, predictedBallPos.y, endTheta);
-        Pose cp1(predictedBallPos.x+500*cos(endTheta+M_PI), predictedBallPos.y+500*sin(endTheta+M_PI), 0);
+        // add a cp behind the ball pos, distance of 500
+      //  Pose cp1(predictedBallPos.x+500*cos(endTheta+M_PI), predictedBallPos.y+500*sin(endTheta+M_PI), 0);
         vector<Pose> midPoints;
-        midPoints.push_back(cp1);
-        st = TrajectoryGenerators::cubic(botPosStart, endPose, 0, 0, 50, 50, midPoints);
+       // midPoints.push_back(cp1);
+       st = TrajectoryGenerators::cubic(botPosStart, endPose, 0,0, 40,40 , midPoints);
+       //st = TrajectoryGenerators::cubic(botPosStart, endPose, botVel.x, botVel.y, 30, 30, midPoints);
+
         double t = st->totalTime();
         if (t < T)
             break;
@@ -68,16 +81,19 @@ SplineTrajectory* getIntTraj(Pose botPosStart, Vector2D<double> ballPos, Vector2
     while (1) {
         // predictedBallPos: strategy coordinates
         double mid = (T1+T2)/2;
-        predictedBallPos = predictBallPose(ballPos, ballVel, mid);
+        predictedBallPos = predictBallPose(ballPoses, ballVels, mid);
+
         double endTheta = atan2(goalCentre.y - predictedBallPos.y, goalCentre.x - predictedBallPos.x);
         Pose endPose(predictedBallPos.x, predictedBallPos.y, endTheta);
         if (st)
             delete st;
         // add a cp behind the ball pos, distance of 500
-        Pose cp1(predictedBallPos.x+500*cos(endTheta+M_PI), predictedBallPos.y+500*sin(endTheta+M_PI), 0);
+      //  Pose cp1(predictedBallPos.x+500*cos(endTheta+M_PI), predictedBallPos.y+500*sin(endTheta+M_PI), 0);
         vector<Pose> midPoints;
-        midPoints.push_back(cp1);
-        st = TrajectoryGenerators::cubic(botPosStart, endPose, 0, 0, 50, 50, midPoints);
+       // midPoints.push_back(cp1);
+       st = TrajectoryGenerators::cubic(botPosStart, endPose, 0,0, 40, 40, midPoints);
+        //st = TrajectoryGenerators::cubic(botPosStart, endPose, botVel.x, botVel.y, 30, 30, midPoints);
+
         double t = st->totalTime();
         qDebug() << "mid = " << mid << ", bot-ka-time = " << t;
         if (fabs(t-mid) < error)

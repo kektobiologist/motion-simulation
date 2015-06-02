@@ -33,6 +33,7 @@ class Dialog : public QDialog
     Q_OBJECT
     
 public:
+    Vector2D<double> getVel;
     explicit Dialog(QWidget *parent = 0);
     ~Dialog();
     
@@ -106,8 +107,9 @@ private:
     vector<Logging::ReceivedData> recvData;
     Logging::Log log;
     void readDataAndAppendToLog();
-
     Trajectory* traj;
+    queue<Vector2D<double> > ballPoses;
+    queue<Vector2D<double> > ballVels;
 };
 
 #endif // DIALOG_H
