@@ -144,12 +144,8 @@ double Spline::operator()(double u) const
 
 double Spline::k(double u) const
 {
-
-    qDebug() << "Hello!kk\n";
-    return std::abs(xd(u)*ydd(u)-yd(u)*xdd(u))/pow(xd(u)*xd(u)+yd(u)*yd(u), 1.5);
+    return std::fabs(xd(u)*ydd(u)-yd(u)*xdd(u))/pow(xd(u)*xd(u)+yd(u)*yd(u), 1.5);
 }
-
-
 
 
 using VelocityProfiling::ProfileDatapoint;
@@ -197,6 +193,7 @@ SplineTrajectory::~SplineTrajectory()
 SplineTrajectory::SplineTrajectory(Spline *p, double vls, double vrs, double vle, double vre): p(p)
 {
     profile = VelocityProfiling::generateVelocityProfile(*p, 1000, vls, vrs, vle, vre);
+
     full = Integration::integrate(*p, 0, 1);
     tPrev = -1;
 }

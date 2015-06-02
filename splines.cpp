@@ -227,11 +227,10 @@ double CubicSpline::xdd(double u) const
 
 double CubicSpline::ydd(double u) const
 {
-    /*
     double s, ds, d2s;
     alglib::spline1ddiff(splineY, u, s, ds, d2s);
     return d2s;
-    */
+    /*
     using namespace alglib;
     real_2d_array tbly;
     long int ny;
@@ -244,6 +243,7 @@ double CubicSpline::ydd(double u) const
         }
     }
     return ret;
+    */
 }
 
 double CubicSpline::xddd(double u) const {
@@ -264,7 +264,7 @@ double CubicSpline::xddd(double u) const {
 double CubicSpline::yddd(double u) const {
     using namespace alglib;
     real_2d_array tbly;
-    long int ny;
+    int ny;
     double ret = 0.;
     alglib::spline1dunpack(splineY, ny, tbly);
     for (int i = 0; i < ny - 1; i++) {

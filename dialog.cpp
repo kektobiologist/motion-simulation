@@ -28,7 +28,7 @@ using namespace std;
 // as well as the algoController delay
 static const int PREDICTION_PACKET_DELAY = 4;
 // bot used for testing (non-sim)
-static const int BOT_ID_TESTING = 2;
+static const int BOT_ID_TESTING = 1;
 static bool USING_INTERCEPTION = false;
 RenderArea *gRenderArea = NULL;
 Dialog::Dialog(QWidget *parent) :
@@ -233,18 +233,13 @@ void Dialog::onAlgoTimeout()
     sendDataMutex->lock();
     comm.Write(buf, 12);
     sendDataMutex->unlock();
-//    if (counter > 100) {
-//        on_interceptionButton_clicked();
-//        counter = 0;
-//    }
+    if (counter > 100 && (USING_INTERCEPTION==true)) {
+        on_interceptionButton_clicked();
+        counter = 0;
+    }
     // store data in sysData
     sysData.push_back(Logging::populateSystemData(counter%100, vl, vr, bs, BOT_ID_TESTING));
-    double bv = sqrt(bs.ballVx * bs.ballVx + bs.ballVy * bs.ballVy);
-    qDebug() << "ball velocity for friction - " << bv << endl;
-    ballPoses.push(Vector2D<double>(bs.ballX, bs.ballY));
-    ballVels.push(Vector2D<double>(bs.ballVx, bs.ballVy));
-    ballPoses.pop();
-    ballVels.pop();
+
 }
 
 void Dialog::onNewData()
@@ -444,38 +439,38 @@ void Dialog::on_traj2Button_clicked()
 {
     USING_INTERCEPTION = false;
     // not using this right now!
-    bsMutex->lock();
-    BeliefState bs = *beliefStateSh;
-    bsMutex->unlock();
-    Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
-    //qDebug() << start.x() << start.y() << start.theta() << "\n";
-    Pose end = ui->firaRenderArea->getEndPose();
-    FType fun = functions[ui->simCombo->currentIndex()].second;
-    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(fun, start, 0, 0, end, FINAL_VEL,
-                                                                       FINAL_VEL, 4000, timeLCMs));
-    ui->firaRenderArea->toggleTrajectory(true);
-
 //    bsMutex->lock();
 //    BeliefState bs = *beliefStateSh;
 //    bsMutex->unlock();
-//    using namespace TrajectoryGenerators;
 //    Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
+//    //qDebug() << start.x() << start.y() << start.theta() << "\n";
 //    Pose end = ui->firaRenderArea->getEndPose();
-//    if (traj)
-//        delete traj;
-////    traj = quinticBezierSplineGenerator(start, end, 0, 0, 0, 0);
-//    traj = cubic(start, end, 0, 0, 0, 0);
-//    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
-//    if (ui->trajSimButton->isEnabled() == false)
-//        ui->trajSimButton->setEnabled(true);
-//    if (!ui->trajCheckbox->isEnabled()) {
-//        ui->trajCheckbox->setEnabled(true);
-//        ui->trajCheckbox->setChecked(true);
-//    }
-//    ui->renderArea->toggleTrajectory(true);
-
-//    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
+//    FType fun = functions[ui->simCombo->currentIndex()].second;
+//    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(fun, start, 0, 0, end, FINAL_VEL,
+//                                                                       FINAL_VEL, 4000, timeLCMs));
 //    ui->firaRenderArea->toggleTrajectory(true);
+
+    bsMutex->lock();
+    BeliefState bs = *beliefStateSh;
+    bsMutex->unlock();
+    using namespace TrajectoryGenerators;
+    Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
+    Pose end = ui->firaRenderArea->getEndPose();
+    if (traj)
+        delete traj;
+//    traj = quinticBezierSplineGenerator(start, end, 0, 0, 0, 0);
+    traj = cubic(start, end, 0, 0, 0, 0);
+    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
+    if (ui->trajSimButton->isEnabled() == false)
+        ui->trajSimButton->setEnabled(true);
+    if (!ui->trajCheckbox->isEnabled()) {
+        ui->trajCheckbox->setEnabled(true);
+        ui->trajCheckbox->setChecked(true);
+    }
+    ui->renderArea->toggleTrajectory(true);
+
+    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
+    ui->firaRenderArea->toggleTrajectory(true);
 }
 
 
@@ -529,17 +524,17 @@ void Dialog::on_interceptionButton_clicked()
     BeliefState bs = *beliefStateSh;
     bsMutex->unlock();
     USING_INTERCEPTION = true;
-    getVel.x = (getVel.x < 0.1 ? 0 : getVel.x);
-    getVel.y = (getVel.y < 0.1 ? 0 : getVel.y);
-    qDebug() << getVel.x << "bgfdxg " << getVel.y << endl;
     using namespace TrajectoryGenerators;
-    Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
+    double vx = (bs.homeVl[BOT_ID_TESTING] + bs.homeVr[BOT_ID_TESTING]) * cos(bs.homeTheta[BOT_ID_TESTING]) / 2;
+    double vy = (bs.homeVl[BOT_ID_TESTING] + bs.homeVr[BOT_ID_TESTING]) * sin(bs.homeTheta[BOT_ID_TESTING]) / 2;
+    qDebug() << vx << "Dasda " << vy << endl;
+    Pose start(bs.homeX[BOT_ID_TESTING] + 0.016 * vx, bs.homeY[BOT_ID_TESTING] + 0.016 * vy, bs.homeTheta[BOT_ID_TESTING]);
     if (traj)
         delete traj;
     Vector2D<double> ballPos(bs.ballX, bs.ballY);
     Vector2D<double> ballVel(bs.ballVx, bs.ballVy);
     Vector2D<double> botVel(bs.homeVl[BOT_ID_TESTING], bs.homeVr[BOT_ID_TESTING]);
-    traj = BallInterception::getIntTraj(start, ballPoses, ballVels, getVel);
+    traj = BallInterception::getIntTraj(start, ballPos, ballVel, botVel);
     ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)
         ui->trajSimButton->setEnabled(true);
