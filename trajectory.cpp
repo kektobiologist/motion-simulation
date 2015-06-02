@@ -144,9 +144,6 @@ double Spline::operator()(double u) const
 
 double Spline::k(double u) const
 {
-
-    qDebug() << (ydd(u)) << "Hello!gdekk\n";
-    qDebug() <<"here" << std::fabs(xd(u)*ydd(u)-yd(u)*xdd(u))/pow(xd(u)*xd(u)+yd(u)*yd(u), 1.5) << "here" << endl;
     return std::fabs(xd(u)*ydd(u)-yd(u)*xdd(u))/pow(xd(u)*xd(u)+yd(u)*yd(u), 1.5);
 }
 
