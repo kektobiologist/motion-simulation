@@ -60,7 +60,6 @@ SplineTrajectory* getIntTraj(Pose botPosStart, Vector2D<double> ballPos, Vector2
        // midPoints.push_back(cp1);
        st = TrajectoryGenerators::cubic(botPosStart, endPose, 0,0, 40,40 , midPoints);
        //st = TrajectoryGenerators::cubic(botPosStart, endPose, botVel.x, botVel.y, 30, 30, midPoints);
-
         double t = st->totalTime();
         if (t < T)
             break;
@@ -72,6 +71,7 @@ SplineTrajectory* getIntTraj(Pose botPosStart, Vector2D<double> ballPos, Vector2
         T2 = T;
         T1 = T - S;
     }
+    qDebug() << "here3" << endl;
     while (1) {
         // predictedBallPos: strategy coordinates
         double mid = (T1+T2)/2;

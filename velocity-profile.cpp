@@ -171,7 +171,6 @@ vector<ProfileDatapoint> generateVelocityProfile(Spline &p, int numPoints, doubl
         v[i].u = u;
         v[i].s = s;
     }
-
     // forward consistency
     v[0].v = vs;
     for (int i = 1; i < numPoints; i++) {
