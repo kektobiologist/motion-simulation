@@ -24,7 +24,6 @@ Trajectory* circleGenerator(double x, double y, double r, double startTheta, dou
     return new Trajectory(xfunc, yfunc);
 }
 
-
 Trajectory *quinticBezierSplineGenerator(Pose start, Pose end, double vls, double vrs, double vle, double vre) {
 
     QuinticBezierSpline *p = new QuinticBezierSpline(start, end, vls, vrs, vle, vre);

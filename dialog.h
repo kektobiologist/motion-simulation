@@ -90,7 +90,7 @@ private:
     ControllerWrapper *algoController;
     // NOTE(arpit): not used in sim. Queue of predicted pose, size of q = PREDICTION_PACKET_DELAY. Needed because we need to display
     // old predictions side-by-side with the actual position of the bot.
-    std::queue<Pose> predictedPoseQ;
+    std::deque<Pose> predictedPoseQ;
 
     // don't need curIdx, simply read the position of the slider (otherwise there is duplicacy)
     Ui::Dialog *ui;
@@ -108,6 +108,7 @@ private:
     Logging::Log log;
     void readDataAndAppendToLog();
     Trajectory* traj;
+    //SplineTrajectory* bi_traj; // for ball interception testing
     queue<Vector2D<double> > ballPoses;
     queue<Vector2D<double> > ballVels;
 };

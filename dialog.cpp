@@ -28,7 +28,7 @@ using namespace std;
 // as well as the algoController delay
 static const int PREDICTION_PACKET_DELAY = 4;
 // bot used for testing (non-sim)
-static const int BOT_ID_TESTING = 1;
+static const int BOT_ID_TESTING = 2;
 static bool USING_INTERCEPTION = false;
 RenderArea *gRenderArea = NULL;
 Dialog::Dialog(QWidget *parent) :
@@ -164,6 +164,8 @@ void Dialog::onAlgoTimeout()
     bsMutex->unlock();
     Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
     Pose end = ui->firaRenderArea->getEndPose();
+    Vector2D<double> ballPos(bs.ballX, bs.ballY);
+    double dist = BallInterception::getBotBallDist(start, ballPos);
 
     //Pose end(0, 0, 0);
     //TDefend tdef;
@@ -172,13 +174,14 @@ void Dialog::onAlgoTimeout()
     if (USING_INTERCEPTION) {
 //        assert(0);
         // if bot is close to end point, then make a new trajectory that leads to goal!
-        Vector2D<double> ballPos(bs.ballX, bs.ballY);
-        SplineTrajectory *st = dynamic_cast<SplineTrajectory*>(traj);
-        double dist = BallInterception::getBotBallDist(start, ballPos);
-        double dt = st->totalTime() - algoController->getCurrentTimeS();
-        //qDebug() << start.x() << " " << start.y() << endl;
-      //  qDebug() << "dt = " << dt << "st->totalTime() = " << st->totalTime();
-        if (dist <= 1.3*BOT_RADIUS) { //dt = 0.21
+
+        if(traj){
+            SplineTrajectory *st = dynamic_cast<SplineTrajectory*>(traj);
+            double dt = st->totalTime() - algoController->getCurrentTimeS();
+            //qDebug() << start.x() << " " << start.y() << endl;
+          //  qDebug() << "dt = " << dt << "st->totalTime() = " << st->totalTime();
+        }
+        if (dist <= 1.5*BOT_RADIUS) { //dt = 0.21
             USING_INTERCEPTION = false;
             // make a new trajectory
             if (traj)
@@ -208,12 +211,12 @@ void Dialog::onAlgoTimeout()
     }
     // NOTE: set finalvel!!
     algoController->genControls(start, end, vl, vr, FINAL_VEL);
-    predictedPoseQ.push(algoController->getPredictedPose(start));
+    predictedPoseQ.push_back(algoController->getPredictedPose(start));
     // getPredictedPose gives the predicted pose of the robot after PREDICTION_PACKET_DELAY ticks from now. We need to display what our
     // prediction was PREDICTION_PACKET_DELAY ticks ago (i.e. what our prediction was for now).
 
     ui->firaRenderArea->predictedPose = predictedPoseQ.front();
-    predictedPoseQ.pop();
+    predictedPoseQ.pop_front();
     assert(vl <= 120 && vl >= -120);
     assert(vr <= 120 && vr >= -120);
     char buf[12];
@@ -233,12 +236,14 @@ void Dialog::onAlgoTimeout()
     sendDataMutex->lock();
     comm.Write(buf, 12);
     sendDataMutex->unlock();
-    if (counter > 100 && (USING_INTERCEPTION==true)) {
-        on_interceptionButton_clicked();
+    if (counter > 50 && (USING_INTERCEPTION==true) && (dist > 5*BOT_RADIUS)) {
         counter = 0;
+      //  on_stopSending_clicked();
+        on_interceptionButton_clicked();
+
     }
-    // store data in sysData
-    sysData.push_back(Logging::populateSystemData(counter%100, vl, vr, bs, BOT_ID_TESTING));
+   // else  // store data in sysData
+        sysData.push_back(Logging::populateSystemData(counter%100, vl, vr, bs, BOT_ID_TESTING));
 
 }
 
@@ -287,12 +292,12 @@ void Dialog::on_startSending_clicked()
     algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
     //algoController = new ControllerWrapper(fun, 0, 0, PREDICTION_PACKET_DELAY);
     while(!predictedPoseQ.empty())
-        predictedPoseQ.pop();
+        predictedPoseQ.pop_front();
     bsMutex->lock();
     BeliefState bs = *beliefStateSh;
     bsMutex->unlock();
     for (int i = 0; i < PREDICTION_PACKET_DELAY; i++) {
-        predictedPoseQ.push(Pose(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]));
+        predictedPoseQ.push_back(Pose(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]));
     }
     algoTimer->start(timeLCMs);
 }
@@ -525,12 +530,33 @@ void Dialog::on_interceptionButton_clicked()
     bsMutex->unlock();
     USING_INTERCEPTION = true;
     using namespace TrajectoryGenerators;
-    double vx = (bs.homeVl[BOT_ID_TESTING] + bs.homeVr[BOT_ID_TESTING]) * cos(bs.homeTheta[BOT_ID_TESTING]) / 2;
-    double vy = (bs.homeVl[BOT_ID_TESTING] + bs.homeVr[BOT_ID_TESTING]) * sin(bs.homeTheta[BOT_ID_TESTING]) / 2;
+    double vx = 0., vy = 0.;
+
+    if(traj){
+
+        SplineTrajectory *bi_traj = dynamic_cast<SplineTrajectory*>(traj);
+        vector<VelocityProfiling::ProfileDatapoint> profile = bi_traj->getProfile();
+
+        double t = 70 * 0.016;
+        int x = 0;
+        for (int i = 0; i < 1000; i++) {
+            if (profile[i].t > t) {
+                x = i;
+                break;
+            }
+        }
+        for (int i = 0; i < 1; i++) {
+            vx += profile[x+i].v * cos(bs.homeTheta[BOT_ID_TESTING]);
+            vy += profile[x+i].v * sin(bs.homeTheta[BOT_ID_TESTING]); //try using PredictedPoseQ for theta.
+        }
+
+        qDebug() << "Changing SPline Pos";
+        //delete traj;
+    }
+    //double vx = (bs.homeVl[BOT_ID_TESTING] + bs.homeVr[BOT_ID_TESTING]) * cos(bs.homeTheta[BOT_ID_TESTING]) / 2;
+    //double vy = (bs.homeVl[BOT_ID_TESTING] + bs.homeVr[BOT_ID_TESTING]) * sin(bs.homeTheta[BOT_ID_TESTING]) / 2;
     qDebug() << vx << "Dasda " << vy << endl;
     Pose start(bs.homeX[BOT_ID_TESTING] + 0.016 * vx, bs.homeY[BOT_ID_TESTING] + 0.016 * vy, bs.homeTheta[BOT_ID_TESTING]);
-    if (traj)
-        delete traj;
     Vector2D<double> ballPos(bs.ballX, bs.ballY);
     Vector2D<double> ballVel(bs.ballVx, bs.ballVy);
     Vector2D<double> botVel(bs.homeVl[BOT_ID_TESTING], bs.homeVr[BOT_ID_TESTING]);

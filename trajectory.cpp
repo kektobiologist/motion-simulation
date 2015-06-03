@@ -242,3 +242,6 @@ double SplineTrajectory::totalTime() const
 {
     return profile[profile.size()-1].t;
 }
+vector<VelocityProfiling::ProfileDatapoint> SplineTrajectory::getProfile() {
+    return profile;
+}

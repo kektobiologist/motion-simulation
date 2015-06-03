@@ -91,4 +91,3 @@ MiscData ControllerWrapper::genControlsTrajSim(Pose s, int &vl, int &vr, double 
     assert (ctrlType == TRACKCTRL);
     return genControls_(s, vl, vr, t, true);
 }
-
