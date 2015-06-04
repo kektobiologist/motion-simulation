@@ -30,6 +30,8 @@ static const int PREDICTION_PACKET_DELAY = 4;
 // bot used for testing (non-sim)
 static const int BOT_ID_TESTING = 2;
 static bool USING_INTERCEPTION = false;
+int sc_idx = 0;
+
 RenderArea *gRenderArea = NULL;
 Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
@@ -110,6 +112,7 @@ void Dialog::on_resetButton_clicked()
 {
     timer->stop();
     ui->horizontalSlider->setValue(0);
+    sc_idx = 0;
 }
 
 void Dialog::on_horizontalSlider_sliderMoved(int )
@@ -119,6 +122,9 @@ void Dialog::on_horizontalSlider_sliderMoved(int )
 
 void Dialog::onCurIdxChanged(int idx)
 {
+    if (idx > 30) {
+        on_splineChangeBtn_clicked();
+    }
     ui->renderArea->changePose(sim.getPoses(idx));
     MiscData m = sim.getMiscData(idx);
     // lets print for traj sim
@@ -144,17 +150,17 @@ void Dialog::onCurIdxChanged(int idx)
 
 void Dialog::onTimeout()
 {
-    int idx = ui->horizontalSlider->value();
-    idx++;
-    if(idx >= NUMTICKS) {
+    sc_idx = ui->horizontalSlider->value();
+    sc_idx++;
+    if(sc_idx >= NUMTICKS) {
         timer->stop();
         return;
     }
-    if(idx < 0 || idx >= NUMTICKS) {
-        qDebug() << "Error! idx = " << idx << " and is out of range!";
+    if(sc_idx < 0 || sc_idx >= NUMTICKS) {
+        qDebug() << "Error! idx = " << sc_idx << " and is out of range!";
         return;
     }
-    ui->horizontalSlider->setValue(idx);
+    ui->horizontalSlider->setValue(sc_idx);
 }
 
 void Dialog::onAlgoTimeout()
@@ -517,12 +523,19 @@ void Dialog::on_circleTrajButton_clicked()
 
 void Dialog::on_splineChangeBtn_clicked() {
     using namespace TrajectoryGenerators;
-    Pose start = ui->renderArea->getStartPose();
+    Pose start;
+    if (sc_idx == 0)
+        start = ui->renderArea->getStartPose();
+    else
+        start = sim.getPoses(sc_idx);
     Pose end = ui->renderArea->getEndPose();
     if (traj)
         delete traj;
 
-    traj = cubic(start, end, 0, 0, 70, 70);
+    if (!sc_idx)
+        traj = cubic(start, end, 0, 0, 70, 70);
+    else
+        traj = cubic(start, end, sim.getVls(sc_idx), sim.getVrs(sc_idx), 70, 70);
 
     ui->renderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)
@@ -541,8 +554,15 @@ void Dialog::on_splineChangeBtn_clicked() {
 
 void Dialog::on_trajSimButton_clicked()
 {
-    Pose start = ui->renderArea->getStartPose();
-    sim.simulate(start, traj, 0, 0, false);
+    Pose start;
+    if (sc_idx == 0)
+        start = ui->renderArea->getStartPose();
+    else
+        start = sim.getPoses(sc_idx);
+    if (sc_idx == 0)
+        sim.simulate(start, traj, 0, 0, false);
+    else
+        sim.simulate(start, traj, sim.getVls(sc_idx), sim.getVrs(sc_idx), false);
     onCurIdxChanged(0);
     on_resetButton_clicked();
 }
