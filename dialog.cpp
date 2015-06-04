@@ -515,6 +515,30 @@ void Dialog::on_circleTrajButton_clicked()
     ui->firaRenderArea->toggleTrajectory(true);
 }
 
+void Dialog::on_splineChangeBtn_clicked() {
+    using namespace TrajectoryGenerators;
+    Pose start = ui->renderArea->getStartPose();
+    Pose end = ui->renderArea->getEndPose();
+    if (traj)
+        delete traj;
+
+    traj = cubic(start, end, 0, 0, 70, 70);
+
+    ui->renderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
+    if (ui->trajSimButton->isEnabled() == false)
+        ui->trajSimButton->setEnabled(true);
+    if (!ui->trajCheckbox->isEnabled()) {
+        ui->trajCheckbox->setEnabled(true);
+        ui->trajCheckbox->setChecked(true);
+    }
+    ui->renderArea->toggleTrajectory(true);
+
+    ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
+    ui->firaRenderArea->toggleTrajectory(true);
+    on_trajSimButton_clicked();
+    on_startButton_clicked();
+}
+
 void Dialog::on_trajSimButton_clicked()
 {
     Pose start = ui->renderArea->getStartPose();

@@ -17,7 +17,7 @@
    <item row="0" column="0">
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
@@ -57,6 +57,13 @@
               <string>GroupBox</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout">
+              <item>
+               <widget class="QPushButton" name="splineChangeBtn">
+                <property name="text">
+                 <string>Spline Change</string>
+                </property>
+               </widget>
+              </item>
               <item>
                <widget class="QPushButton" name="trajSimButton">
                 <property name="enabled">
