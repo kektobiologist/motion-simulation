@@ -264,7 +264,7 @@ double CubicSpline::xddd(double u) const {
 double CubicSpline::yddd(double u) const {
     using namespace alglib;
     real_2d_array tbly;
-    int ny;
+    ae_int_t ny;
     double ret = 0.;
     alglib::spline1dunpack(splineY, ny, tbly);
     for (int i = 0; i < ny - 1; i++) {
@@ -592,6 +592,7 @@ double CubicSpline::maxk(double *u_low) const
     qDebug() << "maxk = " << maxk << ", tempmaxk = " << tempmaxk << "umax = " << umax;
 
     if (u_low)
-        *u_low = maxk_u;
+        *u_low = x;
+        //*u_low = maxk_u;
     return maxk;
 }
