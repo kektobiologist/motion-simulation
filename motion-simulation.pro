@@ -103,7 +103,8 @@ HEADERS  += dialog.h \
     ballinterception.h \
     defender.hpp \
     tests.hpp \
-    ballinterception.hpp
+    ballinterception.hpp \
+    goalie.hpp
 
 LIBS += -lgsl -lgslcblas -lprotobuf
 FORMS    += dialog.ui

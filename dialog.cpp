@@ -17,6 +17,7 @@
 #include "logging.hpp"
 #include "trajectory-drawing.hpp"
 #include "defender.hpp"
+#include "goalie.hpp"
 #include "trajectory-generators.hpp"
 #include "ballinterception.hpp"
 #include <fstream>
@@ -30,6 +31,7 @@ static const int PREDICTION_PACKET_DELAY = 4;
 // bot used for testing (non-sim)
 static const int BOT_ID_TESTING = 2;
 static bool USING_INTERCEPTION = false;
+static bool direction = true;
 RenderArea *gRenderArea = NULL;
 Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
@@ -94,6 +96,18 @@ Dialog::Dialog(QWidget *parent) :
 Dialog::~Dialog()
 {
     delete ui;
+}
+
+bool Dialog::isFrontDirected(Pose botPos, Pose endPos) {
+    int r = 10;
+    double cosTheta = cos(botPos.theta());
+    double sinTheta = sin(botPos.theta());
+    double testx = botPos.x() + r * cosTheta;
+    double testy = botPos.y() + r * sinTheta;
+    double v1 = testx / tan(botPos.theta()) + testy - botPos.x() / tan(botPos.theta()) - botPos.y();
+    double v2 = endPos.x() / tan(botPos.theta()) + endPos.y() - botPos.x() / tan(botPos.theta()) - botPos.y();
+    qDebug() << "v1 * v2 - " << (v1 * v2) << endl;
+    return ((v1 * v2) >= 0) ? true : false;
 }
 
 void Dialog::on_startButton_clicked()
@@ -163,11 +177,15 @@ void Dialog::onAlgoTimeout()
     BeliefState bs = *beliefStateSh;
     bsMutex->unlock();
     Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
-    Pose end = ui->firaRenderArea->getEndPose();
+    //Pose end = ui->firaRenderArea->getEndPose();
+    TGoalie tgoli;
+    Pose end = tgoli.execute(&bs, BOT_ID_TESTING);
+    if(!direction){
+        start = Pose(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]-PI);
+    }
+
     Vector2D<double> ballPos(bs.ballX, bs.ballY);
     double dist = BallInterception::getBotBallDist(start, ballPos);
-
-    //Pose end(0, 0, 0);
     //TDefend tdef;
     //Pose end = tdef.execute(&bs, BOT_ID_TESTING);
     int vl, vr;
@@ -193,7 +211,7 @@ void Dialog::onAlgoTimeout()
             Pose cp1(bs.ballX, bs.ballY, 0);
             vector<Pose> midPoints;
 //            midPoints.push_back(cp1);
-            traj = cubic(start, endPose, bs.homeVl[BOT_ID_TESTING], bs.homeVr[BOT_ID_TESTING], 100, 100, midPoints);
+            traj = cubic(start, endPose, bs.homeVl[BOT_ID_TESTING], bs.homeVr[BOT_ID_TESTING], 70, 70, midPoints);
             ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
             if (ui->trajSimButton->isEnabled() == false)
                 ui->trajSimButton->setEnabled(true);
@@ -207,6 +225,7 @@ void Dialog::onAlgoTimeout()
             ui->firaRenderArea->toggleTrajectory(true);
 
             algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
+            //algoController = new ControllerWrapper(traj, bs.homeVl[BOT_ID_TESTING], bs.homeVr[BOT_ID_TESTING], PREDICTION_PACKET_DELAY);
         }
     }
     // NOTE: set finalvel!!
@@ -227,8 +246,13 @@ void Dialog::onAlgoTimeout()
 //    vl = 80;
 //    vr = 80;
 
-    buf[BOT_ID_TESTING*2 + 1] = vl;
-    buf[BOT_ID_TESTING*2 + 2] = vr;
+    if (direction) {
+        buf[BOT_ID_TESTING*2 + 1] = vl;
+        buf[BOT_ID_TESTING*2 + 2] = vr;
+    } else {
+        buf[BOT_ID_TESTING*2 + 1] = -vr;
+        buf[BOT_ID_TESTING*2 + 2] = -vl;
+    }
     getVel.x = vl;
     getVel.y = vr;
     buf[11] = (++counter)%100;
@@ -244,7 +268,6 @@ void Dialog::onAlgoTimeout()
     }
    // else  // store data in sysData
         sysData.push_back(Logging::populateSystemData(counter%100, vl, vr, bs, BOT_ID_TESTING));
-
 }
 
 void Dialog::onNewData()
@@ -289,13 +312,14 @@ void Dialog::on_startSending_clicked()
 {
     FType fun = functions[ui->simCombo->currentIndex()].second;
     // NOTE: using the trajectory controller for actual bot!
-    algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
-    //algoController = new ControllerWrapper(fun, 0, 0, PREDICTION_PACKET_DELAY);
+    //algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
+    algoController = new ControllerWrapper(fun, 0, 0, PREDICTION_PACKET_DELAY);
     while(!predictedPoseQ.empty())
         predictedPoseQ.pop_front();
     bsMutex->lock();
     BeliefState bs = *beliefStateSh;
     bsMutex->unlock();
+    //algoController = new ControllerWrapper(traj, bs.homeVl[BOT_ID_TESTING], bs.homeVr[BOT_ID_TESTING], PREDICTION_PACKET_DELAY);
     for (int i = 0; i < PREDICTION_PACKET_DELAY; i++) {
         predictedPoseQ.push_back(Pose(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]));
     }
@@ -460,11 +484,19 @@ void Dialog::on_traj2Button_clicked()
     bsMutex->unlock();
     using namespace TrajectoryGenerators;
     Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
+    Pose start2(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]-PI);
     Pose end = ui->firaRenderArea->getEndPose();
     if (traj)
         delete traj;
 //    traj = quinticBezierSplineGenerator(start, end, 0, 0, 0, 0);
-    traj = cubic(start, end, 0, 0, 0, 0);
+    direction = isFrontDirected(start, end) ;
+    if(direction){
+        traj = cubic(start, end, 0, 0, 0, 0);
+    }
+    else {
+        traj = cubic(start2, end, 0, 0, 0, 0);
+        qDebug() << "piche se curve" << endl;
+    }
     ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)
         ui->trajSimButton->setEnabled(true);
@@ -477,7 +509,6 @@ void Dialog::on_traj2Button_clicked()
     ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     ui->firaRenderArea->toggleTrajectory(true);
 }
-
 
 void Dialog::on_circleTrajButton_clicked()
 {
