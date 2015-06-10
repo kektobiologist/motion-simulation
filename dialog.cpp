@@ -17,6 +17,7 @@
 #include "logging.hpp"
 #include "trajectory-drawing.hpp"
 #include "defender.hpp"
+#include "goalie.hpp"
 #include "trajectory-generators.hpp"
 #include "ballinterception.hpp"
 #include <fstream>
@@ -28,8 +29,9 @@ using namespace std;
 // as well as the algoController delay
 static const int PREDICTION_PACKET_DELAY = 4;
 // bot used for testing (non-sim)
-static const int BOT_ID_TESTING = 1;
+static const int BOT_ID_TESTING = 2;
 static bool USING_INTERCEPTION = false;
+static bool direction = true;
 RenderArea *gRenderArea = NULL;
 Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
@@ -48,12 +50,12 @@ Dialog::Dialog(QWidget *parent) :
     ui->horizontalSlider->setRange(0, NUMTICKS-1);
     connect(ui->horizontalSlider, SIGNAL(valueChanged(int)), this, SLOT(onCurIdxChanged(int)));
     connect(timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
+    functions.push_back(make_pair("DynamicWindow", &Controllers::DynamicWindow));
     functions.push_back(make_pair("PolarBidirectional", &Controllers::PolarBidirectional));
     functions.push_back(make_pair("PolarBased", &Controllers::PolarBased));
     functions.push_back(make_pair("kgpkubs", &Controllers::kgpkubs));
     functions.push_back(make_pair("CMU", &Controllers::CMU));
     functions.push_back(make_pair("PController", &Controllers::PController));
-    functions.push_back(make_pair("DynamicWindow", &Controllers::DynamicWindow));
     for(unsigned int i = 0; i < functions.size(); i++) {
         ui->simCombo->addItem(functions[i].first);
     }
@@ -85,11 +87,27 @@ Dialog::Dialog(QWidget *parent) :
     onCurIdxChanged(0);
     counter = 0;
     sendDataMutex = new QMutex;
+    for (int i = 0; i < 4; i++) {
+        ballPoses.push(Vector2D<double>(0, 0));
+        ballVels.push(Vector2D<double>(0, 0));
+    }
 }
 
 Dialog::~Dialog()
 {
     delete ui;
+}
+
+bool Dialog::isFrontDirected(Pose botPos, Pose endPos) {
+    int r = 10;
+    double cosTheta = cos(botPos.theta());
+    double sinTheta = sin(botPos.theta());
+    double testx = botPos.x() + r * cosTheta;
+    double testy = botPos.y() + r * sinTheta;
+    double v1 = testx / tan(botPos.theta()) + testy - botPos.x() / tan(botPos.theta()) - botPos.y();
+    double v2 = endPos.x() / tan(botPos.theta()) + endPos.y() - botPos.x() / tan(botPos.theta()) - botPos.y();
+    qDebug() << "v1 * v2 - " << (v1 * v2) << endl;
+    return ((v1 * v2) >= 0) ? true : false;
 }
 
 void Dialog::on_startButton_clicked()
@@ -159,22 +177,28 @@ void Dialog::onAlgoTimeout()
     BeliefState bs = *beliefStateSh;
     bsMutex->unlock();
     Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
-    Pose end = ui->firaRenderArea->getEndPose();
+    //Pose end = ui->firaRenderArea->getEndPose();
+    TGoalie tgoli;
+    Pose end = tgoli.execute(&bs, BOT_ID_TESTING);
+    //TDefend tdf;
+    //Pose end = tdf.execute(&bs, BOT_ID_TESTING);
 
-    //Pose end(0, 0, 0);
+    Vector2D<double> ballPos(bs.ballX, bs.ballY);
+    double diste = BallInterception::getBotBallDist(start, ballPos);
     //TDefend tdef;
     //Pose end = tdef.execute(&bs, BOT_ID_TESTING);
     int vl, vr;
     if (USING_INTERCEPTION) {
 //        assert(0);
         // if bot is close to end point, then make a new trajectory that leads to goal!
-        Vector2D<double> ballPos(bs.ballX, bs.ballY);
-        SplineTrajectory *st = dynamic_cast<SplineTrajectory*>(traj);
-        double dist = BallInterception::getBotBallDist(start, ballPos);
-        double dt = st->totalTime() - algoController->getCurrentTimeS();
-        //qDebug() << start.x() << " " << start.y() << endl;
-      //  qDebug() << "dt = " << dt << "st->totalTime() = " << st->totalTime();
-        if (dist <= 1.3*BOT_RADIUS) { //dt = 0.21
+
+        if(traj){
+            SplineTrajectory *st = dynamic_cast<SplineTrajectory*>(traj);
+            double dt = st->totalTime() - algoController->getCurrentTimeS();
+            //qDebug() << start.x() << " " << start.y() << endl;
+          //  qDebug() << "dt = " << dt << "st->totalTime() = " << st->totalTime();
+        }
+        if (diste <= 1.5*BOT_RADIUS) { //dt = 0.21
             USING_INTERCEPTION = false;
             // make a new trajectory
             if (traj)
@@ -186,7 +210,7 @@ void Dialog::onAlgoTimeout()
             Pose cp1(bs.ballX, bs.ballY, 0);
             vector<Pose> midPoints;
 //            midPoints.push_back(cp1);
-            traj = cubic(start, endPose, bs.homeVl[BOT_ID_TESTING], bs.homeVr[BOT_ID_TESTING], 100, 100, midPoints);
+            traj = cubic(start, endPose, bs.homeVl[BOT_ID_TESTING], bs.homeVr[BOT_ID_TESTING], 70, 70, midPoints);
             ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
             if (ui->trajSimButton->isEnabled() == false)
                 ui->trajSimButton->setEnabled(true);
@@ -200,16 +224,17 @@ void Dialog::onAlgoTimeout()
             ui->firaRenderArea->toggleTrajectory(true);
 
             algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
+            //algoController = new ControllerWrapper(traj, bs.homeVl[BOT_ID_TESTING], bs.homeVr[BOT_ID_TESTING], PREDICTION_PACKET_DELAY);
         }
     }
     // NOTE: set finalvel!!
     algoController->genControls(start, end, vl, vr, FINAL_VEL);
-    predictedPoseQ.push(algoController->getPredictedPose(start));
+    predictedPoseQ.push_back(algoController->getPredictedPose(start));
     // getPredictedPose gives the predicted pose of the robot after PREDICTION_PACKET_DELAY ticks from now. We need to display what our
     // prediction was PREDICTION_PACKET_DELAY ticks ago (i.e. what our prediction was for now).
 
     ui->firaRenderArea->predictedPose = predictedPoseQ.front();
-    predictedPoseQ.pop();
+    predictedPoseQ.pop_front();
     assert(vl <= 120 && vl >= -120);
     assert(vr <= 120 && vr >= -120);
     char buf[12];
@@ -220,8 +245,13 @@ void Dialog::onAlgoTimeout()
 //    vl = 80;
 //    vr = 80;
 
-    buf[BOT_ID_TESTING*2 + 1] = vl;
-    buf[BOT_ID_TESTING*2 + 2] = vr;
+    if (dist(start, end) < 0.5 * BOT_BALL_THRESH) {
+        buf[BOT_ID_TESTING*2 + 1] = 0;
+        buf[BOT_ID_TESTING*2 + 2] = 0;
+    } else {
+        buf[BOT_ID_TESTING*2 + 1] = vl;
+        buf[BOT_ID_TESTING*2 + 2] = vr;
+    }
     getVel.x = vl;
     getVel.y = vr;
     buf[11] = (++counter)%100;
@@ -229,14 +259,14 @@ void Dialog::onAlgoTimeout()
     sendDataMutex->lock();
     comm.Write(buf, 12);
     sendDataMutex->unlock();
-    if (counter > 100 && (USING_INTERCEPTION==true)) {
-        on_interceptionButton_clicked();
+    if (counter > 50 && (USING_INTERCEPTION==true) && (diste > 5*BOT_RADIUS)) {
         counter = 0;
+      //  on_stopSending_clicked();
+        on_interceptionButton_clicked();
+
     }
-    // store data in sysData
-    sysData.push_back(Logging::populateSystemData(counter%100, vl, vr, bs, BOT_ID_TESTING));
-//    double bv = sqrt(bs.ballVx * bs.ballVx + bs.ballVy * bs.ballVy);
-//    qDebug() << "ball velocity for friction - " << bv << endl;
+   // else  // store data in sysData
+        sysData.push_back(Logging::populateSystemData(counter%100, vl, vr, bs, BOT_ID_TESTING));
 }
 
 void Dialog::onNewData()
@@ -284,14 +314,16 @@ void Dialog::on_startSending_clicked()
     //algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
     algoController = new ControllerWrapper(fun, 0, 0, PREDICTION_PACKET_DELAY);
     while(!predictedPoseQ.empty())
-        predictedPoseQ.pop();
+        predictedPoseQ.pop_front();
     bsMutex->lock();
     BeliefState bs = *beliefStateSh;
     bsMutex->unlock();
+    //algoController = new ControllerWrapper(traj, bs.homeVl[BOT_ID_TESTING], bs.homeVr[BOT_ID_TESTING], PREDICTION_PACKET_DELAY);
     for (int i = 0; i < PREDICTION_PACKET_DELAY; i++) {
-        predictedPoseQ.push(Pose(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]));
+        predictedPoseQ.push_back(Pose(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]));
     }
-    algoTimer->start(timeLCMs);
+    qDebug() << "ball vekl" << bs.ballVx << " " << bs.ballVy << endl;
+ //   algoTimer->start(timeLCMs);
 }
 
 void Dialog::on_stopSending_clicked()
@@ -470,7 +502,6 @@ void Dialog::on_traj2Button_clicked()
 //    ui->firaRenderArea->toggleTrajectory(true);
 }
 
-
 void Dialog::on_circleTrajButton_clicked()
 {
     // adding test code here
@@ -522,12 +553,33 @@ void Dialog::on_interceptionButton_clicked()
     bsMutex->unlock();
     USING_INTERCEPTION = true;
     using namespace TrajectoryGenerators;
-    double vx = (bs.homeVl[BOT_ID_TESTING] + bs.homeVr[BOT_ID_TESTING]) * cos(bs.homeTheta[BOT_ID_TESTING]) / 2;
-    double vy = (bs.homeVl[BOT_ID_TESTING] + bs.homeVr[BOT_ID_TESTING]) * sin(bs.homeTheta[BOT_ID_TESTING]) / 2;
+    double vx = 0., vy = 0.;
+
+    if(traj){
+
+        SplineTrajectory *bi_traj = dynamic_cast<SplineTrajectory*>(traj);
+        vector<VelocityProfiling::ProfileDatapoint> profile = bi_traj->getProfile();
+
+        double t = 70 * 0.016;
+        int x = 0;
+        for (int i = 0; i < 1000; i++) {
+            if (profile[i].t > t) {
+                x = i;
+                break;
+            }
+        }
+        for (int i = 0; i < 1; i++) {
+            vx += profile[x+i].v * cos(bs.homeTheta[BOT_ID_TESTING]);
+            vy += profile[x+i].v * sin(bs.homeTheta[BOT_ID_TESTING]); //try using PredictedPoseQ for theta.
+        }
+
+        qDebug() << "Changing SPline Pos";
+        //delete traj;
+    }
+    //double vx = (bs.homeVl[BOT_ID_TESTING] + bs.homeVr[BOT_ID_TESTING]) * cos(bs.homeTheta[BOT_ID_TESTING]) / 2;
+    //double vy = (bs.homeVl[BOT_ID_TESTING] + bs.homeVr[BOT_ID_TESTING]) * sin(bs.homeTheta[BOT_ID_TESTING]) / 2;
     qDebug() << vx << "Dasda " << vy << endl;
     Pose start(bs.homeX[BOT_ID_TESTING] + 0.016 * vx, bs.homeY[BOT_ID_TESTING] + 0.016 * vy, bs.homeTheta[BOT_ID_TESTING]);
-    if (traj)
-        delete traj;
     Vector2D<double> ballPos(bs.ballX, bs.ballY);
     Vector2D<double> ballVel(bs.ballVx, bs.ballVy);
     Vector2D<double> botVel(bs.homeVl[BOT_ID_TESTING], bs.homeVr[BOT_ID_TESTING]);

@@ -39,6 +39,7 @@ double getBotBallDist(Pose botPos, Vector2D<double> ballPos) {
 }
 
 SplineTrajectory* getIntTraj(Pose botPosStart, Vector2D<double> ballPos, Vector2D<double> ballVel, Vector2D<double> botVel) {
+
     Vector2D<double> predictedBallPos;
     double error = 0.1;
     double T2 = 6.0;

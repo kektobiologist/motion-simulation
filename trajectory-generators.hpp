@@ -24,7 +24,6 @@ Trajectory* circleGenerator(double x, double y, double r, double startTheta, dou
     return new Trajectory(xfunc, yfunc);
 }
 
-
 Trajectory *quinticBezierSplineGenerator(Pose start, Pose end, double vls, double vrs, double vle, double vre) {
 
     QuinticBezierSpline *p = new QuinticBezierSpline(start, end, vls, vrs, vle, vre);
@@ -49,7 +48,6 @@ Vector2D<double> predictBallPose(Vector2D<double> ballPos, Vector2D<double> ball
     return finalBallPos;
 }
 */
-
 Trajectory *ellipseGen(double x, double y, double a, double b, double startTheta, double f) {
 
     function<double(double)> xfunc = [=](double t)->double {

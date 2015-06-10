@@ -106,9 +106,8 @@ MiscData DynamicWindow(Pose s, Pose e, int &vl, int &vr, double prevSpeed, doubl
     QTextStream outStream(&outputFile);
     if(va==-1)
     {
-        outputFile.open(QIODevice::WriteOnly);
-        outStream<<"\n\n\n\n \t\t\t\t The Print of QT Code\n";
-        outStream<<"old_x \t old_y \t prevSpeed \t prevOmega \t newSpeed \t newOmega \t new_x \t new_y \n";
+         outputFile.open(QIODevice::WriteOnly);
+        outStream<<"\n\n\n\n \t\t\t\t The Log of QT Code\n";
         va=0;
     }
     va=0;
@@ -389,4 +388,5 @@ void PolarBasedGA(Pose s, Pose e, int &vl, int &vr, double k1, double k2, double
         vr = vr*speed/max;
     }
 }
+
 }

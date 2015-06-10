@@ -91,6 +91,7 @@ public:
     virtual double thetad(double t) const;
     virtual double v(double t) const;
     virtual double totalTime() const;
+    vector<VelocityProfiling::ProfileDatapoint> getProfile();
 };
 
 #endif // TRAJECTORY_HPP

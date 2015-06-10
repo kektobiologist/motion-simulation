@@ -148,8 +148,8 @@ CubicSpline::CubicSpline(Pose start, Pose end, std::vector<Pose> midPoints)
     double x2 = end.x()/fieldXConvert;
     double y1 = start.y()/fieldXConvert;
     double y2 = end.y()/fieldXConvert;
-    double th1 = start.theta();
-    double th2 = end.theta();
+    double th1 = (start.theta());
+    double th2 = (end.theta());
     {
         using namespace alglib;
         double n = midPoints.size()+2; // number of points to interpolate on
@@ -233,7 +233,7 @@ double CubicSpline::ydd(double u) const
     /*
     using namespace alglib;
     real_2d_array tbly;
-    int ny;
+    long int ny;
     double ret = 0.;
     alglib::spline1dunpack(splineY, ny, tbly);
     for (int i = 0; i < ny; i++) {

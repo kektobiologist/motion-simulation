@@ -8,7 +8,7 @@ MiscData ControllerWrapper::genControls_(Pose s, Pose e, int &vl, int &vr, doubl
     }
 //    int prevSpeed = max(fabs(prevVl), fabs(prevVr));
     double prevSpeed = (prevVl+prevVr)/2;
-    double prevOmega = (prevVr- prevVr)/(Constants::d);
+    double prevOmega = (prevVr- prevVl)/(Constants::d);
     MiscData m = (*fun)(x, e, vl, vr, prevSpeed,prevOmega, finalVel);
     prevVl = vl; prevVr = vr;
     uq.push_back(make_pair<int,int>((int)vl, (int)vr));
@@ -91,4 +91,3 @@ MiscData ControllerWrapper::genControlsTrajSim(Pose s, int &vl, int &vr, double 
     assert (ctrlType == TRACKCTRL);
     return genControls_(s, vl, vr, t, true);
 }
-
