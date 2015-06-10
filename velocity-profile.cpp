@@ -2,6 +2,7 @@
 #include "constants.h"
 #include <limits>
 #include "arclength-param.hpp"
+#include "splines.hpp"
 using namespace std;
 namespace VelocityProfiling {
 // isolated constraints
@@ -155,17 +156,28 @@ vector<ProfileDatapoint> generateVelocityProfile(Spline &p, int numPoints, doubl
     double ve = (vle+vre)/2.;
     qDebug() << vs << " " << ve << endl;
     //assert(vs >= 0 && ve >= 0);
-    vector<ProfileDatapoint> v(numPoints, ProfileDatapoint());
+    vector<ProfileDatapoint> v(numPoints+1, ProfileDatapoint());
     double dels = full/(numPoints-1);
 
     Integration::refreshMatrix();
     Integration::computeInverseBezierMatrices(p);
     Integration::computeSplineApprox(p);
+
+    CubicSpline *cubicp = dynamic_cast<CubicSpline*>(&p);
+    double u_low = 1.;
+    double maxk = cubicp->maxk(&u_low);
     //Integration::computeBezierMatrices(p);
-    for (int i = 0; i < numPoints; i++) {
+    for (int i = 0; i < v.size(); i++) {
         double s = full/(numPoints-1)*(double)i;
         double u = Integration::getArcLengthParam(p, s, full);
         double k = p.k(u);
+        if(u > u_low){
+            v[i].v = min(vmax_isolated(maxk, 100), Constants::vsat);
+            v[i].u = u_low;
+            v[i].s = Integration::integrate(p, 0, u_low);
+            qDebug() << "\nyes, it should be only once with u as " << u_low << "and maxk as " << maxk;
+            i++;u_low = 2;
+        }
         //NOTE: hardcoding vsat here!!
         v[i].v = min(vmax_isolated(k, 100), Constants::vsat);
         v[i].u = u;

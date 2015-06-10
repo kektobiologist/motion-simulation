@@ -69,6 +69,8 @@ private slots:
 
     void on_circleTrajButton_clicked();
 
+    void on_splineChangeBtn_clicked();
+
     void on_trajSimButton_clicked();
 
     void on_interceptionButton_clicked();
