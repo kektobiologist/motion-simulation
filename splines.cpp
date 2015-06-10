@@ -5,6 +5,8 @@
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_roots.h>
 #include <cmath>
+#include <functional>
+#include <queue>
 
 QuinticBezierSpline::QuinticBezierSpline(Pose start, Pose end, double vls, double vrs, double vle, double vre)
 {
@@ -595,4 +597,36 @@ double CubicSpline::maxk(double *u_low) const
         *u_low = x;
         //*u_low = maxk_u;
     return maxk;
+}
+typedef struct lmaxku{
+    double kmax;
+    float umax;
+
+
+}lmku;
+
+struct compare : std::binary_function<lmku, lmku, bool>{
+    bool operator()(const lmku& l, const lmku& r)
+      {
+          return l.kmax > r.kmax;
+      }
+};
+
+vector<pair<double,double> > CubicSpline::lmaxk() const{
+
+    std::priority_queue<lmku, vector<lmku>, compare > tempmaxk;
+
+    lmku temp;temp.kmax=0;temp.umax=0;
+    for(int i=0;i<6;i++)tempmaxk.push(temp);  //6 because no. of local maxima can be atmax 6
+
+    for(float u=0;u<1;u+=0.001){
+        //qDebug() << "Curvature at u as " << u << " = " << std::abs(this->k(u));
+        if(this->k(u) > tempmaxk.top().kmax){
+
+            temp.kmax = this->k(u);
+            temp.umax = u;
+            tempmaxk.pop();
+            tempmaxk.push(temp);
+        }
+    }
 }
