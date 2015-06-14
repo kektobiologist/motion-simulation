@@ -102,6 +102,7 @@ private:
     QTimer *timer;
     // simulator
     Simulator sim;
+    Simulator simsc;
     vector<FPair> functions;  // for display the spin box of choosing p2p controller
     // counter for counting num of packets sent:
     int counter;

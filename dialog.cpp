@@ -31,13 +31,14 @@ static const int PREDICTION_PACKET_DELAY = 4;
 // bot used for testing (non-sim)
 static const int BOT_ID_TESTING = 2;
 static bool USING_INTERCEPTION = false;
-int sc_idx = 0;
+int flag = 0;
 
 RenderArea *gRenderArea = NULL;
 Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::Dialog)
 {
+    direction = true;
     traj = NULL;
     std::function<void (void)> func = []() {qDebug() << "hello world";};
     algoController = NULL;
@@ -48,6 +49,7 @@ Dialog::Dialog(QWidget *parent) :
     Pose start = ui->renderArea->getStartPose();
     Pose end = ui->renderArea->getEndPose();
     sim.simulate(start, end, &Controllers::kgpkubs, 0, 0);
+    simsc.simulate(start, end, &Controllers::kgpkubs, 0, 0);
     ui->horizontalSlider->setRange(0, NUMTICKS-1);
     connect(ui->horizontalSlider, SIGNAL(valueChanged(int)), this, SLOT(onCurIdxChanged(int)));
     connect(timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
@@ -87,7 +89,7 @@ Dialog::Dialog(QWidget *parent) :
     }
     onCurIdxChanged(0);
     counter = 0;
-    sendDataMutex = new QMutex;
+    sendDataMutex = new QMutex;    double vx = 0, vy = 0;
     for (int i = 0; i < 4; i++) {
         ballPoses.push(Vector2D<double>(0, 0));
         ballVels.push(Vector2D<double>(0, 0));
@@ -125,7 +127,6 @@ void Dialog::on_resetButton_clicked()
 {
     timer->stop();
     ui->horizontalSlider->setValue(0);
-    sc_idx = 0;
 }
 
 void Dialog::on_horizontalSlider_sliderMoved(int )
@@ -135,17 +136,32 @@ void Dialog::on_horizontalSlider_sliderMoved(int )
 
 void Dialog::onCurIdxChanged(int idx)
 {
-    if (idx > 30) {
+    if (idx >= 40 && flag==0) {
+        flag=1;
         on_splineChangeBtn_clicked();
     }
-    ui->renderArea->changePose(sim.getPoses(idx));
-    MiscData m = sim.getMiscData(idx);
+    if(idx < 40){
+        qDebug() <<  "\n This is the original trajectory";
+        ui->renderArea->changePose(sim.getPoses(idx));
+        MiscData m = sim.getMiscData(idx);
+        qDebug() << idx << ". " << "vl, vr = " << sim.getVls(idx) << ", " << sim.getVrs(idx) << ", vl_calc, vr_calc = " <<
+                    sim.getVls_calc(idx) << ", " << sim.getVrs_calc(idx) << "v_ref, omega_ref = " << m.v_ref << ", " << m.omega_ref << ", "
+                 << "v1, v2 = " << m.v1 << ", " << m.v2 << "time = " << m.t << "v, w = " << m.v << m.w
+                 << "vl, vr (in miscdata) = " << m.vl << m.vr << "vl_ref, vr_ref = " << m.vl_ref << m.vr_ref;
+    }
+    else{
+        qDebug() <<  "\n\t\t This is the trajectory after changing";
+        ui->renderArea->changePose(simsc.getPoses(idx-40));
+        MiscData m = simsc.getMiscData(idx-40);
+        qDebug() << idx << ". " << "vl, vr = " << simsc.getVls(idx) << ", " << simsc.getVrs(idx) << ", vl_calc, vr_calc = " <<
+                    simsc.getVls_calc(idx) << ", " << simsc.getVrs_calc(idx) << "v_ref, omega_ref = " << m.v_ref << ", " << m.omega_ref << ", "
+                 << "v1, v2 = " << m.v1 << ", " << m.v2 << "time = " << m.t << "v, w = " << m.v << m.w
+                 << "vl, vr (in miscdata) = " << m.vl << m.vr << "vl_ref, vr_ref = " << m.vl_ref << m.vr_ref;
+    }
+
     // lets print for traj sim
 //    Pose s = sim.getPoses(idx);
-    qDebug() << idx << ". " << "vl, vr = " << sim.getVls(idx) << ", " << sim.getVrs(idx) << ", vl_calc, vr_calc = " <<
-                sim.getVls_calc(idx) << ", " << sim.getVrs_calc(idx) << "v_ref, omega_ref = " << m.v_ref << ", " << m.omega_ref << ", "
-             << "v1, v2 = " << m.v1 << ", " << m.v2 << "time = " << m.t << "v, w = " << m.v << m.w
-             << "vl, vr (in miscdata) = " << m.vl << m.vr << "vl_ref, vr_ref = " << m.vl_ref << m.vr_ref;
+
 //    Pose e = ui->renderArea->getEndPose();
     // some debug prints:
 //    Vector2D<int> initial(s.x()-e.x(), s.y()-e.y());
@@ -163,17 +179,17 @@ void Dialog::onCurIdxChanged(int idx)
 
 void Dialog::onTimeout()
 {
-    sc_idx = ui->horizontalSlider->value();
-    sc_idx++;
-    if(sc_idx >= NUMTICKS) {
+    int idx = ui->horizontalSlider->value();
+    idx++;
+    if(idx >= NUMTICKS) {
         timer->stop();
         return;
     }
-    if(sc_idx < 0 || sc_idx >= NUMTICKS) {
-        qDebug() << "Error! idx = " << sc_idx << " and is out of range!";
+    if(idx < 0 || idx >= NUMTICKS) {
+        qDebug() << "Error! idx = " << idx << " and is out of range!";
         return;
     }
-    ui->horizontalSlider->setValue(sc_idx);
+    ui->horizontalSlider->setValue(idx);
 }
 
 void Dialog::onAlgoTimeout()
@@ -265,12 +281,11 @@ void Dialog::onAlgoTimeout()
     sendDataMutex->lock();
     comm.Write(buf, 12);
     sendDataMutex->unlock();
-    if (counter > 50 && (USING_INTERCEPTION==true) && (dist > 5*BOT_RADIUS)) {
-        counter = 0;
-      //  on_stopSending_clicked();
-        on_interceptionButton_clicked();
-
-    }
+//    if (counter > 50 && (USING_INTERCEPTION==true) && (dist > 5*BOT_RADIUS)) {
+//        counter = 0;
+//        on_stopSending_clicked();
+//        on_interceptionButton_clicked();
+//    }
    // else  // store data in sysData
         sysData.push_back(Logging::populateSystemData(counter%100, vl, vr, bs, BOT_ID_TESTING));
 }
@@ -317,8 +332,8 @@ void Dialog::on_startSending_clicked()
 {
     FType fun = functions[ui->simCombo->currentIndex()].second;
     // NOTE: using the trajectory controller for actual bot!
-    //algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
-    algoController = new ControllerWrapper(fun, 0, 0, PREDICTION_PACKET_DELAY);
+    algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
+   // algoController = new ControllerWrapper(fun, 0, 0, PREDICTION_PACKET_DELAY);
     while(!predictedPoseQ.empty())
         predictedPoseQ.pop_front();
     bsMutex->lock();
@@ -494,7 +509,7 @@ void Dialog::on_traj2Button_clicked()
     if (traj)
         delete traj;
 //    traj = quinticBezierSplineGenerator(start, end, 0, 0, 0, 0);
-    direction = isFrontDirected(start, end) ;
+  //  direction = isFrontDirected(start, end) ;
     if(direction){
         traj = cubic(start, end, 0, 0, 0, 0);
     }
@@ -553,19 +568,20 @@ void Dialog::on_circleTrajButton_clicked()
 
 void Dialog::on_splineChangeBtn_clicked() {
     using namespace TrajectoryGenerators;
+    int idx = ui->horizontalSlider->value();
     Pose start;
-    if (sc_idx == 0)
+    if (idx == 0)
         start = ui->renderArea->getStartPose();
     else
-        start = sim.getPoses(sc_idx);
+        start = sim.getPoses(idx);
     Pose end = ui->renderArea->getEndPose();
     if (traj)
         delete traj;
 
-    if (!sc_idx)
+    if (!idx)
         traj = cubic(start, end, 0, 0, 70, 70);
     else
-        traj = cubic(start, end, sim.getVls(sc_idx), sim.getVrs(sc_idx), 70, 70);
+        traj = cubic(start, end, sim.getVls(idx), sim.getVrs(idx), 70, 70);
 
     ui->renderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)
@@ -579,22 +595,23 @@ void Dialog::on_splineChangeBtn_clicked() {
     ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     ui->firaRenderArea->toggleTrajectory(true);
     on_trajSimButton_clicked();
-    on_startButton_clicked();
+    //on_startButton_clicked();
 }
 
 void Dialog::on_trajSimButton_clicked()
 {
     Pose start;
-    if (sc_idx == 0)
+    int idx = ui->horizontalSlider->value();
+    if (idx == 0)
         start = ui->renderArea->getStartPose();
     else
-        start = sim.getPoses(sc_idx);
-    if (sc_idx == 0)
+        start = sim.getPoses(idx);
+    if (idx == 0)
         sim.simulate(start, traj, 0, 0, false);
     else
-        sim.simulate(start, traj, sim.getVls(sc_idx), sim.getVrs(sc_idx), false);
-    onCurIdxChanged(0);
-    on_resetButton_clicked();
+        simsc.simulate(start, traj, sim.getVls(idx), sim.getVrs(idx), false);
+    //onCurIdxChanged(0);
+    //on_resetButton_clicked();
 }
 
 void Dialog::on_interceptionButton_clicked()
@@ -627,9 +644,9 @@ void Dialog::on_interceptionButton_clicked()
         qDebug() << "Changing SPline Pos";
         //delete traj;
     }
-    //double vx = (bs.homeVl[BOT_ID_TESTING] + bs.homeVr[BOT_ID_TESTING]) * cos(bs.homeTheta[BOT_ID_TESTING]) / 2;
-    //double vy = (bs.homeVl[BOT_ID_TESTING] + bs.homeVr[BOT_ID_TESTING]) * sin(bs.homeTheta[BOT_ID_TESTING]) / 2;
-    qDebug() << vx << "Dasda " << vy << endl;
+    vx = (bs.homeVl[BOT_ID_TESTING] + bs.homeVr[BOT_ID_TESTING]) * cos(bs.homeTheta[BOT_ID_TESTING]) / 2;
+    vy = (bs.homeVl[BOT_ID_TESTING] + bs.homeVr[BOT_ID_TESTING]) * sin(bs.homeTheta[BOT_ID_TESTING]) / 2;
+    qDebug() << bs.ballVx << "Dasda " << bs.ballVy << endl;
     Pose start(bs.homeX[BOT_ID_TESTING] + 0.016 * vx, bs.homeY[BOT_ID_TESTING] + 0.016 * vy, bs.homeTheta[BOT_ID_TESTING]);
     Vector2D<double> ballPos(bs.ballX, bs.ballY);
     Vector2D<double> ballVel(bs.ballVx, bs.ballVy);
@@ -646,5 +663,5 @@ void Dialog::on_interceptionButton_clicked()
 
     ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     ui->firaRenderArea->toggleTrajectory(true);
-    on_startSending_clicked();
+   on_startSending_clicked();
 }
