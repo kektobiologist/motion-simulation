@@ -103,7 +103,7 @@ SplineTrajectory* getIntTraj(Pose botPosStart, Vector2D<double> ballPos, Vector2
             break;
         }
     }
-   // qDebug() << "iterations getinttraj " << iter << endl;
+    qDebug() << "iterations getinttraj " << iter << ballPos.x << " " << ballPos.y << " " << predictedBallPos.x << " " << predictedBallPos.y << endl;
     return st;
 }
 }
