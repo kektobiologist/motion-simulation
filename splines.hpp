@@ -35,7 +35,7 @@ public:
   virtual double yddd(double u) const;
   // returns max of ABSOLUTE value of curvature
   virtual double maxk(double *u_low = NULL) const;
-  virtual vector<pair<double,double> > lmaxk() const;
+  virtual /*vector<pair<double,float> >*/ void lmaxk() const;
 };
 #endif // SPLIENS_HPP
 

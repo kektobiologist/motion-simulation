@@ -404,8 +404,8 @@ double CubicSpline::maxk(double *u_low) const
             a[j] = tblx[i][j+2];
             b[j] = tbly[i][j+2];
         }
-        qDebug() << "coeff (x), (y) =  x(t)=" << a[3] <<"t^3 + "<< a[2] <<"t^2 + "<< a[1] <<"t + "<< a[0] <<", y(t)=" <<
-                    b[3] <<"t^3 + "<< b[2] <<"t^2 + "<< b[1] <<"t + "<< b[0] << "ulow, uhigh=" << u_low << u_high;
+        //qDebug() << "coeff (x), (y) =  x(t)=" << a[3] <<"t^3 + "<< a[2] <<"t^2 + "<< a[1] <<"t + "<< a[0] <<", y(t)=" <<
+          //          b[3] <<"t^3 + "<< b[2] <<"t^2 + "<< b[1] <<"t + "<< b[0] << "ulow, uhigh=" << u_low << u_high;
         // get k value at beginning
         if (fabs(this->k(u_low)) > maxk) {
             maxk = fabs(this->k(u_low));
@@ -598,6 +598,7 @@ double CubicSpline::maxk(double *u_low) const
         //*u_low = maxk_u;
     return maxk;
 }
+
 typedef struct lmaxku{
     double kmax;
     float umax;
@@ -612,21 +613,38 @@ struct compare : std::binary_function<lmku, lmku, bool>{
       }
 };
 
-vector<pair<double,double> > CubicSpline::lmaxk() const{
+/*vector<pair<double,float> >*/ void CubicSpline::lmaxk() const{
 
     std::priority_queue<lmku, vector<lmku>, compare > tempmaxk;
+    //std::vector<pair<double,float> > tempmaxk;
 
     lmku temp;temp.kmax=0;temp.umax=0;
     for(int i=0;i<6;i++)tempmaxk.push(temp);  //6 because no. of local maxima can be atmax 6
 
-    for(float u=0;u<1;u+=0.001){
+    for(float u=0;u<(1-0.001);u+=0.001){
         //qDebug() << "Curvature at u as " << u << " = " << std::abs(this->k(u));
-        if(this->k(u) > tempmaxk.top().kmax){
-
-            temp.kmax = this->k(u);
-            temp.umax = u;
-            tempmaxk.pop();
-            tempmaxk.push(temp);
+        if((this->k(u) > this->k(u-0.001)) && (this->k(u) < this->k(u+0.001))){
+            if(this->k(u) > tempmaxk.top().kmax){
+                temp.kmax = this->k(u);
+                temp.umax = u;
+                tempmaxk.pop();
+                //tempmaxk.push_back(std::make_pair(this->k(u), u));
+                tempmaxk.push(temp);
+                u += 0.001;
+            }
         }
     }
+
+//    for(std::vector<pair<double,float> >::iterator it=tempmaxk.begin(); it != tempmaxk.end();it++){
+//        qDebug() << "\nu and maxk are " << it->second << " " << it->first;
+//    }
+
+    int a = tempmaxk.size();
+    for(int i=0; i< a;i++){
+            lmku tm = tempmaxk.top();
+            tempmaxk.pop();
+            qDebug() << "\nu and maxk are " << tm.umax << " " << tm.kmax;
+        }
+
+    return;// tempmaxk;
 }

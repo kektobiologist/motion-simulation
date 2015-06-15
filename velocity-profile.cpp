@@ -157,7 +157,7 @@ vector<ProfileDatapoint> generateVelocityProfile(Spline &p, int numPoints, doubl
     qDebug() << vs << " " << ve << endl;
     //assert(vs >= 0 && ve >= 0);
     vector<ProfileDatapoint> v(numPoints+1, ProfileDatapoint());
-    double dels = full/(numPoints-1);
+    double dels = full/(numPoints);//full/(numPoints-1);
 
     Integration::refreshMatrix();
     Integration::computeInverseBezierMatrices(p);
@@ -168,7 +168,7 @@ vector<ProfileDatapoint> generateVelocityProfile(Spline &p, int numPoints, doubl
     double maxk = cubicp->maxk(&u_low);
     //Integration::computeBezierMatrices(p);
     for (int i = 0; i < v.size(); i++) {
-        double s = full/(numPoints-1)*(double)i;
+        double s = full/(numPoints)*(double)i;
         double u = Integration::getArcLengthParam(p, s, full);
         double k = p.k(u);
         if(u > u_low){
@@ -185,23 +185,23 @@ vector<ProfileDatapoint> generateVelocityProfile(Spline &p, int numPoints, doubl
     }
     // forward consistency
     v[0].v = vs;
-    for (int i = 1; i < numPoints; i++) {
+    for (int i = 1; i < numPoints+1; i++) {
         double vwold = v[i-1].v*v[i-1].v*p.k(v[i-1].u);
         v[i].v = min(v[i].v, trans_acc_limits(vwold, Constants::vwmax, v[i-1].v, Constants::atmax, dels).second);
     }
     // backward consistency
-    v[numPoints-1].v = ve;
-    for (int i = numPoints-2; i >= 0; i--) {
+    v[numPoints].v = ve;
+    for (int i = numPoints-1; i >= 0; i--) {
         double vwold = v[i+1].v*v[i+1].v*p.k(v[i+1].u);
         v[i].v = min(v[i].v, trans_acc_limits(vwold, Constants::vwmax, v[i+1].v, Constants::atmax, dels).second);
     }
     // set time to reach for each datapoint
     v[0].t = 0;
-    for (int i = 1; i < numPoints; i++) {
+    for (int i = 1; i < numPoints+1; i++) {
         v[i].t = v[i-1].t + 2*dels/(v[i].v+v[i-1].v);
     }
     // qDebug() << "profile:" ;
-    for (int i = 0; i< numPoints; i++) {
+    for (int i = 0; i< numPoints+1; i++) {
         // qDebug() << v[i].u << v[i].t << v[i].s << v[i].v;
     }
     return v;

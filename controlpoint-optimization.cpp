@@ -20,8 +20,10 @@ double Optimization::f_cubic2CP(const gsl_vector *x, void *params_)
     // try using ONLY maxk as cost function?
     //double maxk = p->maxk();
 //    delete st;
+    //vector<pair<double,float> > mp = p->lmaxk();
+    //p->lmaxk();
     return time;
-//    return maxk;
+    //return maxk;
 }
 
 
