@@ -153,8 +153,8 @@ void Dialog::onCurIdxChanged(int idx)
         qDebug() <<  "\n\t\t This is the trajectory after changing";
         ui->renderArea->changePose(simsc.getPoses(idx-40));
         MiscData m = simsc.getMiscData(idx-40);
-        qDebug() << idx << ". " << "vl, vr = " << simsc.getVls(idx) << ", " << simsc.getVrs(idx) << ", vl_calc, vr_calc = " <<
-                    simsc.getVls_calc(idx) << ", " << simsc.getVrs_calc(idx) << "v_ref, omega_ref = " << m.v_ref << ", " << m.omega_ref << ", "
+        qDebug() << idx-40 << ". " << "vl, vr = " << simsc.getVls(idx-40) << ", " << simsc.getVrs(idx-40) << ", vl_calc, vr_calc = " <<
+                    simsc.getVls_calc(idx-40) << ", " << simsc.getVrs_calc(idx-40) << "v_ref, omega_ref = " << m.v_ref << ", " << m.omega_ref << ", "
                  << "v1, v2 = " << m.v1 << ", " << m.v2 << "time = " << m.t << "v, w = " << m.v << m.w
                  << "vl, vr (in miscdata) = " << m.vl << m.vr << "vl_ref, vr_ref = " << m.vl_ref << m.vr_ref;
     }

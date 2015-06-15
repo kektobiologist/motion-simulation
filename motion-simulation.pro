@@ -100,7 +100,6 @@ HEADERS  += dialog.h \
     alglib/stdafx.h \
     controlpoint-optimization.hpp \
     drawable.h \
-    ballinterception.h \
     defender.hpp \
     tests.hpp \
     ballinterception.hpp \

@@ -154,30 +154,19 @@ vector<ProfileDatapoint> generateVelocityProfile(Spline &p, int numPoints, doubl
     double full = Integration::integrate(p, 0, 1);
     double vs = (vls+vrs)/2.;
     double ve = (vle+vre)/2.;
-    qDebug() << vs << " " << ve << endl;
+    qDebug() << "Starting ending vel:"<< vs << " " << ve << endl;
     //assert(vs >= 0 && ve >= 0);
-    vector<ProfileDatapoint> v(numPoints+1, ProfileDatapoint());
-    double dels = full/(numPoints);//full/(numPoints-1);
+    vector<ProfileDatapoint> v(numPoints, ProfileDatapoint());
+    double dels = full/(numPoints-1);
 
     Integration::refreshMatrix();
     Integration::computeInverseBezierMatrices(p);
     Integration::computeSplineApprox(p);
-
-    CubicSpline *cubicp = dynamic_cast<CubicSpline*>(&p);
-    double u_low = 1.;
-    double maxk = cubicp->maxk(&u_low);
     //Integration::computeBezierMatrices(p);
     for (int i = 0; i < v.size(); i++) {
-        double s = full/(numPoints)*(double)i;
+        double s = full/(numPoints-1)*(double)i;
         double u = Integration::getArcLengthParam(p, s, full);
         double k = p.k(u);
-        if(u > u_low){
-            v[i].v = min(vmax_isolated(maxk, 100), Constants::vsat);
-            v[i].u = u_low;
-            v[i].s = Integration::integrate(p, 0, u_low);
-            qDebug() << "\nyes, it should be only once with u as " << u_low << "and maxk as " << maxk;
-            i++;u_low = 2;
-        }
         //NOTE: hardcoding vsat here!!
         v[i].v = min(vmax_isolated(k, 100), Constants::vsat);
         v[i].u = u;
@@ -185,24 +174,24 @@ vector<ProfileDatapoint> generateVelocityProfile(Spline &p, int numPoints, doubl
     }
     // forward consistency
     v[0].v = vs;
-    for (int i = 1; i < numPoints+1; i++) {
+    for (int i = 1; i < numPoints; i++) {
         double vwold = v[i-1].v*v[i-1].v*p.k(v[i-1].u);
         v[i].v = min(v[i].v, trans_acc_limits(vwold, Constants::vwmax, v[i-1].v, Constants::atmax, dels).second);
     }
     // backward consistency
-    v[numPoints].v = ve;
-    for (int i = numPoints-1; i >= 0; i--) {
+    v[numPoints-1].v = ve;
+    for (int i = numPoints-2; i >= 0; i--) {
         double vwold = v[i+1].v*v[i+1].v*p.k(v[i+1].u);
         v[i].v = min(v[i].v, trans_acc_limits(vwold, Constants::vwmax, v[i+1].v, Constants::atmax, dels).second);
     }
     // set time to reach for each datapoint
     v[0].t = 0;
-    for (int i = 1; i < numPoints+1; i++) {
+    for (int i = 1; i < numPoints; i++) {
         v[i].t = v[i-1].t + 2*dels/(v[i].v+v[i-1].v);
     }
     // qDebug() << "profile:" ;
-    for (int i = 0; i< numPoints+1; i++) {
-        // qDebug() << v[i].u << v[i].t << v[i].s << v[i].v;
+    for (int i = 0; i< numPoints; i++) {
+       //  qDebug() << v[i].u << v[i].t << v[i].s << v[i].v;
     }
     return v;
 }
