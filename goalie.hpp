@@ -44,25 +44,17 @@ Pose execute(BeliefState *state, int botID)
   {
     return Pose(-HALF_FIELD_MAXX + GOAL_DEPTH + BOT_RADIUS*1.2, 0, -PI/2);
   }
-Vector2D<int> botDestination ;
-float ang1;
-   if(abs(state->ballVx)<10)
-       ang1 = 0;
-   else
-        ang1 = atan(state->ballVy/state->ballVx);
+  Vector2D<int> botDestination ;
    //in case of ball traveling directly from the oponent's half
-   botDestination.y = state->ballY - ((state->ballX) - (-HALF_FIELD_MAXX + DBOX_WIDTH + BOT_RADIUS*1.5))*tan(ang1) ; //tan(ang1)
-
+   botDestination.y = state->ballY - ((state->ballX) - (-HALF_FIELD_MAXX + DBOX_WIDTH + BOT_RADIUS*1.5))*tan(ang1) ;
    if(botDestination.y >=  OUR_GOAL_MAXY)
-       botDestination.y = OUR_GOAL_MAXY - 0.2*BOT_RADIUS;
+       botDestination.y = OUR_GOAL_MAXY - BOT_RADIUS;
    if(botDestination.y <= OUR_GOAL_MINY)
-       botDestination.y = OUR_GOAL_MINY + 0.2*BOT_RADIUS;
+       botDestination.y = OUR_GOAL_MINY + BOT_RADIUS;
    qDebug() << "bot dest y " << botDestination.y << endl;
-botDestination.x = (-HALF_FIELD_MAXX + GOAL_DEPTH+ 1.5*BOT_RADIUS); //+ 100;   //set your threshold ********
-// botDestination.y + =  oscillation()*BOT_RADIUS ;// set according to you decide to put oscillation at normal point********
+    botDestination.x = (-HALF_FIELD_MAXX + GOAL_DEPTH+ 1.5*BOT_RADIUS); //+ 100;   //set your threshold ********
 
-return Pose(-HALF_FIELD_MAXX + GOAL_DEPTH + BOT_RADIUS*1.5, botDestination.y, -PI/2);
-
+    return Pose(botDestination.x, botDestination.y, -PI/2);
 }
 };// class TGoalKeepingOurside
 #endif // GOALIE_H
