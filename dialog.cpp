@@ -197,8 +197,10 @@ void Dialog::onAlgoTimeout()
     BeliefState bs = *beliefStateSh;
     bsMutex->unlock();
     Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
-    Pose end = ui->firaRenderArea->getEndPose();
+    //Pose end = ui->firaRenderArea->getEndPose();
 
+    TGoalie tg;
+    Pose end = tg.execute(&bs, BOT_ID_TESTING);
     if(!direction){
         start = Pose(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]-PI);
     }
@@ -261,9 +263,6 @@ void Dialog::onAlgoTimeout()
     for (int i = 0; i < 12; i++)
         buf[i] = 0;
     buf[0] = 126; // doesnt matter
-    // NOTE: testing, remove these 2 lines pls
-//    vl = 80;
-//    vr = 80;
 
     if (direction) {
         buf[BOT_ID_TESTING*2 + 1] = vl;
@@ -279,7 +278,7 @@ void Dialog::onAlgoTimeout()
     sendDataMutex->lock();
     comm.Write(buf, 12);
     sendDataMutex->unlock();
-    if (counter > 50 && flag==0) {
+    if (counter > 40 && flag==0) {
         qDebug() << "Changing trajectoiry ";
         counter=0;flag=1;
         on_traj2Button_clicked();
@@ -504,11 +503,13 @@ void Dialog::on_traj2Button_clicked()
     using namespace TrajectoryGenerators;
     Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
     Pose start2(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]-PI);
-    Pose end = ui->firaRenderArea->getEndPose();
+    //Pose end = ui->firaRenderArea->getEndPose();
+    TGoalie tg;
+    Pose end = tg.execute(&bs, BOT_ID_TESTING);
     if (traj)
         delete traj;
 //    traj = quinticBezierSplineGenerator(start, end, 0, 0, 0, 0);
-    //direction = isFrontDirected(start, end) ;
+    direction = isFrontDirected(start, end) ;
     if(direction){
         if(!flag)
             traj = cubic(start, end, 0, 0, 0, 0);

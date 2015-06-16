@@ -33,8 +33,6 @@ inline bool isActiveTactic(void) const
     return false;
 }
 
-
-
 Pose execute(BeliefState *state, int botID)
 {
  Vector2D<int> homePos(state->homeX[botID], state->homeY[botID]);
@@ -42,9 +40,14 @@ Pose execute(BeliefState *state, int botID)
   float dist = Vector2D<int>::dist(ballPos, homePos);
   if (!isGoalKeeperInPosition(state, botID) && dist > 0.5 * BOT_BALL_THRESH)
   {
-    return Pose(-HALF_FIELD_MAXX + GOAL_DEPTH + BOT_RADIUS*1.2, 0, -PI/2);
+    return Pose(-HALF_FIELD_MAXX + GOAL_DEPTH + BOT_RADIUS*1.5, 0, PI/2);
   }
   Vector2D<int> botDestination ;
+  float ang1;
+     if(abs(state->ballVx)<10)
+         ang1 = 0;
+     else
+          ang1 = atan(state->ballVy/state->ballVx);
    //in case of ball traveling directly from the oponent's half
    botDestination.y = state->ballY - ((state->ballX) - (-HALF_FIELD_MAXX + DBOX_WIDTH + BOT_RADIUS*1.5))*tan(ang1) ;
    if(botDestination.y >=  OUR_GOAL_MAXY)
@@ -54,7 +57,7 @@ Pose execute(BeliefState *state, int botID)
    qDebug() << "bot dest y " << botDestination.y << endl;
     botDestination.x = (-HALF_FIELD_MAXX + GOAL_DEPTH+ 1.5*BOT_RADIUS); //+ 100;   //set your threshold ********
 
-    return Pose(botDestination.x, botDestination.y, -PI/2);
+    return Pose(botDestination.x, botDestination.y, PI/2);
 }
 };// class TGoalKeepingOurside
 #endif // GOALIE_H

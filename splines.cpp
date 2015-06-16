@@ -141,7 +141,6 @@ double QuinticBezierSpline::ydd(double u) const
 }
 
 
-
 CubicSpline::CubicSpline(Pose start, Pose end, std::vector<Pose> midPoints)
 {
     double d = sqrt((start.x() - end.x())*(start.x() - end.x()) + (start.y() - end.y())*(start.y() - end.y()));
