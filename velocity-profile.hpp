@@ -46,6 +46,8 @@ struct ProfileDatapoint {
 // p: spline
 // numPoints: number of planning points to set velocity for
 vector<ProfileDatapoint> generateVelocityProfile(Spline &p, int numPoints, double vls, double vrs, double vle, double vre);
+
+vector<ProfileDatapoint> getVelocityProfileGoalie(Spline &p, int numPoints, double vls, double vrs, double vle, double vre);
 }
 #endif // VELOCITYPROFILE_HPP
 

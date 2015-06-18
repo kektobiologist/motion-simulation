@@ -245,3 +245,101 @@ double SplineTrajectory::totalTime() const
 vector<VelocityProfiling::ProfileDatapoint> SplineTrajectory::getProfile() {
     return profile;
 }
+
+StraightLine::StraightLine(Pose start, Pose end){
+    assert(abs(start.x() - end.x()) < 10);
+    cx = (start.x()+end.x())/2.0;
+    b = start.y();
+    a = end.y()- start.y();
+}
+
+LineTrajectory::LineTrajectory(Spline *p, double vls, double vrs, double vle, double vre):p(p)
+{
+    profile = VelocityProfiling::getVelocityProfileGoalie(*p, 1000, vls, vrs, vle, vre);
+    full = abs(p->y(1) - p->y(0));
+}
+
+LineTrajectory::~LineTrajectory(){
+    if(p)
+        delete p;
+}
+
+void LineTrajectory::calculateAll(double t) const
+{
+    assert(t >= 0);
+    tPrev = t;
+    vector<ProfileDatapoint>::const_iterator upper = upper_bound(profile.begin(), profile.end(), ProfileDatapoint(0.,0.,0.,t));
+    double dt, s, u, at;
+    int i;
+    if (upper == profile.end()) {
+        i = profile.size()-1;
+        // handle
+        dt = t-profile[i].t;
+        s = profile[i].s + profile[i].v*dt;
+        u = 1.0*s/full;
+        at = 0;
+    } else {
+        assert(upper != profile.begin());// upper can't possibly be v.begin() since v[0].t = 0.. ?
+        i = upper-profile.begin()-1;
+        // we are now in the interval between i and i+1
+        at = (profile[i+1].v-profile[i].v)/(profile[i+1].t-profile[i].t);
+        dt = t - profile[i].t;
+        assert(dt>=0);
+        s = 0.5*at*dt*dt+profile[i].v*dt+profile[i].s;
+        assert(s <= full);
+        // now find u
+        u = 1.0*s/full;
+    }
+    x_ = p->x(u);
+    y_ = p->y(u);
+    theta_ = atan2(p->yd(u), p->xd(u));
+    v_ = profile[i].v + dt*at;
+    thetad_ = 0;
+//    qDebug() << "computed: t = " << t << "u = " << u << ", x = " << x_ << "y = " << y_
+    //             << ", theta=" << theta_ << "thetad = " << thetad_ << "v = " << v_;
+}
+
+double LineTrajectory::x(double t) const
+{
+    if (t-tPrev >1e-8 || t-tPrev <-1e-8) {
+        calculateAll(t);
+    }
+    return x_;
+}
+
+double LineTrajectory::y(double t) const
+{
+    if (t-tPrev >1e-8 || t-tPrev <-1e-8) {
+        calculateAll(t);
+    }
+    return y_;
+}
+
+double LineTrajectory::theta(double t) const
+{
+    if (t-tPrev >1e-8 || t-tPrev <-1e-8) {
+        calculateAll(t);
+    }
+    return theta_;
+}
+
+double LineTrajectory::thetad(double t) const
+{
+    return 0;
+}
+
+double LineTrajectory::v(double t) const
+{
+    if (t-tPrev >1e-8 || t-tPrev <-1e-8) {
+        calculateAll(t);
+    }
+    return v_;
+}
+
+double LineTrajectory::totalTime() const
+{
+    return profile[profile.size()-1].t;
+}
+vector<VelocityProfiling::ProfileDatapoint> LineTrajectory::getProfile() {
+    return profile;
+}

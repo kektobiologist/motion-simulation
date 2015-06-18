@@ -68,6 +68,13 @@ SplineTrajectory *cubic(Pose start, Pose end, double vls, double vrs, double vle
     return st;
 }
 
+LineTrajectory *sline(Pose start, Pose end, double vls, double vrs, double vle, double vre){
+
+    StraightLine *p = new StraightLine(start, end);
+    LineTrajectory *stline = new LineTrajectory(p, vls, vrs, vle, vre);
+    return stline;
+}
+
 Trajectory *cubic2CP(Pose start, Pose end, double vls, double vrs, double vle, double vre) {
 
 //    Pose cp1((start.x()*2+end.x())*1/3., (start.y()*2+end.y())*1/3., 0);
