@@ -38,10 +38,6 @@ Pose execute(BeliefState *state, int botID)
  Vector2D<int> homePos(state->homeX[botID], state->homeY[botID]);
  Vector2D<int> ballPos(state->ballX, state->ballY);
   float dist = Vector2D<int>::dist(ballPos, homePos);
-  if (!isGoalKeeperInPosition(state, botID) && dist > 0.5 * BOT_BALL_THRESH)
-  {
-    return Pose(-HALF_FIELD_MAXX + GOAL_DEPTH + BOT_RADIUS*1.5, 0, PI/2);
-  }
   Vector2D<int> botDestination ;
   float ang1;
      if(abs(state->ballVx)<10)
@@ -54,6 +50,12 @@ Pose execute(BeliefState *state, int botID)
        botDestination.y = OUR_GOAL_MAXY - BOT_RADIUS;
    if(botDestination.y <= OUR_GOAL_MINY)
        botDestination.y = OUR_GOAL_MINY + BOT_RADIUS;
+
+   if (!isGoalKeeperInPosition(state, botID) && dist > 0.5 * BOT_BALL_THRESH)
+   {
+     return Pose(-HALF_FIELD_MAXX + GOAL_DEPTH + BOT_RADIUS*1.5, botDestination.y, PI/2);
+   }
+
    qDebug() << "bot dest y " << botDestination.y << endl;
     botDestination.x = (-HALF_FIELD_MAXX + GOAL_DEPTH+ 1.5*BOT_RADIUS); //+ 100;   //set your threshold ********
 

@@ -197,10 +197,10 @@ void Dialog::onAlgoTimeout()
     BeliefState bs = *beliefStateSh;
     bsMutex->unlock();
     Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
-    //Pose end = ui->firaRenderArea->getEndPose();
-
-    TGoalie tg;
-    Pose end = tg.execute(&bs, BOT_ID_TESTING);
+    Pose end = ui->firaRenderArea->getEndPose();
+    qDebug() << "vlvr " << bs.homeVl[BOT_ID_TESTING] << " " << bs.homeVr[BOT_ID_TESTING] << endl;
+    //TGoalie tg;
+    //Pose end = tg.execute(&bs, BOT_ID_TESTING);
     if(!direction){
         start = Pose(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]-PI);
     }
@@ -278,12 +278,21 @@ void Dialog::onAlgoTimeout()
     sendDataMutex->lock();
     comm.Write(buf, 12);
     sendDataMutex->unlock();
-    if (counter > 40 && flag==0) {
+
+
+    if (counter > 40 && USING_INTERCEPTION == true) {
+        qDebug() << "Changing trajectoiry ";
+        counter=0;
+        on_interceptionButton_clicked();
+    }
+
+    else if (counter > 40 && flag == 0) {
         qDebug() << "Changing trajectoiry ";
         counter=0;flag=1;
         on_traj2Button_clicked();
         on_startSending_clicked();
     }
+
    // else  // store data in sysData
         sysData.push_back(Logging::populateSystemData(counter%100, vl, vr, bs, BOT_ID_TESTING));
 }
@@ -330,7 +339,7 @@ void Dialog::on_startSending_clicked()
 {
     FType fun = functions[ui->simCombo->currentIndex()].second;
     // NOTE: using the trajectory controller for actual bot!
-    //algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
+    algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
    // algoController = new ControllerWrapper(fun, 0, 0, PREDICTION_PACKET_DELAY);
     while(!predictedPoseQ.empty())
         predictedPoseQ.pop_front();
@@ -503,9 +512,9 @@ void Dialog::on_traj2Button_clicked()
     using namespace TrajectoryGenerators;
     Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
     Pose start2(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]-PI);
-    //Pose end = ui->firaRenderArea->getEndPose();
-    TGoalie tg;
-    Pose end = tg.execute(&bs, BOT_ID_TESTING);
+    Pose end = ui->firaRenderArea->getEndPose();
+ //   TGoalie tg;
+ //   Pose end = tg.execute(&bs, BOT_ID_TESTING);
     if (traj)
         delete traj;
 //    traj = quinticBezierSplineGenerator(start, end, 0, 0, 0, 0);
@@ -622,6 +631,7 @@ void Dialog::on_trajSimButton_clicked()
 
 void Dialog::on_interceptionButton_clicked()
 {
+    direction = true;
     bsMutex->lock();
     BeliefState bs = *beliefStateSh;
     bsMutex->unlock();
@@ -629,27 +639,29 @@ void Dialog::on_interceptionButton_clicked()
     using namespace TrajectoryGenerators;
     double vx = 0., vy = 0.;
 
-    if(traj){
+    if(traj)
+        delete traj;
+//    if(traj){
 
-        SplineTrajectory *bi_traj = dynamic_cast<SplineTrajectory*>(traj);
-        vector<VelocityProfiling::ProfileDatapoint> profile = bi_traj->getProfile();
+//        SplineTrajectory *bi_traj = dynamic_cast<SplineTrajectory*>(traj);
+//        vector<VelocityProfiling::ProfileDatapoint> profile = bi_traj->getProfile();
 
-        double t = 70 * 0.016;
-        int x = 0;
-        for (int i = 0; i < 1000; i++) {
-            if (profile[i].t > t) {
-                x = i;
-                break;
-            }
-        }
-        for (int i = 0; i < 1; i++) {
-            vx += profile[x+i].v * cos(bs.homeTheta[BOT_ID_TESTING]);
-            vy += profile[x+i].v * sin(bs.homeTheta[BOT_ID_TESTING]); //try using PredictedPoseQ for theta.
-        }
+//        double t = 70 * 0.016;
+//        int x = 0;
+//        for (int i = 0; i < 1000; i++) {
+//            if (profile[i].t > t) {
+//                x = i;
+//                break;
+//            }
+//        }
+//        for (int i = 0; i < 1; i++) {
+//            vx += profile[x+i].v * cos(bs.homeTheta[BOT_ID_TESTING]);
+//            vy += profile[x+i].v * sin(bs.homeTheta[BOT_ID_TESTING]); //try using PredictedPoseQ for theta.
+//        }
 
-        qDebug() << "Changing SPline Pos";
-        //delete traj;
-    }
+//        qDebug() << "Changing SPline Pos";
+//        //delete traj;
+//    }
     vx = (bs.homeVl[BOT_ID_TESTING] + bs.homeVr[BOT_ID_TESTING]) * cos(bs.homeTheta[BOT_ID_TESTING]) / 2;
     vy = (bs.homeVl[BOT_ID_TESTING] + bs.homeVr[BOT_ID_TESTING]) * sin(bs.homeTheta[BOT_ID_TESTING]) / 2;
     qDebug() << bs.ballVx << "Dasda " << bs.ballVy << endl;
