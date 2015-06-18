@@ -200,7 +200,8 @@ void Dialog::onAlgoTimeout()
     //Pose end = ui->firaRenderArea->getEndPose();
 
     TGoalie tg;
-    Pose end = tg.execute(&bs, BOT_ID_TESTING);
+    //Pose end = tg.execute(&bs, BOT_ID_TESTING);
+    Pose end(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING] + 200, bs.homeTheta[BOT_ID_TESTING]);
     if(!direction){
         start = Pose(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]-PI);
     }
@@ -505,22 +506,23 @@ void Dialog::on_traj2Button_clicked()
     Pose start2(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]-PI);
     //Pose end = ui->firaRenderArea->getEndPose();
     TGoalie tg;
-    Pose end = tg.execute(&bs, BOT_ID_TESTING);
+    //Pose end = tg.execute(&bs, BOT_ID_TESTING);
+    Pose end(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING]+200, bs.homeTheta[BOT_ID_TESTING]);
     if (traj)
         delete traj;
 //    traj = quinticBezierSplineGenerator(start, end, 0, 0, 0, 0);
-    direction = isFrontDirected(start, end) ;
+    //direction = isFrontDirected(start, end) ;
     if(direction){
         if(!flag)
-            traj = cubic(start, end, 0, 0, 0, 0);
+            traj = sline(start, end, 0, 0, 0, 0);
         else
-            traj = cubic(start, end, bs.homeVl[BOT_ID_TESTING], bs.homeVr[BOT_ID_TESTING], 0, 0);
+            traj = sline(start, end, bs.homeVl[BOT_ID_TESTING], bs.homeVr[BOT_ID_TESTING], 0, 0);
     }
     else {
         if(!flag)
-            traj = cubic(start2, end, 0, 0, 0, 0);
+            traj = sline(start2, end, 0, 0, 0, 0);
         else
-            traj = cubic(start2, end, bs.homeVl[BOT_ID_TESTING], bs.homeVr[BOT_ID_TESTING], 0, 0);
+            traj = sline(start2, end, bs.homeVl[BOT_ID_TESTING], bs.homeVr[BOT_ID_TESTING], 0, 0);
     }
     flag=0;
     ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
@@ -585,9 +587,9 @@ void Dialog::on_splineChangeBtn_clicked() {
         delete traj;
 
     if (!idx)
-        traj = cubic(start, end, 0, 0, 70, 70);
+        traj = sline(start, end, 0, 0, 70, 70);
     else
-        traj = cubic(start, end, sim.getVls(idx), sim.getVrs(idx), 70, 70);
+        traj = sline(start, end, sim.getVls(idx), sim.getVrs(idx), 70, 70);
 
     ui->renderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)

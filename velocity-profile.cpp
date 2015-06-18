@@ -196,6 +196,48 @@ vector<ProfileDatapoint> generateVelocityProfile(Spline &p, int numPoints, doubl
     return v;
 }
 
+vector<ProfileDatapoint> getVelocityProfileGoalie(Spline &p, int numPoints, double vls, double vrs, double vle, double vre){
+
+    // all calculations are done AFTER converting strategy coordinates to cm!
+    assert(numPoints >= 2);
+    double full = abs(p.y(1) - p.y(0));
+    double vs = (vls+vrs)/2.;
+    double ve = (vle+vre)/2.;
+    qDebug() << "Starting ending vel:"<< vs << " " << ve << endl;
+    //assert(vs >= 0 && ve >= 0);
+    vector<ProfileDatapoint> v(numPoints, ProfileDatapoint());
+    double dels = full/(numPoints-1);
+
+    for (int i = 0; i < v.size(); i++) {
+        double s = full/(numPoints-1)*(double)i;
+        double u = (double)i/(numPoints-1);
+        //NOTE: hardcoding vsat here!!
+        v[i].v = Constants::vsat;
+        v[i].u = u;
+        v[i].s = s;
+    }
+    // forward consistency
+    v[0].v = vs;
+    for (int i = 1; i < numPoints; i++) {
+        v[i].v = min(v[i].v, sqrt(v[i-1].v*v[i-1].v + 2*Constants::atmax*dels));
+    }
+    // backward consistency
+    v[numPoints-1].v = ve;
+    for (int i = numPoints-2; i >= 0; i--) {
+        v[i].v = min(v[i].v, sqrt(v[i+1].v*v[i+1].v + 2*Constants::atmax*dels));
+    }
+    // set time to reach for each datapoint
+    v[0].t = 0;
+    for (int i = 1; i < numPoints; i++) {
+        v[i].t = v[i-1].t + 2*dels/(v[i].v+v[i-1].v);
+    }
+    // qDebug() << "profile:" ;
+    for (int i = 0; i< numPoints; i++) {
+       //  qDebug() << v[i].u << v[i].t << v[i].s << v[i].v;
+    }
+    return v;
+}
+
 ProfileDatapoint::ProfileDatapoint(): u(0), v(0), s(0), t(0)
 {
 

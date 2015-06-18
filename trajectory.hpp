@@ -5,6 +5,7 @@
 #include "pose.h"
 #include <sys/time.h>
 #include "velocity-profile.hpp"
+
 using namespace std;
 // should take time as seconds.
 // NOTE: FOR SOME REASON, x, y, theta, thetad, v have to be in STRATEGY COORDINATES. I'll fix this later.
@@ -70,7 +71,6 @@ public:
 };
 
 
-
 // NOTE: x(t) and y(t) MUST be in cm!!!!
 // NOTE: always create SplineTrajectory object with a dynamically allocated Spline.
 // This class takes ownership of the passed Spline and is responsible for its destruction.
@@ -85,6 +85,46 @@ protected:
 public:
     ~SplineTrajectory();
     SplineTrajectory(Spline *p, double vls, double vrs, double vle, double vre);
+    SplineTrajectory(){};//dummy
+    virtual double x(double t) const;
+    virtual double y(double t) const;
+    virtual double theta(double t) const;
+    virtual double thetad(double t) const;
+    virtual double v(double t) const;
+    virtual double totalTime() const;
+    vector<VelocityProfiling::ProfileDatapoint> getProfile();
+};
+
+class StraightLine: public Spline {
+protected:
+    //currently, only for vertical lines
+    // y = au + b, x=cx(constant)
+    double a;
+    double b;
+    double cx;
+public:
+  StraightLine(Pose start, Pose end);
+  virtual double x(double u) const{return cx;}
+  virtual double y(double u) const{return a*u + b;}
+  virtual double xd(double u) const{return 0;}
+  virtual double yd(double u) const{return a;}
+  virtual double xdd(double u) const{return 0;}
+  virtual double ydd(double u) const{return 0;}
+  virtual double xddd(double u) const{return 0;}
+  virtual double yddd(double u) const{return 0;}
+};
+
+class LineTrajectory: public Trajectory {
+protected:
+    Spline *p;
+    vector<VelocityProfiling::ProfileDatapoint> profile;
+    double full;
+    mutable double tPrev;  // so that multiple calculations are not done when x(t), y(t), theta(t) etc. called with same t.
+    mutable double x_, y_, theta_, thetad_, v_; // these are returned, but calculated only in calculateAll(t);
+    void calculateAll(double t) const;
+public:
+    LineTrajectory(Spline *p, double vls, double vrs, double vle, double vre);
+    ~LineTrajectory();
     virtual double x(double t) const;
     virtual double y(double t) const;
     virtual double theta(double t) const;
