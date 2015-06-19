@@ -102,12 +102,12 @@ Dialog::~Dialog()
 }
 
 bool Dialog::isFrontDirected(Pose botPos, Pose endPos) {
-    int r = 10;
     double cosTheta = cos(botPos.theta());
     double sinTheta = sin(botPos.theta());
-    double testx = botPos.x() + r * cosTheta;
-    double testy = botPos.y() + r * sinTheta;
-    double v1 = testx / tan(botPos.theta()) + testy - botPos.x() / tan(botPos.theta()) - botPos.y();
+    double v1;
+    if(normalizeAngle(botPos.theta())==0)v1 = 0.1;
+    if(normalizeAngle(botPos.theta())==PI)v1 = -0.1;
+    else v1 = 1.0/sinTheta;
     double v2 = endPos.x() / tan(botPos.theta()) + endPos.y() - botPos.x() / tan(botPos.theta()) - botPos.y();
     return ((v1 * v2) >= 0) ? true : false;
 }
@@ -191,23 +191,29 @@ void Dialog::onTimeout()
     ui->horizontalSlider->setValue(idx);
 }
 
+QString outputFilename = "/home/robocup/Desktop/vlvrlog.txt";
+QFile outputFile(outputFilename);
+
 void Dialog::onAlgoTimeout()
 {
     bsMutex->lock();
     BeliefState bs = *beliefStateSh;
     bsMutex->unlock();
-    Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
+    int goalx = -HALF_FIELD_MAXX + GOAL_DEPTH + 1.5*BOT_RADIUS;
+    Pose start(goalx, bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);//try with PI/2
     //Pose end = ui->firaRenderArea->getEndPose();
-
-    TGoalie tg;
-    //Pose end = tg.execute(&bs, BOT_ID_TESTING);
-    Pose end(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING] + 200, bs.homeTheta[BOT_ID_TESTING]);
-    if(!direction){
-        start = Pose(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]-PI);
-    }
 
     Vector2D<double> ballPos(bs.ballX, bs.ballY);
     double dist = BallInterception::getBotBallDist(start, ballPos);
+    TGoalie tg;
+    Pose end = tg.execute(&bs, BOT_ID_TESTING);
+    //Pose end(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING] + 1000, bs.homeTheta[BOT_ID_TESTING]);
+//    if(dist > 300)
+//        direction = isFrontDirected(start, end) ;
+//    if(!direction){
+//            start = Pose(goalx, bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]-PI);
+//    }
+
     //TDefend tdef;
     //Pose end = tdef.execute(&bs, BOT_ID_TESTING);
     int vl, vr;
@@ -272,6 +278,10 @@ void Dialog::onAlgoTimeout()
         buf[BOT_ID_TESTING*2 + 1] = -vr;
         buf[BOT_ID_TESTING*2 + 2] = -vl;
     }
+//    if(dist < 500){
+//        buf[BOT_ID_TESTING] = 0;
+//        buf[BOT_ID_TESTING] = 0;
+//    }
     getVel.x = vl;
     getVel.y = vr;
     buf[11] = (++counter)%100;
@@ -280,19 +290,16 @@ void Dialog::onAlgoTimeout()
     comm.Write(buf, 12);
     sendDataMutex->unlock();
 
-
-    if (counter > 40 && USING_INTERCEPTION == true) {
-        qDebug() << "Changing trajectoiry ";
-        counter=0;
-        on_interceptionButton_clicked();
-    }
-
-    else if (counter > 40 && flag == 0) {
+    if (counter > 25 && flag == 0) {
         qDebug() << "Changing trajectoiry ";
         counter=0;flag=1;
         on_traj2Button_clicked();
         on_startSending_clicked();
     }
+
+    QTextStream outStream(&outputFile);
+    outputFile.open(QIODevice::Append);
+    outStream<<"\n" << "Vl,Vr,Counter,Direction - "<<vl << " " << vr << " " << counter << " " << direction << " " << start.theta();
 
    // else  // store data in sysData
         sysData.push_back(Logging::populateSystemData(counter%100, vl, vr, bs, BOT_ID_TESTING));
@@ -340,7 +347,7 @@ void Dialog::on_startSending_clicked()
 {
     FType fun = functions[ui->simCombo->currentIndex()].second;
     // NOTE: using the trajectory controller for actual bot!
-    algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
+    //algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
    // algoController = new ControllerWrapper(fun, 0, 0, PREDICTION_PACKET_DELAY);
     while(!predictedPoseQ.empty())
         predictedPoseQ.pop_front();
@@ -511,29 +518,24 @@ void Dialog::on_traj2Button_clicked()
     BeliefState bs = *beliefStateSh;
     bsMutex->unlock();
     using namespace TrajectoryGenerators;
-    Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
-    Pose start2(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]-PI);
+    int goalx = -HALF_FIELD_MAXX + GOAL_DEPTH + 1.5*BOT_RADIUS;
+    Pose start(goalx, bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
     //Pose end = ui->firaRenderArea->getEndPose();
     TGoalie tg;
-    //Pose end = tg.execute(&bs, BOT_ID_TESTING);
-    Pose end(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING]+200, bs.homeTheta[BOT_ID_TESTING]);
+    Pose end = tg.execute(&bs, BOT_ID_TESTING);
+    //Pose end(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING]+1000, bs.homeTheta[BOT_ID_TESTING]);
     if (traj)
         delete traj;
 //    traj = quinticBezierSplineGenerator(start, end, 0, 0, 0, 0);
-    //direction = isFrontDirected(start, end) ;
-    if(direction){
+    direction = isFrontDirected(start, end) ;
+
         if(!flag)
             traj = sline(start, end, 0, 0, 0, 0);
         else
             traj = sline(start, end, bs.homeVl[BOT_ID_TESTING], bs.homeVr[BOT_ID_TESTING], 0, 0);
-    }
-    else {
-        if(!flag)
-            traj = sline(start2, end, 0, 0, 0, 0);
-        else
-            traj = sline(start2, end, bs.homeVl[BOT_ID_TESTING], bs.homeVr[BOT_ID_TESTING], 0, 0);
-    }
+
     flag=0;
+    qDebug() << "Making a new trajectory\n";
     ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)
         ui->trajSimButton->setEnabled(true);

@@ -203,7 +203,7 @@ vector<ProfileDatapoint> getVelocityProfileGoalie(Spline &p, int numPoints, doub
     double full = abs(p.y(1) - p.y(0));
     double vs = (vls+vrs)/2.;
     double ve = (vle+vre)/2.;
-    qDebug() << "Starting ending vel:"<< vs << " " << ve << endl;
+    qDebug() << "Starting ending for goalie vel:"<< vs << " " << ve << endl;
     //assert(vs >= 0 && ve >= 0);
     vector<ProfileDatapoint> v(numPoints, ProfileDatapoint());
     double dels = full/(numPoints-1);

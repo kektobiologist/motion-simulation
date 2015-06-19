@@ -247,16 +247,18 @@ vector<VelocityProfiling::ProfileDatapoint> SplineTrajectory::getProfile() {
 }
 
 StraightLine::StraightLine(Pose start, Pose end){
-    assert(abs(start.x() - end.x()) < 10);
-    cx = (start.x()+end.x())/2.0;
-    b = start.y();
-    a = end.y()- start.y();
+    //assert(abs(start.x() - end.x()) < 10);
+    cx = start.x()/fieldXConvert;
+    b = start.y()/fieldYConvert;
+    a = (end.y()- start.y())/fieldYConvert;
+    qDebug() << "Values of a,b,cx " << a << " " << b << " " << cx << "\n";
 }
 
 LineTrajectory::LineTrajectory(Spline *p, double vls, double vrs, double vle, double vre):p(p)
 {
     profile = VelocityProfiling::getVelocityProfileGoalie(*p, 1000, vls, vrs, vle, vre);
     full = abs(p->y(1) - p->y(0));
+    qDebug() << full << " Returning from velocity profiling";
 }
 
 LineTrajectory::~LineTrajectory(){

@@ -133,6 +133,5 @@ public:
     virtual double totalTime() const;
     vector<VelocityProfiling::ProfileDatapoint> getProfile();
 };
-
 #endif // TRAJECTORY_HPP
 

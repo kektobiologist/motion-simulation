@@ -72,6 +72,7 @@ LineTrajectory *sline(Pose start, Pose end, double vls, double vrs, double vle, 
 
     StraightLine *p = new StraightLine(start, end);
     LineTrajectory *stline = new LineTrajectory(p, vls, vrs, vle, vre);
+    qDebug() << "Returning stline variable!";
     return stline;
 }
 

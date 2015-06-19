@@ -45,9 +45,10 @@ QPainterPath getTrajectoryPath(FType func, Pose s, int vl_s, int vr_s, Pose e, i
 }
 QPainterPath getTrajectoryPath(const Trajectory& traj, double timespanMs, double timeLCMs) {
     QPainterPath p;
-    qDebug() << traj.x(0);
+    qDebug() << "Printing the x and y coordinates: \n" << traj.x(0)*fieldXConvert << " " << traj.y(0)*fieldXConvert;
     p.moveTo(traj.x(0)*fieldXConvert, traj.y(0)*fieldXConvert);
     for (int i = 1; i*timeLCMs < timespanMs; i++) {
+        //qDebug() << traj.x(i*timeLCMs*0.001)*fieldXConvert << " " << traj.y(i*timeLCMs*0.001)*fieldXConvert;
         p.lineTo(traj.x(i*timeLCMs*0.001)*fieldXConvert, traj.y(i*timeLCMs*0.001)*fieldXConvert);
     }
     return p;

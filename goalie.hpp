@@ -51,15 +51,17 @@ Pose execute(BeliefState *state, int botID)
    if(botDestination.y <= OUR_GOAL_MINY)
        botDestination.y = OUR_GOAL_MINY + BOT_RADIUS;
 
-   if (!isGoalKeeperInPosition(state, botID) && dist > 0.5 * BOT_BALL_THRESH)
-   {
-     return Pose(-HALF_FIELD_MAXX + GOAL_DEPTH + BOT_RADIUS*1.5, botDestination.y, PI/2);
-   }
+//   if (!isGoalKeeperInPosition(state, botID) && dist > 0.5 * BOT_BALL_THRESH)
+//   {
+//     return Pose(-HALF_FIELD_MAXX + GOAL_DEPTH + BOT_RADIUS*1.5, botDestination.y, -PI/2);
+//   }
 
    qDebug() << "bot dest y " << botDestination.y << endl;
-    botDestination.x = (-HALF_FIELD_MAXX + GOAL_DEPTH+ 1.5*BOT_RADIUS); //+ 100;   //set your threshold ********
+    //botDestination.x = (-HALF_FIELD_MAXX + GOAL_DEPTH+ 1.5*BOT_RADIUS); //+ 100;   //set your threshold ********
+    botDestination.x = homePos.x;
 
-    return Pose(botDestination.x, botDestination.y, PI/2);
+
+    return Pose(-HALF_FIELD_MAXX + GOAL_DEPTH + BOT_RADIUS*1.5, ballPos.y, -PI/2);
 }
 };// class TGoalKeepingOurside
 #endif // GOALIE_H
