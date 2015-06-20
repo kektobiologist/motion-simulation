@@ -148,7 +148,6 @@ vector<Interval> rot_acc_limits(double vold, double kold, double k, double dels,
 
 vector<ProfileDatapoint> generateVelocityProfile(Spline &p, int numPoints, double vls, double vrs, double vle, double vre)
 {
-
     // all calculations are done AFTER converting strategy coordinates to cm!
     assert(numPoints >= 2);
     double full = Integration::integrate(p, 0, 1);
@@ -168,7 +167,7 @@ vector<ProfileDatapoint> generateVelocityProfile(Spline &p, int numPoints, doubl
         double u = Integration::getArcLengthParam(p, s, full);
         double k = p.k(u);
         //NOTE: hardcoding vsat here!!
-        v[i].v = min(vmax_isolated(k, 100), Constants::vsat);
+        v[i].v = min(vmax_isolated(k, 130), Constants::vsat);//100
         v[i].u = u;
         v[i].s = s;
     }

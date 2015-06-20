@@ -9,6 +9,14 @@
 #include <queue>
 #include <utility>
 #include <algorithm>
+#include <iostream>
+#include <stdio.h>
+#include "opencv2/video/tracking.hpp"
+#include <opencv2/highgui/highgui.hpp>
+#include <fstream>
+
+using namespace cv;
+using namespace std;
 
 using namespace std;
 class VisionWorker : public QObject
@@ -23,6 +31,12 @@ public slots:
     void onEntry();
     void onExit();
 private:
+    ifstream myfile;
+    ofstream writefile;
+    //double deltaT = 0.016, omega_w =8, omega_u = 3.1623;
+    KalmanFilter KF;
+    Mat_<float> measurement;
+
     int detectionCount;
     static const int maxDetectionCount = 10; // after every these many detections, everything will be set as not detected
     QThread *myThread;

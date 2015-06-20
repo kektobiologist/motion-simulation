@@ -29,7 +29,7 @@ using namespace std;
 // as well as the algoController delay
 static const int PREDICTION_PACKET_DELAY = 4;
 // bot used for testing (non-sim)
-static const int BOT_ID_TESTING = 2;
+static const int BOT_ID_TESTING = 4;
 static bool USING_INTERCEPTION = false;
 int flag = 0;
 
@@ -255,8 +255,8 @@ void Dialog::onAlgoTimeout()
 
     ui->firaRenderArea->predictedPose = predictedPoseQ.front();
     predictedPoseQ.pop_front();
-    assert(vl <= 120 && vl >= -120);
-    assert(vr <= 120 && vr >= -120);
+    assert(vl <= 180 && vl >= -180);
+    assert(vr <= 180 && vr >= -180);
     char buf[12];
     for (int i = 0; i < 12; i++)
         buf[i] = 0;
@@ -266,11 +266,11 @@ void Dialog::onAlgoTimeout()
 //    vr = 80;
 
     if (direction) {
-        buf[BOT_ID_TESTING*2 + 1] = vl;
-        buf[BOT_ID_TESTING*2 + 2] = vr;
+        buf[BOT_ID_TESTING*2 + 1] = vl/2;
+        buf[BOT_ID_TESTING*2 + 2] = vr/2;
     } else {
-        buf[BOT_ID_TESTING*2 + 1] = -vr;
-        buf[BOT_ID_TESTING*2 + 2] = -vl;
+        buf[BOT_ID_TESTING*2 + 1] = -vr/2;
+        buf[BOT_ID_TESTING*2 + 2] = -vl/2;
     }
     getVel.x = vl;
     getVel.y = vr;
@@ -278,14 +278,24 @@ void Dialog::onAlgoTimeout()
     qDebug() << "sending: " << vl << vr << counter%100 << ", packets sent = " << counter ;
     sendDataMutex->lock();
     comm.Write(buf, 12);
+//    for(int i=0;i<12;i++){
+//        comm.WriteByte(buf[i]);
+//        usleep(800);
+//    }
     sendDataMutex->unlock();
-    if (counter > 50 && flag==0) {
-        qDebug() << "Changing trajectoiry ";
-        counter=0;flag=1;
-        on_traj2Button_clicked();
-        on_startSending_clicked();
-    }
+//    if (counter > 50 && flag==0) {
+//        qDebug() << "Changing trajectoiry ";
+//        counter=0;flag=1;
+//        on_traj2Button_clicked();
+//        on_startSending_clicked();
+//    }
    // else  // store data in sysData
+
+       if (counter > 50 && USING_INTERCEPTION == true) {
+            qDebug() << "Changing trajectoiry ";
+            counter=0;flag=1;
+            on_interceptionButton_clicked();
+        }
         sysData.push_back(Logging::populateSystemData(counter%100, vl, vr, bs, BOT_ID_TESTING));
 }
 
@@ -356,6 +366,12 @@ void Dialog::on_stopSending_clicked()
     sendDataMutex->lock();
     usleep(timeLCMs * 1000);
     comm.Write(buf, 12);
+//    comm.WriteByte(126);
+//    usleep(1000);
+//    for(int i=1;i<12;i++){
+//        comm.WriteByte(0);
+//        usleep(1000);
+//    }
     sendDataMutex->unlock();
     // store data in sysData
     bsMutex->lock();
@@ -511,9 +527,9 @@ void Dialog::on_traj2Button_clicked()
     //direction = isFrontDirected(start, end) ;
     if(direction){
         if(!flag)
-            traj = cubic(start, end, 0, 0, 0, 0);
+            traj = cubic(start, end, 0, 0, 30, 30);
         else
-            traj = cubic(start, end, bs.homeVl[BOT_ID_TESTING], bs.homeVr[BOT_ID_TESTING], 0, 0);
+            traj = cubic(start, end, bs.homeVl[BOT_ID_TESTING], bs.homeVr[BOT_ID_TESTING], 30, 30);
     }
     else {
         if(!flag)
@@ -629,22 +645,22 @@ void Dialog::on_interceptionButton_clicked()
     double vx = 0., vy = 0.;
 
     if(traj){
+        delete traj;
+//        SplineTrajectory *bi_traj = dynamic_cast<SplineTrajectory*>(traj);
+//        vector<VelocityProfiling::ProfileDatapoint> profile = bi_traj->getProfile();
 
-        SplineTrajectory *bi_traj = dynamic_cast<SplineTrajectory*>(traj);
-        vector<VelocityProfiling::ProfileDatapoint> profile = bi_traj->getProfile();
-
-        double t = 70 * 0.016;
-        int x = 0;
-        for (int i = 0; i < 1000; i++) {
-            if (profile[i].t > t) {
-                x = i;
-                break;
-            }
-        }
-        for (int i = 0; i < 1; i++) {
-            vx += profile[x+i].v * cos(bs.homeTheta[BOT_ID_TESTING]);
-            vy += profile[x+i].v * sin(bs.homeTheta[BOT_ID_TESTING]); //try using PredictedPoseQ for theta.
-        }
+////        double t = 70 * 0.016;
+////        int x = 0;
+////        for (int i = 0; i < 1000; i++) {
+////            if (profile[i].t > t) {
+////                x = i;
+////                break;
+////            }
+////        }
+////        for (int i = 0; i < 1; i++) {
+////            vx += profile[x+i].v * cos(bs.homeTheta[BOT_ID_TESTING]);
+////            vy += profile[x+i].v * sin(bs.homeTheta[BOT_ID_TESTING]); //try using PredictedPoseQ for theta.
+////        }
 
         qDebug() << "Changing SPline Pos";
         //delete traj;

@@ -8,7 +8,7 @@
 #include <assert.h>
 using namespace std;
 // Constants required by generateControl, directly copied from most recent version of kgpkubs.
-const float MAX_BOT_LINEAR_VEL_CHANGE  = 4;
+const float MAX_BOT_LINEAR_VEL_CHANGE  = 4; // 4;
 // NOTE(arpit): changed for real bots. for sim make this 100.0
 const float MAX_BOT_SPEED              = 120.0;
 const float MIN_BOT_SPEED              = 10.0;
