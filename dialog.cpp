@@ -284,6 +284,7 @@ void Dialog::onAlgoTimeout()
 //    }
     sendDataMutex->unlock();
 
+
     if (counter > 20 && USING_INTERCEPTION == true) {
          qDebug() << "Changing trajectoiry ";
          counter=0;
