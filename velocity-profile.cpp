@@ -167,7 +167,7 @@ vector<ProfileDatapoint> generateVelocityProfile(Spline &p, int numPoints, doubl
         double u = Integration::getArcLengthParam(p, s, full);
         double k = p.k(u);
         //NOTE: hardcoding vsat here!!
-        v[i].v = min(vmax_isolated(k, 130), Constants::vsat);//100
+        v[i].v = min(vmax_isolated(k, 150), Constants::vsat);//100
         v[i].u = u;
         v[i].s = s;
     }

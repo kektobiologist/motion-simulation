@@ -31,12 +31,14 @@ public slots:
     void onEntry();
     void onExit();
 private:
+    double  omega_w, omega_u;
     ifstream myfile;
     ofstream writefile;
+    std::deque<float> velxq;
+    std::deque<float> velyq;
     //double deltaT = 0.016, omega_w =8, omega_u = 3.1623;
-    KalmanFilter KF;
-    Mat_<float> measurement;
-
+    KalmanFilter KF,KFx,KFy;
+    Mat_<float> measurement,measurementx,measurementy;
     int detectionCount;
     static const int maxDetectionCount = 10; // after every these many detections, everything will be set as not detected
     QThread *myThread;

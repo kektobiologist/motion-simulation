@@ -29,9 +29,10 @@ using namespace std;
 // as well as the algoController delay
 static const int PREDICTION_PACKET_DELAY = 4;
 // bot used for testing (non-sim)
-static const int BOT_ID_TESTING = 4;
+static const int BOT_ID_TESTING = 2;
 static bool USING_INTERCEPTION = false;
 int flag = 0;
+int flag2 = 0;
 
 RenderArea *gRenderArea = NULL;
 Dialog::Dialog(QWidget *parent) :
@@ -76,7 +77,7 @@ Dialog::Dialog(QWidget *parent) :
     connect(vw, SIGNAL(newData()), ui->firaRenderArea, SLOT(update()));
     // Removing this, i think it slows down everything.
 //    connect(vw, SIGNAL(newData()), this, SLOT(onNewData()));
-    algoTimer = new QTimer();
+    algoTimer = new QTimer();    cout << " flag " << flag << endl;
     connect(algoTimer, SIGNAL(timeout()), this, SLOT(onAlgoTimeout()));
     QTimer *printTimer = new QTimer();
     printTimer->setSingleShot(false);
@@ -95,7 +96,6 @@ Dialog::Dialog(QWidget *parent) :
         ballVels.push(Vector2D<double>(0, 0));
     }
 }
-
 Dialog::~Dialog()
 {
     delete ui;
@@ -283,7 +283,15 @@ void Dialog::onAlgoTimeout()
 //        usleep(800);
 //    }
     sendDataMutex->unlock();
-//    if (counter > 50 && flag==0) {
+
+    if (counter > 20 && USING_INTERCEPTION == true) {
+         qDebug() << "Changing trajectoiry ";
+         counter=0;
+         flag2 = 1;
+         on_interceptionButton_clicked();
+     }
+
+//    if (counter > 20 && flag==0) {
 //        qDebug() << "Changing trajectoiry ";
 //        counter=0;flag=1;
 //        on_traj2Button_clicked();
@@ -291,9 +299,10 @@ void Dialog::onAlgoTimeout()
 //    }
    // else  // store data in sysData
 
-       if (counter > 50 && USING_INTERCEPTION == true) {
+       if (counter > 20 && USING_INTERCEPTION == true) {
             qDebug() << "Changing trajectoiry ";
-            counter=0;flag=1;
+            counter=0;
+            flag2 = 1;
             on_interceptionButton_clicked();
         }
         sysData.push_back(Logging::populateSystemData(counter%100, vl, vr, bs, BOT_ID_TESTING));
@@ -521,21 +530,35 @@ void Dialog::on_traj2Button_clicked()
     Pose start(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
     Pose start2(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]-PI);
     Pose end = ui->firaRenderArea->getEndPose();
-    if (traj)
-        delete traj;
+
 //    traj = quinticBezierSplineGenerator(start, end, 0, 0, 0, 0);
     //direction = isFrontDirected(start, end) ;
+    if(!flag)
+        delete traj ;
     if(direction){
         if(!flag)
-            traj = cubic(start, end, 0, 0, 30, 30);
-        else
-            traj = cubic(start, end, bs.homeVl[BOT_ID_TESTING], bs.homeVr[BOT_ID_TESTING], 30, 30);
+            traj = cubic(start, end, 0, 0, 70, 70);
+        else{
+            pair<int,int> delayedVel = algoController->getDelayedVel();
+//            double vx = (delayedVel.first + delayedVel.second) * cos(bs.homeTheta[BOT_ID_TESTING]) / (Constants::ticksToCmS*2);
+//            double vy = (delayedVel.first + delayedVel.second) * sin(bs.homeTheta[BOT_ID_TESTING]) / (Constants::ticksToCmS*2);
+//            start.setX(start.x() + timeLCMs*0.001*traj->x());
+//            start.setX(start.y() + timeLCMs*0.001*vy);
+           // qDebug() << "here1";
+            Pose start = algoController->getNewStartPose();
+            //qDebug() << start.x();
+            delete traj;
+            traj = cubic(start, end, delayedVel.first , delayedVel.second , 70, 70);
+            qDebug() << "made" ;
+        }
     }
     else {
         if(!flag)
-            traj = cubic(start2, end, 0, 0, 0, 0);
-        else
-            traj = cubic(start2, end, bs.homeVl[BOT_ID_TESTING], bs.homeVr[BOT_ID_TESTING], 0, 0);
+            traj = cubic(start2, end, 0, 0, 30, 30);
+        else{
+           pair<int,int> delayedVel = algoController->getDelayedVel();
+            traj = cubic(start2, end, delayedVel.first, delayedVel.second, 30, 30);
+        }
     }
     flag=0;
     ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
@@ -644,6 +667,19 @@ void Dialog::on_interceptionButton_clicked()
     using namespace TrajectoryGenerators;
     double vx = 0., vy = 0.;
 
+
+    qDebug() << bs.ballVx << "Dasda " << bs.ballVy << endl;
+    Pose start(bs.homeX[BOT_ID_TESTING] , bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]);
+    Vector2D<double> ballPos(bs.ballX, bs.ballY);
+    Vector2D<double> ballVel(bs.ballVx, bs.ballVy);
+    Vector2D<double> botVel(bs.homeVl[BOT_ID_TESTING], bs.homeVr[BOT_ID_TESTING]);
+
+    if(flag2){
+        botVel = Vector2D<double>(algoController->getDelayedVel().first , algoController->getDelayedVel().second);
+
+        start = algoController->getNewStartPose();
+    }
+
     if(traj){
         delete traj;
 //        SplineTrajectory *bi_traj = dynamic_cast<SplineTrajectory*>(traj);
@@ -665,13 +701,7 @@ void Dialog::on_interceptionButton_clicked()
         qDebug() << "Changing SPline Pos";
         //delete traj;
     }
-    vx = (bs.homeVl[BOT_ID_TESTING] + bs.homeVr[BOT_ID_TESTING]) * cos(bs.homeTheta[BOT_ID_TESTING]) / 2;
-    vy = (bs.homeVl[BOT_ID_TESTING] + bs.homeVr[BOT_ID_TESTING]) * sin(bs.homeTheta[BOT_ID_TESTING]) / 2;
-    qDebug() << bs.ballVx << "Dasda " << bs.ballVy << endl;
-    Pose start(bs.homeX[BOT_ID_TESTING] + 0.016 * vx, bs.homeY[BOT_ID_TESTING] + 0.016 * vy, bs.homeTheta[BOT_ID_TESTING]);
-    Vector2D<double> ballPos(bs.ballX, bs.ballY);
-    Vector2D<double> ballVel(bs.ballVx, bs.ballVy);
-    Vector2D<double> botVel(bs.homeVl[BOT_ID_TESTING], bs.homeVr[BOT_ID_TESTING]);
+    flag2 = 0;
     traj = BallInterception::getIntTraj(start, ballPos, ballVel, botVel);
     ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)

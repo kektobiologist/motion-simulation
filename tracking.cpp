@@ -3,6 +3,8 @@
 #include <QDebug>
 #include <assert.h>
 
+#define PREDICTION_PACKET_DELAY 4
+
 double sgn(double x) {
     return (x > 0) - (0 > x);
 }
@@ -11,6 +13,7 @@ MiscData Tracker::genControls(Pose s, int &vl, int &vr, int prevVl, int prevVr, 
     Q_UNUSED(prevVl);
     Q_UNUSED(prevVr);
     Pose ref(traj->x(t)*fieldXConvert, traj->y(t)*fieldXConvert, traj->theta(t));
+    //qDebug() << ref.x() << endl;
     double ur1 = traj->v(t);
     double ur2 = traj->thetad(t);
     // err coordinates are in cm!
@@ -51,4 +54,10 @@ MiscData Tracker::genControls(Pose s, int &vl, int &vr, int prevVl, int prevVr, 
     double vl_ref = (ur1/Constants::ticksToCmS - Constants::d*ur2/2);
     double vr_ref = (ur1/Constants::ticksToCmS + Constants::d*ur2/2);
     return MiscData(ur1, ur2, v1, v2, t, v, w, vl, vr, vl_ref, vr_ref);
+}
+
+Pose Tracker::getNewStartPose(double t){
+    double timeLMs = 16.;
+    //qDebug() << traj->y(t)*fieldXConvert << "Dqa "<< endl ;
+    return Pose(traj->x(t + 4*timeLMs*0.001)*fieldXConvert, traj->y(t + 4*timeLMs*0.001)*fieldXConvert, traj->theta(t + 4*timeLMs*0.001));
 }

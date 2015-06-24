@@ -33,6 +33,7 @@ public:
         traj = tr;
     }
     MiscData genControls(Pose s, int &vl, int &vr, int prevVl, int prevVr, double t);
+    Pose getNewStartPose(double t);
 };
 
 #endif // TRACKING_HPP

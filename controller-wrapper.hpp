@@ -18,6 +18,8 @@ class ControllerWrapper { // a wrapper to implement controller for a robot (both
     MiscData genControls_(Pose s, int &vl, int &vr, double time = 0, bool useTime = false);
 
 public:
+
+    pair<int, int> getDelayedVel();
     ControllerWrapper(FType fun, int start_vl, int start_vr, int k);
     ControllerWrapper(Trajectory *traj, int start_vl, int start_vr,  int k);
     void reset();
@@ -26,6 +28,7 @@ public:
     double getCurrentTimeS() const; // when tracking, get the current time the tracker is working on.
     MiscData genControls(Pose s, Pose e, int &vl, int &vr, double finalVel = 0);
     MiscData genControlsTrajSim(Pose s, int &vl, int &vr, double t);
+    Pose getNewStartPose();
 
 };
 #endif // CONTROLLERWRAPPER_HPP

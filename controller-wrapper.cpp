@@ -1,8 +1,10 @@
 #include "controller-wrapper.hpp"
+#define PREDICTION_PACKET_DELAY 4
 
 MiscData ControllerWrapper::genControls_(Pose s, Pose e, int &vl, int &vr, double finalVel) {
     assert(ctrlType == POINTCTRL);
     Pose x = s;
+
     for(deque<pair<int,int> >::iterator it = uq.begin(); it != uq.end(); it++) {
         x.updateNoDelay(it->first, it->second, timeLC);
     }
@@ -12,9 +14,12 @@ MiscData ControllerWrapper::genControls_(Pose s, Pose e, int &vl, int &vr, doubl
     MiscData m = (*fun)(x, e, vl, vr, prevSpeed,prevOmega, finalVel);
     prevVl = vl; prevVr = vr;
     uq.push_back(make_pair<int,int>((int)vl, (int)vr));
-    uq.pop_front();
+    if(uq.size() > PREDICTION_PACKET_DELAY )
+        uq.pop_front();
+   // qDebug() << "herevsd" << uq.size() << endl;
     return m;
 }
+
 MiscData ControllerWrapper::genControls_(Pose s, int &vl, int &vr, double time, bool useTime) {
     assert(ctrlType == TRACKCTRL);
     Pose x = s;
@@ -40,6 +45,14 @@ MiscData ControllerWrapper::genControls_(Pose s, int &vl, int &vr, double time, 
     uq.push_back(make_pair<int,int>((int)vl, (int)vr));
     uq.pop_front();
     return m;
+}
+
+Pose ControllerWrapper::getNewStartPose(){
+    double elapsedS;
+    struct timeval nowTime;
+    gettimeofday(&nowTime, NULL);
+    elapsedS = (nowTime.tv_sec-startTime.tv_sec)+(nowTime.tv_usec-startTime.tv_usec)/1000000.0;
+    return tracker.getNewStartPose(elapsedS);
 }
 
 ControllerWrapper::ControllerWrapper(FType fun, int start_vl, int start_vr, int k):fun(fun), k(k), ctrlType(POINTCTRL), tracker(),
@@ -85,6 +98,11 @@ MiscData ControllerWrapper::genControls(Pose s, Pose e, int &vl, int &vr, double
         return genControls_(s, vl, vr);
     }
 }
+
+pair<int, int> ControllerWrapper::getDelayedVel()
+{
+    //qDebug() << "cfswdvgewsr" << uq.size() << "dfwgv" << endl;
+    return uq.front();}
 
 MiscData ControllerWrapper::genControlsTrajSim(Pose s, int &vl, int &vr, double t)
 {

@@ -12,6 +12,7 @@ public:
 
     // vision calculated velocities
     double homeVl[5], homeVr[5];
+    double homeVx[5], homeVy[5];
     double awayVl[5], awayVr[5];
     // ball velocity in strategy coordinates per second.
     double ballVx, ballVy;
