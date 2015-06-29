@@ -102,7 +102,8 @@ MiscData ControllerWrapper::genControls(Pose s, Pose e, int &vl, int &vr, double
 pair<int, int> ControllerWrapper::getDelayedVel()
 {
     //qDebug() << "cfswdvgewsr" << uq.size() << "dfwgv" << endl;
-    return uq.front();}
+    return uq.front();
+}
 
 MiscData ControllerWrapper::genControlsTrajSim(Pose s, int &vl, int &vr, double t)
 {

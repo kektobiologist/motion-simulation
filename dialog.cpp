@@ -29,7 +29,7 @@ using namespace std;
 // as well as the algoController delay
 static const int PREDICTION_PACKET_DELAY = 4;
 // bot used for testing (non-sim)
-static const int BOT_ID_TESTING = 2;
+static const int BOT_ID_TESTING = 0;
 static bool USING_INTERCEPTION = false;
 int flag = 0;
 int flag2 = 0;
@@ -83,7 +83,7 @@ Dialog::Dialog(QWidget *parent) :
     printTimer->setSingleShot(false);
 //    printTimer->start(500);
     connect(printTimer, SIGNAL(timeout()), this, SLOT(onNewData()));
-    if(!comm.Open("/dev/ttyUSB0", 38400)) {
+    if(!comm.Open("/dev/ttyUSB1", 38400)) {
         qDebug() << "Could not open comm port!";
     } else {
         qDebug() << "Connected.";
@@ -284,15 +284,7 @@ void Dialog::onAlgoTimeout()
 //    }
     sendDataMutex->unlock();
 
-
-    if (counter > 20 && USING_INTERCEPTION == true) {
-         qDebug() << "Changing trajectoiry ";
-         counter=0;
-         flag2 = 1;
-         on_interceptionButton_clicked();
-     }
-
-//    if (counter > 20 && flag==0) {
+//    if (counter > 40 && flag==0) {
 //        qDebug() << "Changing trajectoiry ";
 //        counter=0;flag=1;
 //        on_traj2Button_clicked();
@@ -358,7 +350,10 @@ void Dialog::on_startSending_clicked()
     bsMutex->lock();
     BeliefState bs = *beliefStateSh;
     bsMutex->unlock();
-    algoController = new ControllerWrapper(traj, bs.homeVl[BOT_ID_TESTING], bs.homeVr[BOT_ID_TESTING], PREDICTION_PACKET_DELAY);
+    if(direction)
+        algoController = new ControllerWrapper(traj, bs.homeVl[BOT_ID_TESTING], bs.homeVr[BOT_ID_TESTING], PREDICTION_PACKET_DELAY);
+    else
+        algoController = new ControllerWrapper(traj, (-1)*bs.homeVr[BOT_ID_TESTING], (-1)*bs.homeVl[BOT_ID_TESTING], PREDICTION_PACKET_DELAY);
     for (int i = 0; i < PREDICTION_PACKET_DELAY; i++) {
         predictedPoseQ.push_back(Pose(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]));
     }
@@ -532,24 +527,22 @@ void Dialog::on_traj2Button_clicked()
     Pose start2(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]-PI);
     Pose end = ui->firaRenderArea->getEndPose();
 
+
+    pair<int,int> delayedVel;
 //    traj = quinticBezierSplineGenerator(start, end, 0, 0, 0, 0);
-    //direction = isFrontDirected(start, end) ;
+ //   direction = isFrontDirected(start, end) ;
+
     if(!flag)
         delete traj ;
     if(direction){
         if(!flag)
-            traj = cubic(start, end, 0, 0, 70, 70);
+            traj = cubic(start, end, 0, 0, 30, 30);
         else{
-            pair<int,int> delayedVel = algoController->getDelayedVel();
-//            double vx = (delayedVel.first + delayedVel.second) * cos(bs.homeTheta[BOT_ID_TESTING]) / (Constants::ticksToCmS*2);
-//            double vy = (delayedVel.first + delayedVel.second) * sin(bs.homeTheta[BOT_ID_TESTING]) / (Constants::ticksToCmS*2);
-//            start.setX(start.x() + timeLCMs*0.001*traj->x());
-//            start.setX(start.y() + timeLCMs*0.001*vy);
-           // qDebug() << "here1";
+            delayedVel = algoController->getDelayedVel();
             Pose start = algoController->getNewStartPose();
             //qDebug() << start.x();
             delete traj;
-            traj = cubic(start, end, delayedVel.first , delayedVel.second , 70, 70);
+            traj = cubic(start, end, delayedVel.first , delayedVel.second , 30, 30);
             qDebug() << "made" ;
         }
     }
@@ -557,7 +550,8 @@ void Dialog::on_traj2Button_clicked()
         if(!flag)
             traj = cubic(start2, end, 0, 0, 30, 30);
         else{
-           pair<int,int> delayedVel = algoController->getDelayedVel();
+            Pose start2 = algoController->getNewStartPose();
+            delayedVel = algoController->getDelayedVel();
             traj = cubic(start2, end, delayedVel.first, delayedVel.second, 30, 30);
         }
     }
@@ -715,5 +709,5 @@ void Dialog::on_interceptionButton_clicked()
 
     ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     ui->firaRenderArea->toggleTrajectory(true);
-   on_startSending_clicked();
+  // on_startSending_clicked();
 }

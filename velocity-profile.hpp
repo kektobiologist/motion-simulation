@@ -41,7 +41,6 @@ struct ProfileDatapoint {
     bool operator<(const ProfileDatapoint &dp) const;
 };
 
-
 // velocity profile
 // p: spline
 // numPoints: number of planning points to set velocity for

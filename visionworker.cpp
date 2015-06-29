@@ -8,12 +8,14 @@
 #include "pose.h"
 #include "vision-velocity.hpp"
 #include <assert.h>
-
+#include <QtCore/QFile>
 #include <iostream>
 #include <stdio.h>
 #include "opencv2/video/tracking.hpp"
 #include <opencv2/highgui/highgui.hpp>
 #include <fstream>
+#include <QFile>
+#include <QTextStream>
 
 using namespace cv;
 using namespace std;
@@ -48,33 +50,6 @@ VisionWorker::VisionWorker(QObject *parent) :
 {
     detectionCount = 0;
     isTeamYellow = false;
-       omega_w =8;
-       omega_u = 3.1623;
-       KFx =  KalmanFilter(3, 2, 0);
-       measurementx =  Mat_<double>(2,1);
-       KFy =  KalmanFilter(3, 2, 0);
-       measurementy =  Mat_<double>(2,1);
-       measurementx.setTo(Scalar(0));
-       KFx.statePost.at<double>(0) = 0.0; // X
-       KFx.statePost.at<double>(1) = 0.0; // dX
-       KFx.statePost.at<double>(2) = 0.0; // theta
-       KFx.transitionMatrix = (Mat_<double>(3, 3) << 1,1,0,   0,1,0,  0,0,1  ); //F
-       KFx.measurementMatrix = (Mat_<double>(2, 3) << 1,0,0, 0,0,1  );  //H
-       KFx.processNoiseCov = (Mat_<double>(3, 3) << 1,0,0, 0,0.1,0, 0,0,0.1);
-       KFx.processNoiseCov *=pow(omega_w,2);
-       setIdentity(KFx.measurementNoiseCov, Scalar::all(pow(omega_u,2)));
-       setIdentity(KFx.errorCovPost, Scalar::all(50));
-
-       KFy.statePost.at<float>(0) = 0; // X
-       KFy.statePost.at<float>(1) = 0; // dX
-       KFy.statePost.at<float>(2) = 0; // theta
-       KFy.transitionMatrix = (Mat_<float>(3, 3) << 1,1,0,   0,1,0,  0,0,1  ); //F
-       KFy.measurementMatrix = (Mat_<float>(2, 3) << 1,0,0, 0,0,1  );  //H
-       KFy.processNoiseCov = (Mat_<float>(3, 3) << 1,0,0, 0,0.1,0, 0,0,0.1);
-       KFy.processNoiseCov *=pow(omega_w,2);
-       setIdentity(KFy.measurementNoiseCov, Scalar::all(pow(omega_u,2)));
-       setIdentity(KFy.errorCovPost, Scalar::all(50));
-
 }
 
 void VisionWorker::setup(QThread *cThread, BeliefState *bs_, QMutex *bsMutex_, bool isTeamYellow_)
@@ -142,6 +117,12 @@ void VisionWorker::onEntry()
                     bs->ballVx = ballVx;
                     bs->ballVy = ballVy;
                     bsMutex->unlock();
+                    QString outputFilename = "/home/robocup/qt_test.txt";
+                    QFile outputFile(outputFilename);
+                    QTextStream outStream(&outputFile);
+                    outputFile.open(QIODevice::WriteOnly | QIODevice::Append);
+                    outStream << ballX <<" "<< bsQ.front().first.ballX <<" "<< ballVx <<" "<< timeMs*0.001<<"\n" ;
+
                     float avgvx=0,avgvy=0;
 
                         velxq.push_back(ballVx);
@@ -159,58 +140,6 @@ void VisionWorker::onEntry()
                             velxq.pop_front();
                         while(velyq.size() > 3)
                             velyq.pop_front();
-
-                    ////////////////////////////////////////////
-//                              rhoKFx = KFx.statePost.at<double>(0);  // rho
-//                               DrhoKFx = KFx.statePost.at<double>(1); // d rho
-//                               thetaKFx  = 0.;//KF.statePost.at<float>(2); // theta
-//                                double Dcosx  = tan(thetaKFx)*(1/cos(thetaKFx));
-//                                // Jacobina of transfer function => F
-//                              // changing here
-//                               KFx.transitionMatrix = (Mat_<double>(3, 3) << 1.,(timeMs*0.001)/cos(thetaKFx),DrhoKFx*timeMs*Dcosx,   0.,1.,0., 0.,0.,1.); //(DrhoKF*deltaT*sin(thetaKF))/pow(cos(thetaKF),2)
-//                            //   Mat predictionx = KF.predict();
-//                               KFx.statePre.at<float>(0) = rhoKFx + DrhoKFx * timeMs / cos(thetaKFx);
-//                               KFx.statePre.at<float>(1) = DrhoKFx;
-//                               KFx.statePre.at<float>(2) = thetaKFx;
-
-//                               // Update
-//                              // myfile >> xCoordinateOfObject >> y >> newx >> newy >> velx >> vely;
-//                               measurement.at<float>(0) = ballX;
-//                               measurement.at<float>(1) = 0;
-//                              // lastRho = rightLane[0];
-//                               Mat estimatedx = KFx.correct(measurement);
-//                               KFx.temp5.at<float>(0) = measurement.at<float>(0) - KFx.statePre.at<float>(0);
-//                               KFx.temp5.at<float>(1) = measurement.at<float>(1) - KFx.statePre.at<float>(2);
-//                               KFx.statePost = KFx.statePre + KFx.gain * KFx.temp5;
-                    /////////////////////////////////////////////////
-//                               float rhoKFy, DrhoKFy, thetaKFy, yCoordinateOfObject,newy,lastPosy = 0;
-
-//                                          rhoKFy = KFy.statePost.at<float>(0);  // rho
-//                                          DrhoKFy = KFy.statePost.at<float>(1); // d rho
-//                                          thetaKFy  = 0;//KF.statePost.at<float>(2); // theta     double Dcos  = tan(thetaKF)*(1/cos(thetaKF));
-//                                           double Dcosy  = tan(thetaKFy)*(1/cos(thetaKFy));
-//                                           // Jacobina of transfer function => F
-
-//                                          // changing here
-//                                          KFy.transitionMatrix = (Mat_<float>(3, 3) << 1,timeMs/cos(thetaKFy),DrhoKFy*timeMs*Dcosy,   0,1,0, 0,0,1); //(DrhoKF*deltaT*sin(thetaKF))/pow(cos(thetaKF),2)
-//                                          Mat predictiony = KFy.predict();
-//                                          KFy.statePre.at<float>(0) = rhoKFy + DrhoKFy * timeMs / cos(thetaKFy);
-//                                          KFy.statePre.at<float>(1) = DrhoKFy;
-//                                          KFy.statePre.at<float>(2) = thetaKFy;
-
-//                                          // Update
-//                                         // myfile >> xCoordinateOfObject >> y >> newx >> newy >> velx >> vely;
-//                                          measurement.at<float>(0) = yCoordinateOfObject;
-//                                          measurement.at<float>(1) = 0;
-//                                         // lastRho = rightLane[0];
-//                                          Mat estimatedy = KFy.correct(measurement);
-//                                          KFy.temp5.at<float>(0) = measurement.at<float>(0) - KFy.statePre.at<float>(0);
-//                                          KFy.temp5.at<float>(1) = measurement.at<float>(1) - KFy.statePre.at<float>(2);
-//                                          KFy.statePost = KFy.statePre + KFy.gain * KFy.temp5;
-
-//                                          lastPosy = yCoordinateOfObject;
-
-                    ////////////////////////////////////////////////
 
                 }
                 //Blue robot info:

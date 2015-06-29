@@ -50,7 +50,7 @@ MiscData Tracker::genControls(Pose s, int &vl, int &vr, int prevVl, int prevVr, 
         vr = -vsat_ticks;
 
 
-    // jsut for testing, calculate reference vl and vr also
+    // just for testing, calculate reference vl and vr also
     double vl_ref = (ur1/Constants::ticksToCmS - Constants::d*ur2/2);
     double vr_ref = (ur1/Constants::ticksToCmS + Constants::d*ur2/2);
     return MiscData(ur1, ur2, v1, v2, t, v, w, vl, vr, vl_ref, vr_ref);
@@ -59,5 +59,5 @@ MiscData Tracker::genControls(Pose s, int &vl, int &vr, int prevVl, int prevVr, 
 Pose Tracker::getNewStartPose(double t){
     double timeLMs = 16.;
     //qDebug() << traj->y(t)*fieldXConvert << "Dqa "<< endl ;
-    return Pose(traj->x(t + 4*timeLMs*0.001)*fieldXConvert, traj->y(t + 4*timeLMs*0.001)*fieldXConvert, traj->theta(t + 4*timeLMs*0.001));
+    return Pose(traj->x(t + 4*timeLMs*0.001)*fieldXConvert, traj->y(t + 4*timeLMs*0.001)*fieldXConvert, traj->theta(t + 3*timeLMs*0.001));
 }
