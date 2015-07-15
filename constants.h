@@ -67,7 +67,7 @@ const int OPP_GOAL_Y = 0;
 static const double d          = 6.8; // 6.5 for old bot distance between wheels in cm for new bot
 static const double ticksToCmS = 1.107; //1.139still only approximate... v = v_ticks * ticksToCmS
 static const double fieldXConvert = 23.79; // now im always using xconvert as standard conversion from strategy -> cm and vice versa.
-static const double fieldYConvert = 22.02;
+static const double fieldYConvert = fieldXConvert; //22.02;
 // NOTE(arpit): Uncertainties should be non-zero when simulating. Currently 0 since bot data is fetched from vision.
 static const double xUncertainty = 0;//0.5; // Uncertainty is in %age of max value. eg. 1% where fabs(x) <= 1000 means fabs(error) <= 10
 static const double yUncertainty = 0;//0.5;

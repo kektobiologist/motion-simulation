@@ -8,14 +8,16 @@ namespace Optimization {
 struct OptParams {
     Pose start, end;
     double vls, vrs, vle, vre;
-    OptParams(): start(), end(), vls(0), vrs(0), vle(0), vre(0){}
-    OptParams(Pose start, Pose end, double vls, double vrs, double vle, double vre): start(start),
-        end(end), vls(vls), vrs(vrs), vle(vle), vre(vre) {}
+    // n = number of control points
+    int n;
+    OptParams(): start(), end(), vls(0), vrs(0), vle(0), vre(0), n(0){}
+    OptParams(Pose start, Pose end, double vls, double vrs, double vle, double vre, int n): start(start),
+        end(end), vls(vls), vrs(vrs), vle(vle), vre(vre), n(n) {}
 };
 
 // optimization function
-double f_cubic2CP(const gsl_vector* x, void * params);
-Trajectory *cubicSpline2CPOptimization(Pose start, Pose end, double vls, double vrs, double vle, double vre);
+double f_cubicnCP(const gsl_vector* x, void * params);
+Trajectory *cubicSplinenCPOptimization(Pose start, Pose end, double vls, double vrs, double vle, double vre, int n);
 }
 #endif // CONTROLPOINTOPTIMIZATION_HPP
 

@@ -58,6 +58,7 @@ SOURCES += main.cpp\
     alglib/statistics.cpp \
     controlpoint-optimization.cpp \
     drawable.cpp \
+    collision-checking.cpp
 
 HEADERS  += dialog.h \
     pose.h \
@@ -103,7 +104,8 @@ HEADERS  += dialog.h \
     defender.hpp \
     tests.hpp \
     ballinterception.hpp \
-    goalie.hpp
+    goalie.hpp \
+    collision-checking.h
 
 LIBS += -lgsl -lgslcblas -lprotobuf
 FORMS    += dialog.ui

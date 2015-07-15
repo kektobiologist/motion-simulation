@@ -36,6 +36,10 @@ public:
   // returns max of ABSOLUTE value of curvature
   virtual double maxk(double *u_low = NULL) const;
   virtual /*vector<pair<double,float> >*/ void lmaxk() const;
+
+  // make splineX and splineY accesible from outside
+  alglib::spline1dinterpolant getSplineX() const { return splineX;}
+  alglib::spline1dinterpolant getSplineY() const { return splineY;}
 };
 #endif // SPLIENS_HPP
 

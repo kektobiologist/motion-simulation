@@ -135,29 +135,30 @@ void Dialog::on_horizontalSlider_sliderMoved(int )
 
 void Dialog::onCurIdxChanged(int idx)
 {
-    if (idx >= 40 && flag==0) {
-        flag=1;
-        on_splineChangeBtn_clicked();
-    }
-    if(idx < 40){
-        qDebug() <<  "\n This is the original trajectory";
-        ui->renderArea->changePose(sim.getPoses(idx));
-        MiscData m = sim.getMiscData(idx);
-        qDebug() << idx << ". " << "vl, vr = " << sim.getVls(idx) << ", " << sim.getVrs(idx) << ", vl_calc, vr_calc = " <<
-                    sim.getVls_calc(idx) << ", " << sim.getVrs_calc(idx) << "v_ref, omega_ref = " << m.v_ref << ", " << m.omega_ref << ", "
-                 << "v1, v2 = " << m.v1 << ", " << m.v2 << "time = " << m.t << "v, w = " << m.v << m.w
-                 << "vl, vr (in miscdata) = " << m.vl << m.vr << "vl_ref, vr_ref = " << m.vl_ref << m.vr_ref;
-    }
-    else{
-        qDebug() <<  "\n\t\t This is the trajectory after changing";
-        ui->renderArea->changePose(simsc.getPoses(idx-40));
-        MiscData m = simsc.getMiscData(idx-40);
-        qDebug() << idx-40 << ". " << "vl, vr = " << simsc.getVls(idx-40) << ", " << simsc.getVrs(idx-40) << ", vl_calc, vr_calc = " <<
-                    simsc.getVls_calc(idx-40) << ", " << simsc.getVrs_calc(idx-40) << "v_ref, omega_ref = " << m.v_ref << ", " << m.omega_ref << ", "
-                 << "v1, v2 = " << m.v1 << ", " << m.v2 << "time = " << m.t << "v, w = " << m.v << m.w
-                 << "vl, vr (in miscdata) = " << m.vl << m.vr << "vl_ref, vr_ref = " << m.vl_ref << m.vr_ref;
-    }
-
+//    if (idx >= 40 && flag==0) {
+//        flag=1;
+//        on_splineChangeBtn_clicked();
+//    }
+//    if(idx < 40){
+//        qDebug() <<  "\n This is the original trajectory";
+//        ui->renderArea->changePose(sim.getPoses(idx));
+//        MiscData m = sim.getMiscData(idx);
+//        qDebug() << idx << ". " << "vl, vr = " << sim.getVls(idx) << ", " << sim.getVrs(idx) << ", vl_calc, vr_calc = " <<
+//                    sim.getVls_calc(idx) << ", " << sim.getVrs_calc(idx) << "v_ref, omega_ref = " << m.v_ref << ", " << m.omega_ref << ", "
+//                 << "v1, v2 = " << m.v1 << ", " << m.v2 << "time = " << m.t << "v, w = " << m.v << m.w
+//                 << "vl, vr (in miscdata) = " << m.vl << m.vr << "vl_ref, vr_ref = " << m.vl_ref << m.vr_ref;
+//    }
+//    else{
+//        qDebug() <<  "\n\t\t This is the trajectory after changing";
+//        ui->renderArea->changePose(simsc.getPoses(idx-40));
+//        MiscData m = simsc.getMiscData(idx-40);
+//        qDebug() << idx-40 << ". " << "vl, vr = " << simsc.getVls(idx-40) << ", " << simsc.getVrs(idx-40) << ", vl_calc, vr_calc = " <<
+//                    simsc.getVls_calc(idx-40) << ", " << simsc.getVrs_calc(idx-40) << "v_ref, omega_ref = " << m.v_ref << ", " << m.omega_ref << ", "
+//                 << "v1, v2 = " << m.v1 << ", " << m.v2 << "time = " << m.t << "v, w = " << m.v << m.w
+//                 << "vl, vr (in miscdata) = " << m.vl << m.vr << "vl_ref, vr_ref = " << m.vl_ref << m.vr_ref;
+//    }
+    ui->renderArea->changePose(sim.getPoses(idx));
+    MiscData m = sim.getMiscData(idx);
     // lets print for traj sim
 //    Pose s = sim.getPoses(idx);
 
@@ -590,7 +591,8 @@ void Dialog::on_circleTrajButton_clicked()
 //    traj = quinticBezierSplineGenerator(start, end, 0, 0, 40, 70);aj = cubic2CP(start, end, 0, 0, 40, 70);
 
     //traj = cubic(start, end, 0, 0, 40, 70);
-    traj = cubic2CP(start, end, 0, 0, 40, 70);
+//    traj = cubicnCP(start, end, 0, 0, 40, 70, 1);
+    traj = cubic_drawCollisions(start, end, 0, 0, 40, 70);
 
     ui->renderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)
@@ -639,16 +641,20 @@ void Dialog::on_splineChangeBtn_clicked() {
 
 void Dialog::on_trajSimButton_clicked()
 {
-    Pose start;
-    int idx = ui->horizontalSlider->value();
-    if (idx == 0)
-        start = ui->renderArea->getStartPose();
-    else
-        start = sim.getPoses(idx);
-    if (idx == 0)
-        sim.simulate(start, traj, 0, 0, false);
-    else
-        simsc.simulate(start, traj, sim.getVls(idx), sim.getVrs(idx), false);
+//    Pose start;
+//    int idx = ui->horizontalSlider->value();
+//    if (idx == 0)
+//        start = ui->renderArea->getStartPose();
+//    else
+//        start = sim.getPoses(idx);
+//    if (idx == 0)
+//        sim.simulate(start, traj, 0, 0, false);
+//    else
+//        simsc.simulate(start, traj, sim.getVls(idx), sim.getVrs(idx), false);
+    Pose start = ui->renderArea->getStartPose();
+    sim.simulate(start, traj, 0, 0, false);
+    onCurIdxChanged(0);
+    on_resetButton_clicked();
     //onCurIdxChanged(0);
     //on_resetButton_clicked();
 }

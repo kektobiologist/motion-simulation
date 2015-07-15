@@ -11,6 +11,7 @@
 #include "splines.hpp"
 #include "controlpoint-optimization.hpp"
 #include "drawable.h"
+#include "collision-checking.h"
 using namespace std;
 extern RenderArea *gRenderArea;
 namespace TrajectoryGenerators {
@@ -68,7 +69,7 @@ SplineTrajectory *cubic(Pose start, Pose end, double vls, double vrs, double vle
     return st;
 }
 
-Trajectory *cubic2CP(Pose start, Pose end, double vls, double vrs, double vle, double vre) {
+Trajectory *cubicnCP(Pose start, Pose end, double vls, double vrs, double vle, double vre, int n) {
 
 //    Pose cp1((start.x()*2+end.x())*1/3., (start.y()*2+end.y())*1/3., 0);
 //    Pose cp2((start.x()+2*end.x())*1/3., (start.y()+2*end.y())*1/3., 0);
@@ -84,9 +85,40 @@ Trajectory *cubic2CP(Pose start, Pose end, double vls, double vrs, double vle, d
 //    pt2 = new PointDrawable(QPointF(cp2.x(), cp2.y()), gRenderArea);
 //    CubicSpline *p = new CubicSpline(start, end, midPoints);
 //    SplineTrajectory *st = new SplineTrajectory(p, vls, vrs, vle, vre);
-    Trajectory *st = Optimization::cubicSpline2CPOptimization(start, end, vls, vrs, vle, vre);
+    Trajectory *st = Optimization::cubicSplinenCPOptimization(start, end, vls, vrs, vle, vre, n);
     return st;
 }
+
+SplineTrajectory *cubic_drawCollisions(Pose start, Pose end, double vls, double vrs, double vle, double vre, vector<Pose> midPoints = vector<Pose>()) {
+    // line segments for walls
+    using CollisionChecking::LineSegment;
+    vector<LineSegment> ls;
+    ls.push_back(LineSegment(-HALF_FIELD_MAXX/fieldXConvert, -HALF_FIELD_MAXY/fieldXConvert, HALF_FIELD_MAXX/fieldXConvert, -HALF_FIELD_MAXY/fieldXConvert));
+    ls.push_back(LineSegment(-HALF_FIELD_MAXX/fieldXConvert, HALF_FIELD_MAXY/fieldXConvert, HALF_FIELD_MAXX/fieldXConvert, HALF_FIELD_MAXY/fieldXConvert));
+    ls.push_back(LineSegment(-HALF_FIELD_MAXX/fieldXConvert, -HALF_FIELD_MAXY/fieldXConvert, -HALF_FIELD_MAXX/fieldXConvert, +HALF_FIELD_MAXY/fieldXConvert));
+    ls.push_back(LineSegment(HALF_FIELD_MAXX/fieldXConvert, -HALF_FIELD_MAXY/fieldXConvert, HALF_FIELD_MAXX/fieldXConvert, +HALF_FIELD_MAXY/fieldXConvert));
+
+    CubicSpline *p = new CubicSpline(start, end, midPoints);
+    vector<Pose> collisions;
+    for (int i = 0; i < ls.size(); i++) {
+        vector<Pose> results = CollisionChecking::cubicSpline_LineSegmentIntersection(*p, ls[i]);
+        collisions.insert(collisions.end(), results.begin(), results.end());
+    }
+    static vector<PointDrawable*> pts;
+    for (int i = 0; i < pts.size(); i++) {
+        if (pts[i])
+            delete pts[i];
+    }
+    pts.clear();
+    for (int i = 0; i < collisions.size(); i++) {
+        PointDrawable *pt = new PointDrawable(QPointF(collisions[i].x(), collisions[i].y()), gRenderArea);
+        pts.push_back(pt);
+    }
+    SplineTrajectory *st = new SplineTrajectory(p, vls, vrs, vle, vre);
+
+    return st;
+}
+
 // ballPos: strategy coordinates
 // ballVel: strategy coordinates per second
 /*
