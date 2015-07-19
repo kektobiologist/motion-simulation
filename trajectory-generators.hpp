@@ -91,6 +91,9 @@ Trajectory *cubicnCP(Pose start, Pose end, double vls, double vrs, double vle, d
 
 SplineTrajectory *cubic_drawCollisions(Pose start, Pose end, double vls, double vrs, double vle, double vre, vector<Pose> midPoints = vector<Pose>()) {
     // line segments for walls
+    // currently just adding 4 walls that are the coordinate limits. However we need 12, and they
+    // will all be slightly inside the HALF_FIELD coordinates.
+    // Their coordinates will depend significantly on the camera/arena setup.
     using CollisionChecking::LineSegment;
     vector<LineSegment> ls;
     ls.push_back(LineSegment(-HALF_FIELD_MAXX/fieldXConvert, -HALF_FIELD_MAXY/fieldXConvert, HALF_FIELD_MAXX/fieldXConvert, -HALF_FIELD_MAXY/fieldXConvert));
@@ -114,6 +117,7 @@ SplineTrajectory *cubic_drawCollisions(Pose start, Pose end, double vls, double 
         PointDrawable *pt = new PointDrawable(QPointF(collisions[i].x(), collisions[i].y()), gRenderArea);
         pts.push_back(pt);
     }
+//    qDebug() << "num collisions = " << collisions.size();
     SplineTrajectory *st = new SplineTrajectory(p, vls, vrs, vle, vre);
 
     return st;
