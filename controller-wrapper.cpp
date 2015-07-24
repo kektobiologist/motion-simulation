@@ -5,17 +5,16 @@ MiscData ControllerWrapper::genControls_(Pose s, Pose e, int &vl, int &vr, doubl
     assert(ctrlType == POINTCTRL);
     Pose x = s;
 
-    for(deque<pair<int,int> >::iterator it = uq.begin(); it != uq.end(); it++) {
-        x.updateNoDelay(it->first, it->second, timeLC);
+    for(deque<VelocityPair>::iterator it = uq.begin(); it != uq.end(); it++) {
+        x.updateNoDelay(it->vl, it->vr, timeLC);
     }
 //    int prevSpeed = max(fabs(prevVl), fabs(prevVr));
     double prevSpeed = (prevVl+prevVr)/2;
     double prevOmega = (prevVr- prevVl)/(Constants::d);
     MiscData m = (*fun)(x, e, vl, vr, prevSpeed,prevOmega, finalVel);
     prevVl = vl; prevVr = vr;
-    uq.push_back(make_pair<int,int>((int)vl, (int)vr));
-    if(uq.size() > PREDICTION_PACKET_DELAY )
-        uq.pop_front();
+    uq.push_back(VelocityPair((int)vl, (int)vr));
+    uq.pop_front();
    // qDebug() << "herevsd" << uq.size() << endl;
     return m;
 }
@@ -23,8 +22,8 @@ MiscData ControllerWrapper::genControls_(Pose s, Pose e, int &vl, int &vr, doubl
 MiscData ControllerWrapper::genControls_(Pose s, int &vl, int &vr, double time, bool useTime) {
     assert(ctrlType == TRACKCTRL);
     Pose x = s;
-    for(deque<pair<int,int> >::iterator it = uq.begin(); it != uq.end(); it++) {
-        x.updateNoDelay(it->first, it->second, timeLC);
+    for(deque<VelocityPair >::iterator it = uq.begin(); it != uq.end(); it++) {
+        x.updateNoDelay(it->vl, it->vr, timeLC);
     }
     if (isFirstCall) {
         isFirstCall = false;
@@ -42,7 +41,7 @@ MiscData ControllerWrapper::genControls_(Pose s, int &vl, int &vr, double time, 
     elapsedS += k*timeLCMs/1000.;
     MiscData m = tracker.genControls(x, vl, vr, prevVl, prevVr, elapsedS);
     prevVl = vl; prevVr = vr;
-    uq.push_back(make_pair<int,int>((int)vl, (int)vr));
+    uq.push_back(VelocityPair((int)vl, (int)vr));
     uq.pop_front();
     return m;
 }
@@ -58,13 +57,13 @@ Pose ControllerWrapper::getNewStartPose(){
 ControllerWrapper::ControllerWrapper(FType fun, int start_vl, int start_vr, int k):fun(fun), k(k), ctrlType(POINTCTRL), tracker(),
                                                                 startTime(), isFirstCall(true){
     for(int i = 0; i < k; i++)
-        uq.push_back(make_pair<int,int>((int)start_vl,(int)start_vr));
+        uq.push_back(VelocityPair((int)start_vl,(int)start_vr));
     prevVl = prevVr = 0;
 }
 ControllerWrapper::ControllerWrapper(Trajectory *traj, int start_vl, int start_vr,  int k):k(k), ctrlType(TRACKCTRL), tracker(traj),
                                                                        startTime(), isFirstCall(true){
     for(int i = 0; i < k; i++)
-        uq.push_back(make_pair<int,int>((int)start_vl,(int)start_vr));
+        uq.push_back(VelocityPair((int)start_vl,(int)start_vr));
     prevVl = prevVr = 0;
 }
 void ControllerWrapper::reset() {
@@ -76,8 +75,10 @@ void ControllerWrapper::setTraj(Trajectory* traj) {
 }
 Pose ControllerWrapper::getPredictedPose(Pose s) {
     Pose x = s;
-    for(deque<pair<int,int> >::iterator it = uq.begin(); it != uq.end(); it++) {
-        x.updateNoDelay(it->first, it->second, timeLC);
+    if (uq.empty())
+        return x;
+    for(deque<VelocityPair >::iterator it = uq.begin(); it != uq.end(); it++) {
+        x.updateNoDelay(it->vl, it->vr, timeLC);
     }
     return x;
 }
@@ -99,10 +100,11 @@ MiscData ControllerWrapper::genControls(Pose s, Pose e, int &vl, int &vr, double
     }
 }
 
-pair<int, int> ControllerWrapper::getDelayedVel()
+VelocityPair ControllerWrapper::getDelayedVel()
 {
     //qDebug() << "cfswdvgewsr" << uq.size() << "dfwgv" << endl;
-    return uq.front();
+    return uq.back();
+    // return VelocityPair(prevVl, prevVr);
 }
 
 MiscData ControllerWrapper::genControlsTrajSim(Pose s, int &vl, int &vr, double t)

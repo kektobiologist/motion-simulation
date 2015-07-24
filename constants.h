@@ -64,7 +64,7 @@ const int BOT_BALL_THRESH_FOR_PR       = 200;                  // mm
 const int OUR_GOAL_Y = 500;
 
 const int OPP_GOAL_Y = 0;
-static const double d          = 6.8; // 6.5 for old bot distance between wheels in cm for new bot
+static const double d          = 6.75; // 6.5 for old bot distance between wheels in cm for new bot
 static const double ticksToCmS = 1.107; //1.139still only approximate... v = v_ticks * ticksToCmS
 static const double fieldXConvert = 23.79; // now im always using xconvert as standard conversion from strategy -> cm and vice versa.
 static const double fieldYConvert = 22.02;
@@ -77,8 +77,8 @@ static const int numPacketDelay = 0; // num of packets to delay in update
 
 static const double vwmax      = 200; // 200cm/s^2
 static const double vwSlope    = -5.92; //making vw as function of r
-static const double vwIntercept= 750;
-static const double vsat       = ticksToCmS*120.; // 100 cm/s
+static const double vwIntercept= 700;
+static const double vsat       = ticksToCmS*100.; // 100 cm/s
 static const double atmax      = 100*ticksToCmS; // cm/s^2, need to measure this, need to take inertia into account
 static const double awmax      = 1000; // 1/s^2, no idea how to measure this, need to take inertia into account
 }

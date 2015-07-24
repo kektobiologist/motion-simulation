@@ -1,12 +1,19 @@
 #ifndef CONTROLLERWRAPPER_HPP
 #define CONTROLLERWRAPPER_HPP
 #include "controllers.h"
+
+struct VelocityPair {
+    int vl, vr;
+    VelocityPair(): vl(0), vr(0) {}
+    VelocityPair(int vl, int vr): vl(vl), vr(vr) {}
+};
+
 class ControllerWrapper { // a wrapper to implement controller for a robot (both point to point and tracking control
                           //. Currently able to handle packet delay.
     // this is for point to point control
     FType fun;
     // this is common stuff
-    deque<pair<int,int> > uq; // controls queue. .first = vl, .second = vr
+    deque<VelocityPair> uq; // controls queue. .first = vl, .second = vr
     double prevVl, prevVr; //storing seperately since k = 0 means uq is empty
     int k;                    // the num of packet delay
     enum {POINTCTRL, TRACKCTRL} ctrlType;
@@ -19,7 +26,7 @@ class ControllerWrapper { // a wrapper to implement controller for a robot (both
 
 public:
 
-    pair<int, int> getDelayedVel();
+    VelocityPair getDelayedVel();
     ControllerWrapper(FType fun, int start_vl, int start_vr, int k);
     ControllerWrapper(Trajectory *traj, int start_vl, int start_vr,  int k);
     void reset();
