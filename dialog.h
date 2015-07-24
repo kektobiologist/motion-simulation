@@ -86,7 +86,7 @@ private:
     QThread *visionThread;
     VisionWorker *vw;
 
-    bool direction;
+    bool direction, last_direction;
     BeliefState *beliefStateSh;
     QMutex *bsMutex;
 

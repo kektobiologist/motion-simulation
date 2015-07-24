@@ -33,6 +33,7 @@ static const int BOT_ID_TESTING = 0;
 static bool USING_INTERCEPTION = false;
 int flag = 0;
 int flag2 = 0;
+int flag3 = 0;
 
 RenderArea *gRenderArea = NULL;
 Dialog::Dialog(QWidget *parent) :
@@ -135,30 +136,28 @@ void Dialog::on_horizontalSlider_sliderMoved(int )
 
 void Dialog::onCurIdxChanged(int idx)
 {
-//    if (idx >= 40 && flag==0) {
-//        flag=1;
-//        on_splineChangeBtn_clicked();
-//    }
-//    if(idx < 40){
-//        qDebug() <<  "\n This is the original trajectory";
-//        ui->renderArea->changePose(sim.getPoses(idx));
-//        MiscData m = sim.getMiscData(idx);
-//        qDebug() << idx << ". " << "vl, vr = " << sim.getVls(idx) << ", " << sim.getVrs(idx) << ", vl_calc, vr_calc = " <<
-//                    sim.getVls_calc(idx) << ", " << sim.getVrs_calc(idx) << "v_ref, omega_ref = " << m.v_ref << ", " << m.omega_ref << ", "
-//                 << "v1, v2 = " << m.v1 << ", " << m.v2 << "time = " << m.t << "v, w = " << m.v << m.w
-//                 << "vl, vr (in miscdata) = " << m.vl << m.vr << "vl_ref, vr_ref = " << m.vl_ref << m.vr_ref;
-//    }
-//    else{
-//        qDebug() <<  "\n\t\t This is the trajectory after changing";
-//        ui->renderArea->changePose(simsc.getPoses(idx-40));
-//        MiscData m = simsc.getMiscData(idx-40);
-//        qDebug() << idx-40 << ". " << "vl, vr = " << simsc.getVls(idx-40) << ", " << simsc.getVrs(idx-40) << ", vl_calc, vr_calc = " <<
-//                    simsc.getVls_calc(idx-40) << ", " << simsc.getVrs_calc(idx-40) << "v_ref, omega_ref = " << m.v_ref << ", " << m.omega_ref << ", "
-//                 << "v1, v2 = " << m.v1 << ", " << m.v2 << "time = " << m.t << "v, w = " << m.v << m.w
-//                 << "vl, vr (in miscdata) = " << m.vl << m.vr << "vl_ref, vr_ref = " << m.vl_ref << m.vr_ref;
-//    }
-    ui->renderArea->changePose(sim.getPoses(idx));
-    MiscData m = sim.getMiscData(idx);
+    if (idx >= 40 && flag==0) {
+        flag=1;
+        //on_splineChangeBtn_clicked();
+    }
+    if(idx < 40){
+        qDebug() <<  "\n This is the original trajectory";
+        ui->renderArea->changePose(sim.getPoses(idx));
+        MiscData m = sim.getMiscData(idx);
+        qDebug() << idx << ". " << "vl, vr = " << sim.getVls(idx) << ", " << sim.getVrs(idx) << ", vl_calc, vr_calc = " <<
+                    sim.getVls_calc(idx) << ", " << sim.getVrs_calc(idx) << "v_ref, omega_ref = " << m.v_ref << ", " << m.omega_ref << ", "
+                 << "v1, v2 = " << m.v1 << ", " << m.v2 << "time = " << m.t << "v, w = " << m.v << m.w
+                 << "vl, vr (in miscdata) = " << m.vl << m.vr << "vl_ref, vr_ref = " << m.vl_ref << m.vr_ref;
+    }
+    else{
+        qDebug() <<  "\n\t\t This is the trajectory after changing";
+        ui->renderArea->changePose(simsc.getPoses(idx-40));
+        MiscData m = simsc.getMiscData(idx-40);
+        qDebug() << idx-40 << ". " << "vl, vr = " << simsc.getVls(idx-40) << ", " << simsc.getVrs(idx-40) << ", vl_calc, vr_calc = " <<
+                    simsc.getVls_calc(idx-40) << ", " << simsc.getVrs_calc(idx-40) << "v_ref, omega_ref = " << m.v_ref << ", " << m.omega_ref << ", "
+                 << "v1, v2 = " << m.v1 << ", " << m.v2 << "time = " << m.t << "v, w = " << m.v << m.w
+                 << "vl, vr (in miscdata) = " << m.vl << m.vr << "vl_ref, vr_ref = " << m.vl_ref << m.vr_ref;
+    }
     // lets print for traj sim
 //    Pose s = sim.getPoses(idx);
 
@@ -204,6 +203,12 @@ void Dialog::onAlgoTimeout()
         start = Pose(bs.homeX[BOT_ID_TESTING], bs.homeY[BOT_ID_TESTING], bs.homeTheta[BOT_ID_TESTING]-PI);
     }
 
+    double dt = 0;
+    if(traj){
+        SplineTrajectory *st = dynamic_cast<SplineTrajectory*>(traj);
+        dt = st->totalTime() - algoController->getCurrentTimeS();
+    }
+
     Vector2D<double> ballPos(bs.ballX, bs.ballY);
     double dist = BallInterception::getBotBallDist(start, ballPos);
     //TDefend tdef;
@@ -213,12 +218,12 @@ void Dialog::onAlgoTimeout()
 //        assert(0);
         // if bot is close to end point, then make a new trajectory that leads to goal!
 
-        if(traj){
-            SplineTrajectory *st = dynamic_cast<SplineTrajectory*>(traj);
-            double dt = st->totalTime() - algoController->getCurrentTimeS();
-            //qDebug() << start.x() << " " << start.y() << endl;
-          //  qDebug() << "dt = " << dt << "st->totalTime() = " << st->totalTime();
-        }
+//        if(traj){
+//            SplineTrajectory *st = dynamic_cast<SplineTrajectory*>(traj);
+//            double dt = st->totalTime() - algoController->getCurrentTimeS();
+//            //qDebug() << start.x() << " " << start.y() << endl;
+//          //  qDebug() << "dt = " << dt << "st->totalTime() = " << st->totalTime();
+//        }
         if (dist <= 1.5*BOT_RADIUS) { //dt = 0.21
             USING_INTERCEPTION = false;
             // make a new trajectory
@@ -244,8 +249,8 @@ void Dialog::onAlgoTimeout()
             ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
             ui->firaRenderArea->toggleTrajectory(true);
 
-            algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
-            //algoController = new ControllerWrapper(traj, bs.homeVl[BOT_ID_TESTING], bs.homeVr[BOT_ID_TESTING], PREDICTION_PACKET_DELAY);
+            //algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
+            algoController = new ControllerWrapper(traj, bs.homeVl[BOT_ID_TESTING], bs.homeVr[BOT_ID_TESTING], PREDICTION_PACKET_DELAY);
         }
     }
     // NOTE: set finalvel!!
@@ -253,13 +258,17 @@ void Dialog::onAlgoTimeout()
     predictedPoseQ.push_back(algoController->getPredictedPose(start));
     // getPredictedPose gives the predicted pose of the robot after PREDICTION_PACKET_DELAY ticks from now. We need to display what our
     // prediction was PREDICTION_PACKET_DELAY ticks ago (i.e. what our prediction was for now).
+    if(dt <= 0.075){
+        vl = 0;
+        vr = 0;
+    }
 
     ui->firaRenderArea->predictedPose = predictedPoseQ.front();
     predictedPoseQ.pop_front();
     assert(vl <= 180 && vl >= -180);
     assert(vr <= 180 && vr >= -180);
-    char buf[12];
-    for (int i = 0; i < 12; i++)
+    char buf[11];
+    for (int i = 0; i < 11; i++)
         buf[i] = 0;
     buf[0] = 126; // doesnt matter
     // NOTE: testing, remove these 2 lines pls
@@ -275,30 +284,33 @@ void Dialog::onAlgoTimeout()
     }
     getVel.x = vl;
     getVel.y = vr;
-    buf[11] = (++counter)%100;
+    counter++;
+    //buf[11] = (++counter)%100;
     qDebug() << "sending: " << vl << vr << counter%100 << ", packets sent = " << counter ;
     sendDataMutex->lock();
-    comm.Write(buf, 12);
+    comm.Write(buf, 11);
 //    for(int i=0;i<12;i++){
 //        comm.WriteByte(buf[i]);
 //        usleep(800);
 //    }
     sendDataMutex->unlock();
 
-//    if (counter > 40 && flag==0) {
-//        qDebug() << "Changing trajectoiry ";
-//        counter=0;flag=1;
-//        on_traj2Button_clicked();
-//        on_startSending_clicked();
-//    }
+
+    if (counter > 30 && flag==0) {
+        qDebug() << "Changing trajectoiry ";
+        counter=0;
+        flag=1;
+        on_traj2Button_clicked();
+        on_startSending_clicked();
+    }
    // else  // store data in sysData
 
-       if (counter > 20 && USING_INTERCEPTION == true) {
-            qDebug() << "Changing trajectoiry ";
-            counter=0;
-            flag2 = 1;
-            on_interceptionButton_clicked();
-        }
+//       if (counter > 20 && USING_INTERCEPTION == true) {
+//            qDebug() << "Changing trajectoiry ";
+//            counter=0;
+//            flag2 = 1;
+//            on_interceptionButton_clicked();
+//        }
         sysData.push_back(Logging::populateSystemData(counter%100, vl, vr, bs, BOT_ID_TESTING));
 }
 
@@ -364,14 +376,14 @@ void Dialog::on_startSending_clicked()
 void Dialog::on_stopSending_clicked()
 {
     algoTimer->stop();
-    char buf[12];
+    char buf[11];
     buf[0] = 126; // doesnt matter;
     for (int i = 1; i < 11; i++)
         buf[i] = 0;
-    buf[11] = (++counter)%100; // timestamp
+    //buf[11] = (++counter)%100; // timestamp
     sendDataMutex->lock();
     usleep(timeLCMs * 1000);
-    comm.Write(buf, 12);
+    comm.Write(buf, 11);
 //    comm.WriteByte(126);
 //    usleep(1000);
 //    for(int i=1;i<12;i++){
@@ -529,34 +541,104 @@ void Dialog::on_traj2Button_clicked()
     Pose end = ui->firaRenderArea->getEndPose();
 
 
-    pair<int,int> delayedVel;
+    VelocityPair delayedVel;
 //    traj = quinticBezierSplineGenerator(start, end, 0, 0, 0, 0);
- //   direction = isFrontDirected(start, end) ;
+    direction = isFrontDirected(start, end);
+  //  direction = false;
+//    if(!flag)
+//        delete traj ;
+    qDebug() << "flag" << flag << endl;
+    if(direction == last_direction){
+        if(direction){
+            if(!flag){
+                traj = cubic(start, end, 0, 0, 30, 30);
+                algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
+            }
+            else{
+                delayedVel = algoController->getDelayedVel();
+                start = predictedPoseQ.back();
+                //qDebug() << start.x();
+                //  qDebug() << "here" << endl;
+                if(traj)
+                    delete traj;
+                traj = cubic(start, end, delayedVel.vl , delayedVel.vr , 30, 30);
+                algoController = new ControllerWrapper(traj, delayedVel.vl , delayedVel.vr, PREDICTION_PACKET_DELAY);
+                qDebug() << "made" ;
+            }
+        }
+        else {
+            if(!flag){
+                traj = cubic(start2, end, 0, 0, 30, 30);
+                algoController = new ControllerWrapper(traj, 0, 0 , PREDICTION_PACKET_DELAY);
+            }
+            else{
+                start2 = predictedPoseQ.back();
+                delayedVel = algoController->getDelayedVel();
+                if(traj)
+                    delete traj;
+        //        pair<int,int> delayedVel2(make_pair((-1)*delayedVel.second, (-1)*delayedVel.first));
 
-    if(!flag)
-        delete traj ;
-    if(direction){
-        if(!flag)
-            traj = cubic(start, end, 0, 0, 30, 30);
-        else{
-            delayedVel = algoController->getDelayedVel();
-            Pose start = algoController->getNewStartPose();
-            //qDebug() << start.x();
-            delete traj;
-            traj = cubic(start, end, delayedVel.first , delayedVel.second , 30, 30);
-            qDebug() << "made" ;
+                traj = cubic(start2, end, delayedVel.vl, delayedVel.vr, 30, 30);
+               algoController = new ControllerWrapper(traj, delayedVel.vl , delayedVel.vr, PREDICTION_PACKET_DELAY);
+            }
         }
     }
-    else {
-        if(!flag)
-            traj = cubic(start2, end, 0, 0, 30, 30);
-        else{
-            Pose start2 = algoController->getNewStartPose();
-            delayedVel = algoController->getDelayedVel();
-            traj = cubic(start2, end, delayedVel.first, delayedVel.second, 30, 30);
+    else{
+        qDebug() << "direction change" << bs.homeVl[BOT_ID_TESTING] << " " << bs.homeVr[BOT_ID_TESTING] << " " << flag << endl;
+        if(direction){
+            if(!flag){
+                traj = cubic(start, end, 0, 0, 30, 30);
+                algoController = new ControllerWrapper(traj, 0, 0, PREDICTION_PACKET_DELAY);
+            }
+            else{
+                delayedVel = algoController->getDelayedVel();
+               start = predictedPoseQ.back();
+                //qDebug() << start.x();
+                //  qDebug() << "here" << endl;
+                start.setTheta(normalizeAngle(start.theta() - PI));
+                if(traj)
+                    delete traj;
+                traj = cubic(start, end, (-1)*delayedVel.vr , (-1)*delayedVel.vl , 30, 30);
+                algoController = new ControllerWrapper(traj, (-1)*delayedVel.vr , (-1)*delayedVel.vl, PREDICTION_PACKET_DELAY);
+                qDebug() << "made" ;
+            }
+        }
+        else {
+            if(!flag){
+                traj = cubic(start2, end, 0, 0, 30, 30);
+                algoController = new ControllerWrapper(traj, 0, 0 , PREDICTION_PACKET_DELAY);
+            }
+            else{
+                start2 = predictedPoseQ.back();
+                delayedVel = algoController->getDelayedVel();
+               start2.setTheta(normalizeAngle(start2.theta() - PI));
+                if(traj)
+                    delete traj;
+        //        pair<int,int> delayedVel2(make_pair((-1)*delayedVel.second, (-1)*delayedVel.first));
+
+                traj = cubic(start2, end, (-1)*delayedVel.vr, (-1)*delayedVel.vl, 30, 30);
+               algoController = new ControllerWrapper(traj, (-1)*delayedVel.vr , (-1)*delayedVel.vl, PREDICTION_PACKET_DELAY);
+               //algoController = new ControllerWrapper(traj, (-1)*delayedVel.vl , (-1)*delayedVel.vr, PREDICTION_PACKET_DELAY);
+            }
         }
     }
-    flag=0;
+
+//    if (!flag3) {
+//        flag3 = 1;
+//    } else {
+//        if (last_direction != direction) {
+////            int kk = 10;
+////            while (kk != 0) {
+//                on_stopSending_clicked();
+////                kk--;
+////            }
+//            //on_startSending_clicked();
+//        }
+//    }
+
+    last_direction = direction;
+
+    flag = 0;
     ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)
         ui->trajSimButton->setEnabled(true);
@@ -568,6 +650,7 @@ void Dialog::on_traj2Button_clicked()
 
     ui->firaRenderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     ui->firaRenderArea->toggleTrajectory(true);
+  //   on_startSending_clicked();
 }
 
 void Dialog::on_circleTrajButton_clicked()
@@ -676,7 +759,7 @@ void Dialog::on_interceptionButton_clicked()
     Vector2D<double> botVel(bs.homeVl[BOT_ID_TESTING], bs.homeVr[BOT_ID_TESTING]);
 
     if(flag2){
-        botVel = Vector2D<double>(algoController->getDelayedVel().first , algoController->getDelayedVel().second);
+        botVel = Vector2D<double>(algoController->getDelayedVel().vl , algoController->getDelayedVel().vr);
 
         start = algoController->getNewStartPose();
     }

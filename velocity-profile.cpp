@@ -168,7 +168,7 @@ vector<ProfileDatapoint> generateVelocityProfile(Spline &p, int numPoints, doubl
         double k = p.k(u);
        // double r = 1/k;
         //NOTE: hardcoding vsat here!!
-        v[i].v = min(vmax_isolated(k, 120), Constants::vsat);//100
+        v[i].v = min(vmax_isolated(k, 100), Constants::vsat);//100
         v[i].u = u;
         v[i].s = s;
     }
@@ -176,7 +176,8 @@ vector<ProfileDatapoint> generateVelocityProfile(Spline &p, int numPoints, doubl
     v[0].v = vs;
     for (int i = 1; i < numPoints; i++) {
         double vwold = v[i-1].v*v[i-1].v*p.k(v[i-1].u);
-        double vw = Constants::vwIntercept + Constants::vwSlope/p.k(((i-1)*1.0)/numPoints);
+        assert(p.k(v[i-1].u) != 0);
+        double vw = Constants::vwIntercept + Constants::vwSlope/p.k(v[i-1].u);
         if( vw < Constants::vwmax)
             vw = vwmax;
        //  vw = Constants::vwmax;
@@ -187,7 +188,8 @@ vector<ProfileDatapoint> generateVelocityProfile(Spline &p, int numPoints, doubl
     v[numPoints-1].v = ve;
     for (int i = numPoints-2; i >= 0; i--) {
         double vwold = v[i+1].v*v[i+1].v*p.k(v[i+1].u);
-        double vw = Constants::vwIntercept + Constants::vwSlope/p.k(((i-1)*1.0)/numPoints);
+        assert(p.k(v[i+1].u) != 0);
+        double vw = Constants::vwIntercept + Constants::vwSlope/p.k(v[i+1].u);
         if( vw < Constants::vwmax)
             vw = vwmax;
        //  vw = Constants::vwmax;
