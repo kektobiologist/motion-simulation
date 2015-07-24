@@ -3,6 +3,7 @@
 #include <vector>
 using namespace std;
 #include "drawable.h"
+#include "collision-checking.h"
 
 extern RenderArea *gRenderArea;
 //double Optimization::f_cubic2CP(const gsl_vector *x, void *params_)
@@ -129,6 +130,22 @@ double Optimization::f_cubicnCP(const gsl_vector *x, void *params_)
         cps.push_back(Pose(gsl_vector_get(x, 2*i)*fieldXConvert, gsl_vector_get(x, 2*i+1)*fieldXConvert, 0));
     }
     CubicSpline *p = new CubicSpline(params->start, params->end, cps);
+
+    // check if collides with wall. if so, make the score = 1.5 x time score
+    using CollisionChecking::LineSegment;
+    vector<LineSegment> ls;
+    ls.push_back(LineSegment(-HALF_FIELD_MAXX/fieldXConvert, -HALF_FIELD_MAXY/fieldXConvert, HALF_FIELD_MAXX/fieldXConvert, -HALF_FIELD_MAXY/fieldXConvert));
+    ls.push_back(LineSegment(-HALF_FIELD_MAXX/fieldXConvert, HALF_FIELD_MAXY/fieldXConvert, HALF_FIELD_MAXX/fieldXConvert, HALF_FIELD_MAXY/fieldXConvert));
+    ls.push_back(LineSegment(-HALF_FIELD_MAXX/fieldXConvert, -HALF_FIELD_MAXY/fieldXConvert, -HALF_FIELD_MAXX/fieldXConvert, +HALF_FIELD_MAXY/fieldXConvert));
+    ls.push_back(LineSegment(HALF_FIELD_MAXX/fieldXConvert, -HALF_FIELD_MAXY/fieldXConvert, HALF_FIELD_MAXX/fieldXConvert, +HALF_FIELD_MAXY/fieldXConvert));
+    bool collides_flag = false;
+    for (int i = 0; i < ls.size(); i++) {
+        vector<Pose> collisions = CollisionChecking::cubicSpline_LineSegmentIntersection(*p, ls[i]);
+        if (collisions.size()) {
+            collides_flag = true;
+            break;
+        }
+    }
     SplineTrajectory *st = new SplineTrajectory(p, params->vls, params->vrs, params->vle, params->vre);
     double time = st->totalTime();
     // use maxk also as a cost.
@@ -137,6 +154,8 @@ double Optimization::f_cubicnCP(const gsl_vector *x, void *params_)
 //    delete st;
     //vector<pair<double,float> > mp = p->lmaxk();
     //p->lmaxk();
+    if (collides_flag)
+        time *= 3;
     return time;
     //return maxk;
 }
@@ -160,6 +179,9 @@ Trajectory *Optimization::cubicSplinenCPOptimization(Pose start, Pose end, doubl
     // set some values for the control points
     std::vector<Pose> cps;
     for (int i = 0; i < n; i++) {
+        // initialize all cps to 0,0?
+//        double x = 0;
+//        double y = 0;
         double x = rand()/(double)RAND_MAX*1000.*((rand()%2)*2-1);
         double y = rand()/(double)RAND_MAX*1000.*((rand()%2)*2-1);
         cps.push_back(Pose(x, y, 0));

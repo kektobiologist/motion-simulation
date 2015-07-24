@@ -674,8 +674,8 @@ void Dialog::on_circleTrajButton_clicked()
 //    traj = quinticBezierSplineGenerator(start, end, 0, 0, 40, 70);aj = cubic2CP(start, end, 0, 0, 40, 70);
 
     //traj = cubic(start, end, 0, 0, 40, 70);
-//    traj = cubicnCP(start, end, 0, 0, 40, 70, 1);
-    traj = cubic_drawCollisions(start, end, 0, 0, 40, 70);
+    traj = cubicnCP(start, end, 0, 0, 40, 70, 2);
+//    traj = cubic_drawCollisions(start, end, 0, 0, 40, 70);
 
     ui->renderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));
     if (ui->trajSimButton->isEnabled() == false)
