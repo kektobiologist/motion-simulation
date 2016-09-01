@@ -70,7 +70,7 @@
                  <bool>false</bool>
                 </property>
                 <property name="text">
-                 <string>Simulate Circle Traj</string>
+                 <string>Interception</string>
                 </property>
                </widget>
               </item>

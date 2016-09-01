@@ -4,6 +4,9 @@
 using namespace std;
 #include "drawable.h"
 #include "collision-checking.h"
+#include <QFile>
+#include <QTextStream>
+#include <QString>
 
 extern RenderArea *gRenderArea;
 //double Optimization::f_cubic2CP(const gsl_vector *x, void *params_)
@@ -204,6 +207,11 @@ Trajectory *Optimization::cubicSplinenCPOptimization(Pose start, Pose end, doubl
     s = gsl_multimin_fminimizer_alloc (T, 2*n);
     gsl_multimin_fminimizer_set (s, &minex_func, x, ss);
 
+    QString filename = "/home/abhinav/Desktop/pathplanner_extras/DataLogCP.txt";
+    QFile file(filename);
+    file.open(QIODevice::WriteOnly| QIODevice::Text);
+    QTextStream stream(&file);
+
     do
     {
       iter++;
@@ -220,14 +228,47 @@ Trajectory *Optimization::cubicSplinenCPOptimization(Pose start, Pose end, doubl
           printf ("converged to minimum at\n");
         }
 
-      printf ("%5d %10.3e %10.3e f() = %7.3f size = %.3f\n",
+      printf ("%5d %10.3e %10.3e %10.3e %10.3e f() = %7.3f size = %.3f\n",
               iter,
               gsl_vector_get (s->x, 0),
               gsl_vector_get (s->x, 1),
+              gsl_vector_get (s->x, 2),
+              gsl_vector_get (s->x, 3),
               s->fval, size);
+      QString str;
+      str.sprintf("%5d %10.3e %10.3e %10.3e %10.3e f() = %7.3f size = %.3f\n",iter,gsl_vector_get(s->x, 0),
+                  gsl_vector_get(s->x, 1),gsl_vector_get(s->x, 2),gsl_vector_get(s->x, 3),s->fval,size);
+      stream << str << endl;
     }
     while (status == GSL_CONTINUE && iter < 100);
 
+    //Logging the value of f_cubicnCP for all positions of control points
+    stream << "=================================================================================\n";
+    stream << "=================================================================================\n";
+    stream << "=================================================================================\n";
+
+//    for(int jk=0;jk<1000;jk++){
+//        gsl_vector *x1;
+//        std::vector<Pose> cps;
+//        x1 = gsl_vector_alloc (2*n);
+//        for (int i = 0; i < n; i++) {
+//            double x = gsl_vector_get(s->x, 2*i) + rand()/(double)RAND_MAX*100.*((rand()%2)*2-1);
+//            double y = gsl_vector_get(s->x, 2*i+1) + rand()/(double)RAND_MAX*100.*((rand()%2)*2-1);
+//            cps.push_back(Pose(x, y, 0));
+//        }
+//        for (int i = 0; i < n; i++) {
+//            gsl_vector_set(x1, i*2, cps[i].x()/fieldXConvert);
+//            gsl_vector_set(x1, i*2+1, cps[i].y()/fieldXConvert);
+//        }
+
+//        CubicSpline *p1 = new CubicSpline(start, end, cps);
+//        SplineTrajectory *st1 = new SplineTrajectory(p1, vls, vrs, vle, vre);
+//        QString str;
+//        str.sprintf("iter=%5d cp1.x=%10.3e cp1.y=%10.3e cp2.x=%10.3e cp2.y=%10.3e f() = %7.3f",jk, cps[0].x(), cps[0].y(), cps[1].x(), cps[1].y(), st1->totalTime());
+//        stream << str << endl;
+////        qDebug() << str;
+//    }
+    file.close();
     // make the trajectory now
     SplineTrajectory *st;
     {
