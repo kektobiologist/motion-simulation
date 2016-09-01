@@ -7,6 +7,8 @@ using namespace std;
 #include <QFile>
 #include <QTextStream>
 #include <QString>
+#include <alglib/optimization.h>
+using namespace alglib;
 
 extern RenderArea *gRenderArea;
 //double Optimization::f_cubic2CP(const gsl_vector *x, void *params_)
@@ -163,118 +165,82 @@ double Optimization::f_cubicnCP(const gsl_vector *x, void *params_)
     //return maxk;
 }
 
+Optimization::OptParams *gparams = NULL;
+void Optimization::f_cubicnCP(const real_1d_array &x, real_1d_array &fi, void *ptr){
+    OptParams *params = static_cast<OptParams*>(gparams);
+    int n = params->n;
+    std::vector<Pose> cps;
+    for (int i = 0; i < n; i++) {
+        cps.push_back(Pose(x[2*i]*fieldXConvert, x[2*i+1]*fieldXConvert, 0));
+    }
+    CubicSpline *p = new CubicSpline(params->start, params->end, cps);
+
+    // check if collides with wall. if so, make the score = 1.5 x time score
+    using CollisionChecking::LineSegment;
+    vector<LineSegment> ls;
+    ls.push_back(LineSegment(-HALF_FIELD_MAXX/fieldXConvert, -HALF_FIELD_MAXY/fieldXConvert, HALF_FIELD_MAXX/fieldXConvert, -HALF_FIELD_MAXY/fieldXConvert));
+    ls.push_back(LineSegment(-HALF_FIELD_MAXX/fieldXConvert, HALF_FIELD_MAXY/fieldXConvert, HALF_FIELD_MAXX/fieldXConvert, HALF_FIELD_MAXY/fieldXConvert));
+    ls.push_back(LineSegment(-HALF_FIELD_MAXX/fieldXConvert, -HALF_FIELD_MAXY/fieldXConvert, -HALF_FIELD_MAXX/fieldXConvert, +HALF_FIELD_MAXY/fieldXConvert));
+    ls.push_back(LineSegment(HALF_FIELD_MAXX/fieldXConvert, -HALF_FIELD_MAXY/fieldXConvert, HALF_FIELD_MAXX/fieldXConvert, +HALF_FIELD_MAXY/fieldXConvert));
+    bool collides_flag = false;
+    for (int i = 0; i < ls.size(); i++) {
+        vector<Pose> collisions = CollisionChecking::cubicSpline_LineSegmentIntersection(*p, ls[i]);
+        if (collisions.size()) {
+            collides_flag = true;
+            break;
+        }
+    }
+    SplineTrajectory *st = new SplineTrajectory(p, params->vls, params->vrs, params->vle, params->vre);
+    double time = st->totalTime();
+    if (collides_flag)
+        time *= 3;
+    fi[0] = time;
+}
 
 Trajectory *Optimization::cubicSplinenCPOptimization(Pose start, Pose end, double vls, double vrs, double vle, double vre, int n)
 {
     assert(n >= 0 && n <= 5);
     OptParams params(start, end, vls, vrs, vle, vre, n);
-    const gsl_multimin_fminimizer_type *T =
-    gsl_multimin_fminimizer_nmsimplex2;
-    gsl_multimin_fminimizer *s = NULL;
-    gsl_vector *ss, *x;
-    gsl_multimin_function minex_func;
-
-    size_t iter = 0;
-    int status;
-    double size;
-
+    gparams = &params;
     /* Starting point */
     // set some values for the control points
-    std::vector<Pose> cps;
+    double cps[4] = {0};
     for (int i = 0; i < n; i++) {
-        // initialize all cps to 0,0?
-//        double x = 0;
-//        double y = 0;
         double x = rand()/(double)RAND_MAX*1000.*((rand()%2)*2-1);
         double y = rand()/(double)RAND_MAX*1000.*((rand()%2)*2-1);
-        cps.push_back(Pose(x, y, 0));
-    }
-    x = gsl_vector_alloc (2*n);
-    for (int i = 0; i < n; i++) {
-        gsl_vector_set(x, i*2, cps[i].x()/fieldXConvert);
-        gsl_vector_set(x, i*2+1, cps[i].y()/fieldXConvert);
+        cps[2*i] = x; cps[2*i+1] = y;
     }
 
-    /* Set initial step sizes to 100 */
-    ss = gsl_vector_alloc (2*n);
-    gsl_vector_set_all (ss, 100.0);
+//    QString filename = "/home/abhinav/Desktop/pathplanner_extras/DataLogCP.txt";
+//    QFile file(filename);
+//    file.open(QIODevice::WriteOnly| QIODevice::Text);
+//    QTextStream stream(&file);
 
-    /* Initialize method and iterate */
-    minex_func.n = 2*n;
-    minex_func.f = f_cubicnCP;
-    minex_func.params = &params;
+    real_1d_array x; x.setcontent(4, cps);
+    real_1d_array bndl = "[-1000,-1000,-1000,-1000]";
+    real_1d_array bndu = "[+1000,+1000,+1000,+1000]";
+    double epsg = 0.0000000001;
+    double epsf = 0;
+    double epsx = 0;
+    ae_int_t maxits = 0;
+    minlmstate state;
+    minlmreport rep;
 
-    s = gsl_multimin_fminimizer_alloc (T, 2*n);
-    gsl_multimin_fminimizer_set (s, &minex_func, x, ss);
+    minlmcreatev(2, x, 0.0001, state);
+    minlmsetbc(state, bndl, bndu);
+    minlmsetcond(state, epsg, epsf, epsx, maxits);
+    alglib::minlmoptimize(state, f_cubicnCP);
+    minlmresults(state, x, rep);
 
-    QString filename = "/home/abhinav/Desktop/pathplanner_extras/DataLogCP.txt";
-    QFile file(filename);
-    file.open(QIODevice::WriteOnly| QIODevice::Text);
-    QTextStream stream(&file);
+    qDebug("%d\n", int(rep.terminationtype)); // EXPECTED: 4
+    qDebug("%s\n", x.tostring(4).c_str()); // EXPECTED: [-1,+1]
 
-    do
-    {
-      iter++;
-      status = gsl_multimin_fminimizer_iterate(s);
-
-      if (status)
-        break;
-
-      size = gsl_multimin_fminimizer_size (s);
-      status = gsl_multimin_test_size (size, 1e-2);
-
-      if (status == GSL_SUCCESS)
-        {
-          printf ("converged to minimum at\n");
-        }
-
-      printf ("%5d %10.3e %10.3e %10.3e %10.3e f() = %7.3f size = %.3f\n",
-              iter,
-              gsl_vector_get (s->x, 0),
-              gsl_vector_get (s->x, 1),
-              gsl_vector_get (s->x, 2),
-              gsl_vector_get (s->x, 3),
-              s->fval, size);
-      QString str;
-      str.sprintf("%5d %10.3e %10.3e %10.3e %10.3e f() = %7.3f size = %.3f\n",iter,gsl_vector_get(s->x, 0),
-                  gsl_vector_get(s->x, 1),gsl_vector_get(s->x, 2),gsl_vector_get(s->x, 3),s->fval,size);
-      stream << str << endl;
-    }
-    while (status == GSL_CONTINUE && iter < 100);
-
-    //Logging the value of f_cubicnCP for all positions of control points
-    stream << "=================================================================================\n";
-    stream << "=================================================================================\n";
-    stream << "=================================================================================\n";
-
-//    for(int jk=0;jk<1000;jk++){
-//        gsl_vector *x1;
-//        std::vector<Pose> cps;
-//        x1 = gsl_vector_alloc (2*n);
-//        for (int i = 0; i < n; i++) {
-//            double x = gsl_vector_get(s->x, 2*i) + rand()/(double)RAND_MAX*100.*((rand()%2)*2-1);
-//            double y = gsl_vector_get(s->x, 2*i+1) + rand()/(double)RAND_MAX*100.*((rand()%2)*2-1);
-//            cps.push_back(Pose(x, y, 0));
-//        }
-//        for (int i = 0; i < n; i++) {
-//            gsl_vector_set(x1, i*2, cps[i].x()/fieldXConvert);
-//            gsl_vector_set(x1, i*2+1, cps[i].y()/fieldXConvert);
-//        }
-
-//        CubicSpline *p1 = new CubicSpline(start, end, cps);
-//        SplineTrajectory *st1 = new SplineTrajectory(p1, vls, vrs, vle, vre);
-//        QString str;
-//        str.sprintf("iter=%5d cp1.x=%10.3e cp1.y=%10.3e cp2.x=%10.3e cp2.y=%10.3e f() = %7.3f",jk, cps[0].x(), cps[0].y(), cps[1].x(), cps[1].y(), st1->totalTime());
-//        stream << str << endl;
-////        qDebug() << str;
-//    }
-    file.close();
     // make the trajectory now
     SplineTrajectory *st;
     {
         vector<Pose> cps;
         for (int i = 0; i < n; i++) {
-            cps.push_back(Pose(gsl_vector_get(s->x, 2*i)*fieldXConvert, gsl_vector_get(s->x, 2*i+1)*fieldXConvert, 0));
+            cps.push_back(Pose(x[2*i]*fieldXConvert, x[2*i+1]*fieldXConvert, 0));
         }
         static vector<PointDrawable*> pts;
         for (int i = 0; i < pts.size(); i++) {
@@ -288,13 +254,7 @@ Trajectory *Optimization::cubicSplinenCPOptimization(Pose start, Pose end, doubl
         }
         CubicSpline *p = new CubicSpline(start, end, cps);
         st = new SplineTrajectory(p, vls, vrs, vle, vre);
-//        double maxk_u, maxk;
-//        maxk = p->maxk(&maxk_u);
-//        qDebug() << "maxk = " << maxk << ", maxk_u = " << maxk_u;
     }
-    gsl_vector_free(x);
-    gsl_vector_free(ss);
-    gsl_multimin_fminimizer_free (s);
 
     return st;
 }

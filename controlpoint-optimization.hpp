@@ -3,7 +3,8 @@
 #include <gsl/gsl_multimin.h>
 #include "splines.hpp"
 #include "pose.h"
-
+#include <alglib/optimization.h>
+using namespace alglib;
 namespace Optimization {
 struct OptParams {
     Pose start, end;
@@ -17,6 +18,7 @@ struct OptParams {
 
 // optimization function
 double f_cubicnCP(const gsl_vector* x, void * params);
+void f_cubicnCP(const real_1d_array &x, real_1d_array &fi, void *ptr);
 Trajectory *cubicSplinenCPOptimization(Pose start, Pose end, double vls, double vrs, double vle, double vre, int n);
 }
 #endif // CONTROLPOINTOPTIMIZATION_HPP
