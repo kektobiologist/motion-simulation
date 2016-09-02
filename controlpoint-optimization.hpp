@@ -18,8 +18,8 @@ struct OptParams {
 
 // optimization function
 double f_cubicnCP(const gsl_vector* x, void * params);
-void f_cubicnCP(const real_1d_array &x, real_1d_array &fi, void *ptr);
-Trajectory *cubicSplinenCPOptimization(Pose start, Pose end, double vls, double vrs, double vle, double vre, int n);
+double f_cubicnCP(unsigned int n, const double *x, double *gradient, void *func_data);
+Trajectory *cubicSplinenCPOptimization(Pose start, Pose end, double vls, double vrs, double vle, double vre, int n, std::string fileid);
 }
 #endif // CONTROLPOINTOPTIMIZATION_HPP
 

@@ -153,7 +153,7 @@ vector<ProfileDatapoint> generateVelocityProfile(Spline &p, int numPoints, doubl
     double full = Integration::integrate(p, 0, 1);
     double vs = (vls+vrs)/2.;
     double ve = (vle+vre)/2.;
-    qDebug() << "Starting ending vel:"<< vs << " " << ve << endl;
+//    qDebug() << "Starting ending vel:"<< vs << " " << ve << endl;
     //assert(vs >= 0 && ve >= 0);
     vector<ProfileDatapoint> v(numPoints, ProfileDatapoint());
     double dels = full/(numPoints-1);

@@ -8,6 +8,9 @@ using namespace std;
 #include <QTextStream>
 #include <QString>
 #include <alglib/optimization.h>
+#include "bayesopt/bayesopt/bayesopt.h"
+#include "bayesopt/bayesopt/parameters.h"
+#include <iostream>
 using namespace alglib;
 
 extern RenderArea *gRenderArea;
@@ -166,7 +169,7 @@ double Optimization::f_cubicnCP(const gsl_vector *x, void *params_)
 }
 
 Optimization::OptParams *gparams = NULL;
-void Optimization::f_cubicnCP(const real_1d_array &x, real_1d_array &fi, void *ptr){
+double Optimization::f_cubicnCP(unsigned int n1, const double *x, double *gradient, void *func_data){
     OptParams *params = static_cast<OptParams*>(gparams);
     int n = params->n;
     std::vector<Pose> cps;
@@ -194,10 +197,10 @@ void Optimization::f_cubicnCP(const real_1d_array &x, real_1d_array &fi, void *p
     double time = st->totalTime();
     if (collides_flag)
         time *= 3;
-    fi[0] = time;
+    return time;
 }
 
-Trajectory *Optimization::cubicSplinenCPOptimization(Pose start, Pose end, double vls, double vrs, double vle, double vre, int n)
+Trajectory *Optimization::cubicSplinenCPOptimization(Pose start, Pose end, double vls, double vrs, double vle, double vre, int n, std::string fileid)
 {
     assert(n >= 0 && n <= 5);
     OptParams params(start, end, vls, vrs, vle, vre, n);
@@ -208,17 +211,18 @@ Trajectory *Optimization::cubicSplinenCPOptimization(Pose start, Pose end, doubl
     for (int i = 0; i < n; i++) {
         double x = rand()/(double)RAND_MAX*1000.*((rand()%2)*2-1);
         double y = rand()/(double)RAND_MAX*1000.*((rand()%2)*2-1);
-        cps[2*i] = x; cps[2*i+1] = y;
+        cps[2*i] = x/fieldXConvert; cps[2*i+1] = y/fieldXConvert;
     }
 
-//    QString filename = "/home/abhinav/Desktop/pathplanner_extras/DataLogCP.txt";
+    QString filename = "/home/abhinav/Desktop/pathplanner_extras/log/" + QString::fromStdString(fileid) + ".log";
 //    QFile file(filename);
 //    file.open(QIODevice::WriteOnly| QIODevice::Text);
 //    QTextStream stream(&file);
 
-    real_1d_array x; x.setcontent(4, cps);
-    real_1d_array bndl = "[-1000,-1000,-1000,-1000]";
-    real_1d_array bndu = "[+1000,+1000,+1000,+1000]";
+//    double x[4] = {};
+    const double bndl[4] = {-1000,-1000,-1000,-1000};
+    const double bndu[4] = {1000,1000,1000,1000};
+    double minf=0;
     double epsg = 0.0000000001;
     double epsf = 0;
     double epsx = 0;
@@ -226,21 +230,28 @@ Trajectory *Optimization::cubicSplinenCPOptimization(Pose start, Pose end, doubl
     minlmstate state;
     minlmreport rep;
 
-    minlmcreatev(2, x, 0.0001, state);
-    minlmsetbc(state, bndl, bndu);
-    minlmsetcond(state, epsg, epsf, epsx, maxits);
-    alglib::minlmoptimize(state, f_cubicnCP);
-    minlmresults(state, x, rep);
+//    minlmcreatev(2, x, 0.0001, state);
+//    minlmsetbc(state, bndl, bndu);
+//    minlmsetcond(state, epsg, epsf, epsx, maxits);
+//    alglib::minlmoptimize(state, f_cubicnCP);
+//    minlmresults(state, x, rep);
 
-    qDebug("%d\n", int(rep.terminationtype)); // EXPECTED: 4
-    qDebug("%s\n", x.tostring(4).c_str()); // EXPECTED: [-1,+1]
+//    qDebug("%d\n", float(rep.terminationtype)); // EXPECTED: 4
+//    qDebug("%s\n", x.tostring(4).c_str()); // EXPECTED: [-1,+1]
 
+    bopt_params bparams = initialize_parameters_to_default();
+    bparams.n_iterations = 150;
+    bparams.verbose_level = 4;
+    set_log_file(&bparams, filename.toStdString().c_str());
+    set_learning(&bparams,"L_MCMC");
+    int k= bayes_optimization(4,f_cubicnCP,NULL,bndl, bndu, cps, &minf, bparams);
+//    stream << minf;
     // make the trajectory now
     SplineTrajectory *st;
     {
-        vector<Pose> cps;
+        vector<Pose> cpsf;
         for (int i = 0; i < n; i++) {
-            cps.push_back(Pose(x[2*i]*fieldXConvert, x[2*i+1]*fieldXConvert, 0));
+            cpsf.push_back(Pose(cps[2*i], cps[2*i+1], 0));
         }
         static vector<PointDrawable*> pts;
         for (int i = 0; i < pts.size(); i++) {
@@ -249,10 +260,10 @@ Trajectory *Optimization::cubicSplinenCPOptimization(Pose start, Pose end, doubl
         }
         pts.clear();
         for (int i = 0; i < n; i++) {
-            PointDrawable *pt = new PointDrawable(QPointF(cps[i].x(), cps[i].y()), gRenderArea);
+            PointDrawable *pt = new PointDrawable(QPointF(cpsf[i].x(), cpsf[i].y()), gRenderArea);
             pts.push_back(pt);
         }
-        CubicSpline *p = new CubicSpline(start, end, cps);
+        CubicSpline *p = new CubicSpline(start, end, cpsf);
         st = new SplineTrajectory(p, vls, vrs, vle, vre);
     }
 

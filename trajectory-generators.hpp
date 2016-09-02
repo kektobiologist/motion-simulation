@@ -69,7 +69,7 @@ SplineTrajectory *cubic(Pose start, Pose end, double vls, double vrs, double vle
     return st;
 }
 
-Trajectory *cubicnCP(Pose start, Pose end, double vls, double vrs, double vle, double vre, int n) {
+Trajectory *cubicnCP(Pose start, Pose end, double vls, double vrs, double vle, double vre, int n, std::string fileid) {
 
 //    Pose cp1((start.x()*2+end.x())*1/3., (start.y()*2+end.y())*1/3., 0);
 //    Pose cp2((start.x()+2*end.x())*1/3., (start.y()+2*end.y())*1/3., 0);
@@ -85,7 +85,7 @@ Trajectory *cubicnCP(Pose start, Pose end, double vls, double vrs, double vle, d
 //    pt2 = new PointDrawable(QPointF(cp2.x(), cp2.y()), gRenderArea);
 //    CubicSpline *p = new CubicSpline(start, end, midPoints);
 //    SplineTrajectory *st = new SplineTrajectory(p, vls, vrs, vle, vre);
-    Trajectory *st = Optimization::cubicSplinenCPOptimization(start, end, vls, vrs, vle, vre, n);
+    Trajectory *st = Optimization::cubicSplinenCPOptimization(start, end, vls, vrs, vle, vre, n, fileid);
     return st;
 }
 
