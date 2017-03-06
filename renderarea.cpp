@@ -65,6 +65,12 @@ void RenderArea::paintEvent(QPaintEvent *)
     QPainter painter(this);
     drawField(painter);
     drawBot(painter);    
+    // Obstacles
+    drawBot(painter, 1000, 1000, 0, true);
+    drawBot(painter, -800, -700, 45, true);
+    drawBot(painter, 650, -700, 90, true);
+    drawBot(painter, -450, 300, 135, true);
+
     drawPose(painter, 0);
     drawPose(painter, 1);
     drawTrajectory(painter);
@@ -102,6 +108,33 @@ void RenderArea::drawBot(QPainter &painter)
     QPen pen;
     pen.setColor(Qt::black);
     pen.setWidth(4);
+    painter.setPen(pen);
+    painter.drawRect(bot);
+    painter.drawLine(midLine);
+    painter.restore();
+}
+
+void RenderArea::drawBot(QPainter &painter, double botX, double botY, double botTheta, bool isHome)
+{
+    // size of field in qt is 605x410, same ratio as in ssl-vision.
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+    QRectF bot; // is in the strategy coordinate system only.
+    bot.setHeight(223); // 7.5 * fieldXConvert, what would be better? since fieldXConvert != fieldYConvert, its approx
+    bot.setWidth(223);
+    bot.moveCenter(QPoint(0, 0));
+    QLine midLine;
+    midLine.setLine(bot.center().x(), bot.center().y(), bot.center().x()+bot.width()/2, bot.center().y());
+    painter.translate(this->width()/2, this->height()/2);
+    painter.scale(this->width()/(double)(2*HALF_FIELD_MAXX), this->height()/(double)(2*HALF_FIELD_MAXY));
+    painter.translate(botX, -botY);
+    painter.rotate(-botTheta*180/3.1415); // pathetic
+    QPen pen;
+    if(isHome)
+        pen.setColor(Qt::blue);
+    else
+        pen.setColor(Qt::red);
+    pen.setWidth(10);
     painter.setPen(pen);
     painter.drawRect(bot);
     painter.drawLine(midLine);

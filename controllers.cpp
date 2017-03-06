@@ -102,6 +102,14 @@ MiscData DynamicWindow(Pose s, Pose e, int &vl, int &vr, double prevSpeed, doubl
 //    qDebug()<<"Inside function Dynamic Window";
 //    sprintf(buf, "in function Dynamic Window");
 
+    vector<Pose> obs;
+    obs.push_back(Pose(1000, 1000, 0));
+    obs.push_back(Pose(-1000, -1000, 45));
+    obs.push_back(Pose(1000, -1000, 90));
+    obs.push_back(Pose(-1000, 1000, 135));
+
+    double min_dist = 1000000.0;
+
 
     QTextStream outStream(&outputFile);
     if(va==-1)
@@ -114,7 +122,7 @@ MiscData DynamicWindow(Pose s, Pose e, int &vl, int &vr, double prevSpeed, doubl
      outputFile.open(QIODevice::Append);
      outStream<<" x = "<< s.x()<<" & y = "<< s.y();
 
-    const int del_v_max = 15; //ticks
+    const int del_v_max = 20; //ticks
     const float step = 1; //ticks
     const float max_vel = 100; //ticks
     const float a_r_max = 380; //cm/s^2
@@ -150,11 +158,25 @@ MiscData DynamicWindow(Pose s, Pose e, int &vl, int &vr, double prevSpeed, doubl
                  float x= s.x() + (newSpeed*cos(theta)*t);
                  float y= s.y() + (newSpeed*sin(theta)*t);
 
+                 bool collides_flag = false;
+                 double min_dist = 1000000.0;
+                 for (int i = 0 ; i < obs.size() ; i++) {
+                     double dist = sqrt((x - obs[i].x()) * (x - obs[i].x()) + (y - obs[i].y()) * (y - obs[i].y()));
+                     if (dist < min_dist){
+                         min_dist = dist;
+
+                     }
+                 }
+
                 float reqtheta=atan2((e.y()-y),(e.x()-x));
 
                 float dtheta=firaNormalizeAngle(theta-reqtheta);
 
-                arr[count][0]= sqrt(pow((x - e.x()),2) + pow((y - e.y()),2)) + k*pow((dtheta),2) ;         // our objective function
+                arr[count][0]= sqrt(pow((x - e.x()),2) + pow((y - e.y()),2)) + k*pow((dtheta),2) ;
+                if (min_dist < 2 * BOT_RADIUS) {
+                    arr[count][0] = arr[count][0] * 400;// - arr[count][0] * ( 2 - (min_dist/ (4 * BOT_RADIUS)));
+                }
+
                 arr[count][1]= newSpeed;
                 arr[count][2]= newOmega;
                 count++;

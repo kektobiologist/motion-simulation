@@ -17,5 +17,6 @@ struct LineSegment {
 std::vector<double> cubic_LineSegmentIntersection(const double coeffX[4], const double coeffY[4], double u_low,
     double u_high, const LineSegment &ls);
 std::vector<Pose> cubicSpline_LineSegmentIntersection(const CubicSpline &s, const LineSegment &ls);
+double cubicSpline_ObstacleCollision(const CubicSpline &s, Pose &obs);
 }
 #endif // COLLISIONCHECKING_H

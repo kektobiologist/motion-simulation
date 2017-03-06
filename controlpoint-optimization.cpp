@@ -10,6 +10,7 @@ using namespace std;
 #include <alglib/optimization.h>
 #include "bayesopt/bayesopt/bayesopt.h"
 #include "bayesopt/bayesopt/parameters.h"
+#include "pso.h"
 #include <iostream>
 using namespace alglib;
 
@@ -147,9 +148,25 @@ double Optimization::f_cubicnCP(const gsl_vector *x, void *params_)
     ls.push_back(LineSegment(-HALF_FIELD_MAXX/fieldXConvert, -HALF_FIELD_MAXY/fieldXConvert, -HALF_FIELD_MAXX/fieldXConvert, +HALF_FIELD_MAXY/fieldXConvert));
     ls.push_back(LineSegment(HALF_FIELD_MAXX/fieldXConvert, -HALF_FIELD_MAXY/fieldXConvert, HALF_FIELD_MAXX/fieldXConvert, +HALF_FIELD_MAXY/fieldXConvert));
     bool collides_flag = false;
+
+    vector<Pose> obs;
+    obs.push_back(Pose(1000, 1000, 0));
+    obs.push_back(Pose(-1000, -1000, 45));
+    obs.push_back(Pose(1000, -1000, 90));
+    obs.push_back(Pose(-1000, 1000, 135));
+
+    // Check collision with line segments
     for (int i = 0; i < ls.size(); i++) {
         vector<Pose> collisions = CollisionChecking::cubicSpline_LineSegmentIntersection(*p, ls[i]);
         if (collisions.size()) {
+            collides_flag = true;
+            break;
+        }
+    }
+    // Check collision with Obstacles
+    qDebug() << "checking with obstacles " << endl;
+                for (int i = 0 ; i < obs.size() ; i++) {
+        if (CollisionChecking::cubicSpline_ObstacleCollision(*p, obs[i])){
             collides_flag = true;
             break;
         }
@@ -193,10 +210,35 @@ double Optimization::f_cubicnCP(unsigned int n1, const double *x, double *gradie
             break;
         }
     }
+    vector<Pose> obs;
+    obs.push_back(Pose(1000, 1000, 0));
+    obs.push_back(Pose(-800, -700, 45));
+    obs.push_back(Pose(650, -700, 90));
+    obs.push_back(Pose(-450, 300, 135));
+
+    double min_dist = 1000000.0;
+    for (int i = 0 ; i < obs.size() ; i++) {
+        double dist = CollisionChecking::cubicSpline_ObstacleCollision(*p, obs[i]);
+        if (dist < min_dist)
+            min_dist = dist;
+//            qDebug() << "here" << endl;
+//            collides_flag = true;
+//            break;
+    }
+
     SplineTrajectory *st = new SplineTrajectory(p, params->vls, params->vrs, params->vle, params->vre);
     double time = st->totalTime();
-    if (collides_flag)
-        time *= 3;
+//    qDebug() << min_dist << "bckjswerdv"<< 6 * BOT_RADIUS << endl;
+//    if (collides_flag){
+//        time *= 3;
+//    }
+//    else {
+        if (min_dist < 1.5 * BOT_RADIUS){
+            qDebug() << "old time" << time;
+            time = time * (2.5 - (min_dist / (1.5 * BOT_RADIUS)));
+            qDebug() << "new time" << time << endl;
+        }
+//    }
     return time;
 }
 
@@ -236,11 +278,11 @@ Trajectory *Optimization::cubicSplinenCPOptimization(Pose start, Pose end, doubl
 //    alglib::minlmoptimize(state, f_cubicnCP);
 //    minlmresults(state, x, rep);
 
-//    qDebug("%d\n", float(rep.terminationtype)); // EXPECTED: 4
-//    qDebug("%s\n", x.tostring(4).c_str()); // EXPECTED: [-1,+1]
+//    qDebug("in this %d\n", float(rep.terminationtype)); // EXPECTED: 4
+//    qDebug("in this %s\n", x.tostring(4).c_str()); // EXPECTED: [-1,+1]
 
     bopt_params bparams = initialize_parameters_to_default();
-    bparams.n_iterations = 150;
+    bparams.n_iterations = 100;
     bparams.verbose_level = 4;
     set_log_file(&bparams, filename.toStdString().c_str());
     set_learning(&bparams,"L_MCMC");

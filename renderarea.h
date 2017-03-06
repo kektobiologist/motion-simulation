@@ -25,6 +25,7 @@ protected:
     void paintEvent(QPaintEvent *);
     void drawField(QPainter &painter);
     void drawBot(QPainter &painter);
+    void drawBot(QPainter &painter, double botX, double botY, double botTheta, bool isHome);
     void drawPose(QPainter &painter, int index); //index is 0 or 1, for start or end pose respectively.
     void drawTrajectory(QPainter &painter);
     void mousePressEvent(QMouseEvent *event);

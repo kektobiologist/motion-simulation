@@ -76,4 +76,40 @@ std::vector<Pose> cubicSpline_LineSegmentIntersection(const CubicSpline &s, cons
     }
     return results;
 }
+double cubicSpline_ObstacleCollision(const CubicSpline &s, Pose &obs) {
+    // unpack the x and y splines
+    using namespace alglib;
+    real_2d_array tbly, tblx;
+    ae_int_t ny, nx;
+    alglib::spline1dunpack(s.getSplineX(), nx, tblx);
+    alglib::spline1dunpack(s.getSplineY(), ny, tbly);
+    // both should have same number of pieces
+    assert(nx == ny);
+    int n = nx;
+    vector<Pose> results;
+    double min_dist = 1000000.0;
+    for (int i = 0; i < n-1; i++) {
+        // confirm that u intervals are same for both x and y splines
+        assert(tbly[i][0] == tblx[i][0] && tbly[i][1] == tblx[i][1]);
+        double u_low = tbly[i][0], u_high = tbly[i][1];
+        double cX[4], cY[4];
+        for (int j = 0; j < 4; j++) {
+            cX[j] = tblx[i][j+2];
+            cY[j] = tbly[i][j+2];
+        }
+        double obs_x = obs.x();
+        double obs_y = obs.y();
+//        qDebug() << u_low << " " << u_high << endl;
+        for (int j = 10 ; j< 40; j++){
+            double u_now = ((u_high - u_low) * j) / 50.0;
+            double x = (cX[0] + cX[1]*u_now + cX[2]*u_now*u_now + cX[3]*u_now*u_now*u_now) * fieldXConvert;
+            double y = (cY[0] + cY[1]*u_now + cY[2]*u_now*u_now + cY[3]*u_now*u_now*u_now) * fieldYConvert;
+            double dist = sqrt(((x - obs_x)*(x - obs_x) + (y - obs_y)*(y - obs_y)));
+//            qDebug() << x << " " << y << " " << dist << " " << u_now << " " << n <<  endl;
+            if (dist < min_dist)
+               min_dist = dist;
+        }
+    }
+    return min_dist;
+}
 }

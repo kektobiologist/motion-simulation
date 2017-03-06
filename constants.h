@@ -13,7 +13,6 @@ const int HALF_FIELD_MAXX              = 3025; //actual 225 (rugged surface at e
 
 const int HALF_FIELD_MAXY              = 2050;
 
-
 const int OUR_GOAL_MAXY                = 600;
 
 const int OUR_GOAL_MINY                = -600;

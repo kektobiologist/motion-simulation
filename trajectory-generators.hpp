@@ -70,7 +70,6 @@ SplineTrajectory *cubic(Pose start, Pose end, double vls, double vrs, double vle
 }
 
 Trajectory *cubicnCP(Pose start, Pose end, double vls, double vrs, double vle, double vre, int n, std::string fileid) {
-
 //    Pose cp1((start.x()*2+end.x())*1/3., (start.y()*2+end.y())*1/3., 0);
 //    Pose cp2((start.x()+2*end.x())*1/3., (start.y()+2*end.y())*1/3., 0);
 //    vector<Pose> midPoints;
