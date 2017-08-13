@@ -700,7 +700,7 @@ void Dialog::on_circleTrajButton_clicked()
 //                }
 //            }
 //        }
-     traj = cubicnCP(start, end, 0, 0, 40, 70, 1,"filename");
+     traj = cubicnCP(start, end, 0, 0, 40, 70, 2,"filename");
 //    traj = cubic_drawCollisions(start, end, 0, 0, 40, 70);
 
     ui->renderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));

@@ -12,6 +12,7 @@ using namespace std;
 #include "bayesopt/bayesopt/parameters.h"
 #include "pso.h"
 #include <iostream>
+#include <fstream>
 using namespace alglib;
 
 extern RenderArea *gRenderArea;
@@ -151,9 +152,9 @@ double Optimization::f_cubicnCP(const gsl_vector *x, void *params_)
 
     vector<Pose> obs;
     obs.push_back(Pose(1000, 1000, 0));
-    obs.push_back(Pose(-1000, -1000, 45));
-    obs.push_back(Pose(1000, -1000, 90));
-    obs.push_back(Pose(-1000, 1000, 135));
+    obs.push_back(Pose(-800, -700, 45));
+    obs.push_back(Pose(650, -700, 90));
+    obs.push_back(Pose(-450, 300, 135));
 
     // Check collision with line segments
     for (int i = 0; i < ls.size(); i++) {
@@ -191,7 +192,8 @@ double Optimization::f_cubicnCP(unsigned int n1, const double *x, double *gradie
     int n = params->n;
     std::vector<Pose> cps;
     for (int i = 0; i < n; i++) {
-        cps.push_back(Pose(x[2*i]*fieldXConvert, x[2*i+1]*fieldXConvert, 0));
+        qDebug() << x[2*i]*fieldXConvert << " " <<  x[2*i+1]*fieldXConvert << endl;
+        cps.push_back(Pose(x[2*i] * fieldXConvert, x[2*i+1] * fieldXConvert, 0));
     }
     CubicSpline *p = new CubicSpline(params->start, params->end, cps);
 
@@ -211,10 +213,10 @@ double Optimization::f_cubicnCP(unsigned int n1, const double *x, double *gradie
         }
     }
     vector<Pose> obs;
-    obs.push_back(Pose(1000, 1000, 0));
-    obs.push_back(Pose(-800, -700, 45));
-    obs.push_back(Pose(650, -700, 90));
-    obs.push_back(Pose(-450, 300, 135));
+    obs.push_back(Pose(1000/fieldXConvert, 1000/fieldXConvert, 0));
+    obs.push_back(Pose(-800/fieldXConvert, -700/fieldXConvert, 45));
+    obs.push_back(Pose(650/fieldXConvert, -700/fieldXConvert, 90));
+    obs.push_back(Pose(-450/fieldXConvert, 300/fieldXConvert, 135));
 
     double min_dist = 1000000.0;
     for (int i = 0 ; i < obs.size() ; i++) {
@@ -229,16 +231,23 @@ double Optimization::f_cubicnCP(unsigned int n1, const double *x, double *gradie
     SplineTrajectory *st = new SplineTrajectory(p, params->vls, params->vrs, params->vle, params->vre);
     double time = st->totalTime();
 //    qDebug() << min_dist << "bckjswerdv"<< 6 * BOT_RADIUS << endl;
-//    if (collides_flag){
-//        time *= 3;
-//    }
+    if (collides_flag){
+        time *= 4;
+    }
 //    else {
-        if (min_dist < 1.5 * BOT_RADIUS){
-            qDebug() << "old time" << time;
-            time = time * (2.5 - (min_dist / (1.5 * BOT_RADIUS)));
-            qDebug() << "new time" << time << endl;
+        qDebug() << "old time" << time << " "  << min_dist;
+        if (min_dist < 2 * BOT_RADIUS){
+
+            time = time * 10; //(2.2 - (min_dist / (1.2 * BOT_RADIUS)));
+            qDebug() << "new time" << time;
         }
+        qDebug() << endl;
 //    }
+        std::ofstream outfile;
+
+          outfile.open("logs/bopt.txt", std::ios_base::app);
+          outfile << time << endl;
+          outfile.close();
     return time;
 }
 
@@ -251,8 +260,9 @@ Trajectory *Optimization::cubicSplinenCPOptimization(Pose start, Pose end, doubl
     // set some values for the control points
     double cps[4] = {0};
     for (int i = 0; i < n; i++) {
-        double x = rand()/(double)RAND_MAX*1000.*((rand()%2)*2-1);
-        double y = rand()/(double)RAND_MAX*1000.*((rand()%2)*2-1);
+        double x = rand()/(double)RAND_MAX*3000.*((rand()%2)*2-1);
+        double y = rand()/(double)RAND_MAX*3000.*((rand()%2)*2-1);
+//        qDebug() << "here" << x << " " << y << endl;
         cps[2*i] = x/fieldXConvert; cps[2*i+1] = y/fieldXConvert;
     }
 
@@ -262,8 +272,8 @@ Trajectory *Optimization::cubicSplinenCPOptimization(Pose start, Pose end, doubl
 //    QTextStream stream(&file);
 
 //    double x[4] = {};
-    const double bndl[4] = {-1000,-1000,-1000,-1000};
-    const double bndu[4] = {1000,1000,1000,1000};
+    const double bndl[4] = {-3000/fieldXConvert,-3000/fieldXConvert,-3000/fieldXConvert,-3000/fieldXConvert};
+    const double bndu[4] = {3000/fieldXConvert,3000/fieldXConvert,3000/fieldXConvert,3000/fieldXConvert};
     double minf=0;
     double epsg = 0.0000000001;
     double epsf = 0;
@@ -282,7 +292,7 @@ Trajectory *Optimization::cubicSplinenCPOptimization(Pose start, Pose end, doubl
 //    qDebug("in this %s\n", x.tostring(4).c_str()); // EXPECTED: [-1,+1]
 
     bopt_params bparams = initialize_parameters_to_default();
-    bparams.n_iterations = 100;
+    bparams.n_iterations = 200;
     bparams.verbose_level = 4;
     set_log_file(&bparams, filename.toStdString().c_str());
     set_learning(&bparams,"L_MCMC");
@@ -293,7 +303,8 @@ Trajectory *Optimization::cubicSplinenCPOptimization(Pose start, Pose end, doubl
     {
         vector<Pose> cpsf;
         for (int i = 0; i < n; i++) {
-            cpsf.push_back(Pose(cps[2*i], cps[2*i+1], 0));
+//            qDebug() << "final cps " << cps[2*i]*fieldXConvert << " " <<  cps[2*i+1]*fieldXConvert << endl;
+            cpsf.push_back(Pose(cps[2*i]*fieldXConvert, cps[2*i+1]*fieldXConvert, 0));
         }
         static vector<PointDrawable*> pts;
         for (int i = 0; i < pts.size(); i++) {
