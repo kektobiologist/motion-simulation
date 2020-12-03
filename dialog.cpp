@@ -140,7 +140,7 @@ void Dialog::onCurIdxChanged(int idx)
         flag=1;
         //on_splineChangeBtn_clicked();
     }
-    if(idx < 40){
+    if(idx < 40 || true){
         qDebug() <<  "\n This is the original trajectory";
         ui->renderArea->changePose(sim.getPoses(idx));
         MiscData m = sim.getMiscData(idx);
@@ -674,7 +674,7 @@ void Dialog::on_circleTrajButton_clicked()
 //    traj = quinticBezierSplineGenerator(start, end, 0, 0, 40, 70);aj = cubic2CP(start, end, 0, 0, 40, 70);
 
     //traj = cubic(start, end, 0, 0, 40, 70);
-    traj = cubicnCP(start, end, 0, 0, 40, 70, 2);
+//    traj = cubicnCP(start, end, 0, 0, 40, 70, 2);
 //    traj = cubic_drawCollisions(start, end, 0, 0, 40, 70);
 
     ui->renderArea->setTrajectory(TrajectoryDrawing::getTrajectoryPath(*traj, 4000, timeLCMs));

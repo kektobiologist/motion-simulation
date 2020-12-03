@@ -10,9 +10,14 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = motion-simulation
 TEMPLATE = app
+QT_CONFIG -= no-pkg-config
 CONFIG += link_pkgconfig
-PKGCONFIG += opencv
+PKGCONFIG += opencv4 protobuf gsl
 QMAKE_CXXFLAGS += -std=c++0x
+
+mac {
+  PKG_CONFIG = /usr/local/bin/pkg-config
+}
 
 PROTOFILES_CPP = proto/cpp/messages_robocup_ssl_detection.pb.cc proto/cpp/messages_robocup_ssl_geometry.pb.cc proto/cpp/messages_robocup_ssl_refbox_log.pb.cc proto/cpp/messages_robocup_ssl_wrapper.pb.cc proto/cpp/logging.pb.cc
 PROTOFILES_H = proto/cpp/messages_robocup_ssl_detection.pb.h proto/cpp/messages_robocup_ssl_geometry.pb.h proto/cpp/messages_robocup_ssl_refbox_log.pb.h proto/cpp/messages_robocup_ssl_wrapper.pb.h proto/cpp/logging.pb.h
